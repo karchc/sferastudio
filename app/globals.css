@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+:root {
+  --mui-primary-main: #1976d2;
+  --mui-primary-light: #42a5f5;
+  --mui-primary-dark: #1565c0;
+  --mui-secondary-main: #9c27b0;
+  --mui-secondary-light: #ba68c8;
+  --mui-secondary-dark: #7b1fa2;
+  --mui-background-default: #ffffff;
+  --mui-background-paper: #f5f5f5;
+  --mui-text-primary: rgba(0, 0, 0, 0.87);
+  --mui-text-secondary: rgba(0, 0, 0, 0.6);
+}
+
+/* Theme variables */
+:root {
+  --color-background: var(--mui-background-default);
+  --color-foreground: var(--mui-text-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mui-background-default: #121212;
+    --mui-background-paper: #1e1e1e;
+    --mui-text-primary: rgba(255, 255, 255, 0.87);
+    --mui-text-secondary: rgba(255, 255, 255, 0.6);
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--mui-background-default);
+  color: var(--mui-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure consistent font loading */
+* {
+  font-synthesis: none;
+}
+
+/* Material Design elevation effects */
+.mui-elevation-1 {
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 
+              0px 1px 1px 0px rgba(0,0,0,0.14), 
+              0px 1px 3px 0px rgba(0,0,0,0.12);
+}
+
+.mui-elevation-2 {
+  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 
+              0px 2px 2px 0px rgba(0,0,0,0.14), 
+              0px 1px 5px 0px rgba(0,0,0,0.12);
+}
+
+.mui-elevation-3 {
+  box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 
+              0px 3px 4px 0px rgba(0,0,0,0.14), 
+              0px 1px 8px 0px rgba(0,0,0,0.12);
+}
+
+/* Material Design transitions */
+.mui-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Material Design button ripple effect base styles */
+.mui-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Custom animations for hero section */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}
+
+.delay-600 {
+  animation-delay: 0.6s;
+}
+
+.delay-800 {
+  animation-delay: 0.8s;
+}
+
+.delay-1000 {
+  animation-delay: 1s;
+}
+
+.delay-2000 {
+  animation-delay: 2s;
+}
