@@ -12,6 +12,37 @@ Practice SAP allows users to:
 
 ## Recent Updates (January 2025)
 
+### 250606-02 Test Detail Page & Homepage Updates
+
+1. **Homepage Test Cards Redesign**
+   - Removed action buttons from test cards on homepage
+   - Made entire test card clickable to navigate to detail page
+   - Cards now redirect to `/test-detail/[id]` instead of directly to test
+   - Added hover effects with title color change and "View Details" link
+   - Improved user experience with clearer navigation flow
+
+2. **New Test Detail Page** (`/test-detail/[id]`)
+   - Created comprehensive test information page
+   - **Hero Section**: Test title, description, categories, and key metrics
+   - **Features Grid**: Highlights test benefits (coverage, analytics, feedback)
+   - **Benefits List**: Detailed list of what's included with the test
+   - **Visual Stats Card**: Shows pass rate, average score, and completion time
+   - **Instructions Section**: Displays test-specific instructions if available
+   - **CTA Sections**: Prominent call-to-action buttons for starting test
+   - **Preview Test Button**: Placeholder for future preview functionality
+   - Responsive design with glassmorphism effects
+
+3. **Navigation Flow**
+   - Users click test card → View test details → Choose to start full test or preview
+   - **Non-authenticated users**: See "Purchase Now" and "Preview Test" buttons
+   - **Authenticated users**: See "Start Full Test" and "Try Preview Test" options
+
+4. **Button Updates for Non-Authenticated Users**
+   - Changed "Sign Up to Start" → "Purchase Now" (primary CTA)
+   - Changed "Sign In" → "Preview Test" with PlayCircle icon
+   - Updated both hero section and bottom CTA section buttons
+   - Maintains consistent purchase-focused messaging for visitors
+
 ### 250606-01 Navigation Access Control
 
 1. **Tests Link Access Control**

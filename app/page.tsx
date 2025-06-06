@@ -284,11 +284,15 @@ export default async function Home() {
           {tests.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tests.map((test: Test) => (
-                <div key={test.id} className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 border border-transparent hover:border-[#3EB3E7]">
+                <Link 
+                  key={test.id} 
+                  href={`/test-detail/${test.id}`}
+                  className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 border border-transparent hover:border-[#3EB3E7] cursor-pointer block"
+                >
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-xl font-semibold text-[#0B1F3A] mb-1">
+                        <h3 className="text-xl font-semibold text-[#0B1F3A] mb-1 group-hover:text-[#3EB3E7] transition-colors">
                           {test.title}
                         </h3>
                         {test.categories && test.categories.length > 0 && (
@@ -307,7 +311,7 @@ export default async function Home() {
                       {test.description || 'Test your knowledge and prepare for certification'}
                     </p>
                     
-                    <div className="flex items-center justify-between text-sm text-[#5C677D] mb-4">
+                    <div className="flex items-center justify-between text-sm text-[#5C677D]">
                       <span className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
                         {Math.floor(test.time_limit / 60)} mins
@@ -315,24 +319,12 @@ export default async function Home() {
                       <span>{test.question_count || 25} questions</span>
                     </div>
                     
-                    {session ? (
-                      <Link
-                        href={`/test/${test.id}`}
-                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-bold rounded-md text-white bg-[#3EB3E7] hover:bg-[#2da0d4] transition-all shadow-md hover:shadow-lg"
-                      >
-                        Start Test
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    ) : (
-                      <Link
-                        href="/auth/login"
-                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-[#0B1F3A] text-sm font-medium rounded-md text-[#0B1F3A] bg-white hover:bg-[#0B1F3A] hover:text-white transition-all"
-                      >
-                        Sign in to start
-                      </Link>
-                    )}
+                    <div className="mt-4 text-sm font-medium text-[#3EB3E7] group-hover:text-[#2da0d4] transition-colors flex items-center">
+                      View Details
+                      <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
