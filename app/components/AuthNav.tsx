@@ -139,7 +139,7 @@ export default function AuthNav() {
                 className="mr-3 transition-transform group-hover:scale-110 overflow-hidden"
               />
             </Link>
-              {!user && (
+              {user && (
               <div className="flex space-x-1">
                 <Link 
                   href="/test" 

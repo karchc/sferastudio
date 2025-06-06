@@ -12,6 +12,14 @@ Practice SAP allows users to:
 
 ## Recent Updates (January 2025)
 
+### 250606-01 Navigation Access Control
+
+1. **Tests Link Access Control**
+   - Updated navbar to show "TESTS" link only for authenticated users
+   - Non-authenticated users no longer see the Tests navigation item
+   - Ensures users must be logged in to access test functionality
+   - Modified `AuthNav.tsx` component condition from `{!user && (` to `{user && (`
+
 ### 250604-01 Admin Interface & Dashboard Improvements
 
 1. **Admin Dashboard Redesign**
