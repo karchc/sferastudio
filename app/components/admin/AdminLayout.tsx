@@ -19,7 +19,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-slate-200 dark:border-slate-700">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/admin/dashboard">
+          <Link href="/admin/tests">
             <h1 className="text-2xl font-bold text-blue-600">Practice SAP Admin</h1>
           </Link>
           <Link href="/">
@@ -32,14 +32,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Sidebar */}
         <aside className="w-64 border-r border-slate-200 dark:border-slate-700 p-4">
           <nav className="space-y-2">
-            <Link href="/admin/dashboard">
-              <Button
-                variant={isActive("/admin/dashboard") ? "default" : "ghost"}
-                className="w-full justify-start"
-              >
-                Dashboard
-              </Button>
-            </Link>
             <Link href="/admin/tests">
               <Button
                 variant={isActive("/admin/tests") ? "default" : "ghost"}

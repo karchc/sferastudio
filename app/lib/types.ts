@@ -35,16 +35,9 @@ export interface Test {
 
 // Question types
 export type QuestionType = 
-  'multiple-choice' | 
-  'single-choice' | 
-  'true-false' | 
-  'matching' | 
-  'sequence' |
-  'drag-drop' |
-  'multiple_choice' | 
   'single_choice' | 
-  'true_false' | 
-  'drag_drop';
+  'multiple_choice' | 
+  'dropdown';
 
 export interface Question {
   id: string;
@@ -61,10 +54,8 @@ export interface Question {
   createdAt?: Date;
   updatedAt?: Date;
   position?: number;
-  answers?: Answer[] | MatchItem[] | SequenceItem[] | DragDropItem[];
-  matchItems?: MatchItem[];
-  sequenceItems?: SequenceItem[];
-  dragDropItems?: DragDropItem[];
+  answers?: Answer[];
+  dropdownItems?: DropdownItem[];
 }
 
 // Answer types for different question types
@@ -99,6 +90,16 @@ export interface DragDropItem {
   questionId?: string;
   content: string;
   targetZone: string;
+  createdAt?: Date;
+}
+
+export interface DropdownItem {
+  id?: string;
+  questionId?: string;
+  statement: string;
+  correctAnswer: string;
+  options: string[];
+  position?: number;
   createdAt?: Date;
 }
 
@@ -267,9 +268,7 @@ export interface QuestionFormData {
   points?: number;
   explanation?: string;
   answers?: Answer[];
-  matchItems?: MatchItem[];
-  sequenceItems?: SequenceItem[];
-  dragDropItems?: DragDropItem[];
+  dropdownItems?: DropdownItem[];
 }
 
 export interface TestFormData {

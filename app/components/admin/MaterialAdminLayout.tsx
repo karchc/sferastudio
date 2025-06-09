@@ -66,7 +66,6 @@ export function MaterialAdminLayout({ children }: AdminLayoutProps) {
   };
 
   const navItems: NavItem[] = [
-    { path: "/admin/dashboard", label: "Dashboard", icon: <DashboardIcon /> },
     { path: "/admin/tests", label: "Test Management", icon: <QuizIcon /> },
     { path: "/admin/questions", label: "Question Management", icon: <QuestionIcon /> },
     { path: "/admin/categories", label: "Categories", icon: <CategoryIcon /> },

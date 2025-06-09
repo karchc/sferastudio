@@ -17,9 +17,10 @@ interface TestContainerProps {
   onProgress?: (progress: any) => void;
   onNavigate?: (path: string) => void;
   timeLeft?: number;
+  isPreview?: boolean;
 }
 
-export function TestContainer({ test, onNavigate }: TestContainerProps) {
+export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }: TestContainerProps) {
   // Test state
   const [phase, setPhase] = useState<TestPhase>("idle");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -41,7 +42,15 @@ export function TestContainer({ test, onNavigate }: TestContainerProps) {
 
   // Handle test completion
   const handleComplete = () => {
-    // Check for skipped questions
+    if (isPreview) {
+      // For preview mode, navigate directly to completion page without showing summary
+      if (onNavigate) {
+        onNavigate(`/preview-test/${test.id}/complete`);
+      }
+      return;
+    }
+    
+    // Regular test completion logic
     const answeredQuestionIds = userAnswers
       .filter(a => a.answers && a.answers.length > 0)
       .map(a => a.questionId);
@@ -192,7 +201,8 @@ export function TestContainer({ test, onNavigate }: TestContainerProps) {
         {phase === "in-progress" && (
           <>
             <Timer 
-              initialTime={test.timeLimit} 
+              initialTime={isPreview ? 1800 : test.timeLimit}
+              timeLeft={timeLeft}
               onTimeUp={handleComplete} 
             />
             <div className="pt-16">

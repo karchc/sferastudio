@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp } from '../../lib/auth-client'
 
-export default function SignupPage() {
+function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -13,6 +13,8 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,8 +32,8 @@ export default function SignupPage() {
         if (!data.session) {
           setError('Please check your email for a confirmation link before signing in.')
         } else {
-          // User is automatically signed in, redirect to dashboard
-          router.push('/dashboard')
+          // User is automatically signed in, redirect to specified URL or dashboard
+          router.push(redirectUrl || '/dashboard')
         }
       }
     } catch (err) {
@@ -150,5 +152,13 @@ export default function SignupPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div>Loading...</div></div>}>
+      <SignupForm />
+    </Suspense>
   )
 }

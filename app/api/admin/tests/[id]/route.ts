@@ -14,7 +14,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const testId = params.id;
+    const testId = (await params).id;
     
     // Load test details
     const testRes = await fetch(`${SUPABASE_URL}/rest/v1/tests?id=eq.${testId}&select=*`, {
@@ -109,7 +109,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const testId = params.id;
+    const testId = (await params).id;
     const body = await request.json();
     
     const response = await fetch(`${SUPABASE_URL}/rest/v1/tests?id=eq.${testId}`, {

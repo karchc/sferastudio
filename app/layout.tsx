@@ -12,6 +12,11 @@ const inter = Inter({
 export const metadata = {
   title: 'Practice SAP',
   description: 'Comprehensive exam preparation platform for Business Tech and SAP exams',
+  other: {
+    'cache-control': 'no-cache, no-store, must-revalidate',
+    'pragma': 'no-cache',
+    'expires': '0'
+  }
 };
 
 export default function RootLayout({

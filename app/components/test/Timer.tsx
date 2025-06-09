@@ -5,40 +5,53 @@ import { AlertTriangle, Clock } from "lucide-react";
 
 interface TimerProps {
   initialTime: number; // in seconds
+  timeLeft?: number; // For external time control (like preview mode)
   onTimeUp: () => void;
 }
 
-export function Timer({ initialTime, onTimeUp }: TimerProps) {
-  const [timeRemaining, setTimeRemaining] = useState(initialTime);
+export function Timer({ initialTime, timeLeft, onTimeUp }: TimerProps) {
+  const [timeRemaining, setTimeRemaining] = useState(timeLeft !== undefined ? timeLeft : initialTime);
   const [hasShownOneMinuteWarning, setHasShownOneMinuteWarning] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   
   console.log("Timer initialized with:", initialTime, "seconds");
   console.log("Current time remaining:", timeRemaining);
   
+  // Use external timeLeft if provided, otherwise use internal countdown
+  const currentTime = timeLeft !== undefined ? timeLeft : timeRemaining;
+  
   // Calculate progress percentage for the timer bar
-  const progress = (timeRemaining / initialTime) * 100;
+  const progress = (currentTime / initialTime) * 100;
   
   // Determine color based on time remaining
   const getColor = () => {
-    if (timeRemaining <= 60) return "bg-red-500"; // Last minute
-    if (timeRemaining <= 120) return "bg-yellow-500"; // Last 2 minutes
+    if (currentTime <= 60) return "bg-red-500"; // Last minute
+    if (currentTime <= 120) return "bg-yellow-500"; // Last 2 minutes
     return "bg-green-500"; 
   };
 
-  // Handle countdown
+  // Update internal timer when external timeLeft changes
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTimeRemaining(prev => Math.max(0, prev - 1));
-    }, 1000);
+    if (timeLeft !== undefined) {
+      setTimeRemaining(timeLeft);
+    }
+  }, [timeLeft]);
 
-    return () => clearInterval(intervalId);
-  }, []); // Run once on mount
+  // Handle countdown (only if not using external timeLeft)
+  useEffect(() => {
+    if (timeLeft === undefined) {
+      const intervalId = setInterval(() => {
+        setTimeRemaining(prev => Math.max(0, prev - 1));
+      }, 1000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [timeLeft]);
 
   // Handle time-based events
   useEffect(() => {
     // Show one minute warning
-    if (timeRemaining === 60 && !hasShownOneMinuteWarning) {
+    if (currentTime === 60 && !hasShownOneMinuteWarning) {
       setHasShownOneMinuteWarning(true);
       setShowNotification(true);
       
@@ -49,10 +62,10 @@ export function Timer({ initialTime, onTimeUp }: TimerProps) {
     }
 
     // Check if time is up
-    if (timeRemaining === 0) {
+    if (currentTime === 0) {
       onTimeUp();
     }
-  }, [timeRemaining, onTimeUp, hasShownOneMinuteWarning]);
+  }, [currentTime, onTimeUp, hasShownOneMinuteWarning]);
 
   return (
     <>
@@ -62,10 +75,10 @@ export function Timer({ initialTime, onTimeUp }: TimerProps) {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <span className="font-medium">
-                {formatTime(timeRemaining)}
+                {formatTime(currentTime)}
               </span>
               
-              {timeRemaining <= 60 && (
+              {currentTime <= 60 && (
                 <motion.div 
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}

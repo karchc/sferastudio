@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
-import { Question, QuestionType, Answer, MatchItem, SequenceItem, DragDropItem, Category, QuestionFormData } from "@/app/lib/types";
+import { Question, QuestionType, Answer, DropdownItem, Category, QuestionFormData } from "@/app/lib/types";
 import { generateMockId } from "@/app/components/admin/MockData";
 
 interface QuestionFormProps {
@@ -25,9 +25,7 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
         points: initialData.points || 1,
         explanation: initialData.explanation || '',
         answers: initialData.answers,
-        matchItems: initialData.matchItems,
-        sequenceItems: initialData.sequenceItems,
-        dragDropItems: initialData.dragDropItems
+        dropdownItems: initialData.dropdownItems
       };
     }
     
@@ -76,47 +74,25 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
           { id: generateMockId(), text: "", isCorrect: false, position: 2 },
           { id: generateMockId(), text: "", isCorrect: false, position: 3 }
         ];
-        delete updated.matchItems;
-        delete updated.sequenceItems;
-        delete updated.dragDropItems;
-      } else if (newType === "true_false") {
-        updated.answers = [
-          { id: generateMockId(), text: "True", isCorrect: false, position: 0 },
-          { id: generateMockId(), text: "False", isCorrect: false, position: 1 }
-        ];
-        delete updated.matchItems;
-        delete updated.sequenceItems;
-        delete updated.dragDropItems;
-      } else if (newType === "matching") {
-        updated.matchItems = prev.matchItems?.length ? prev.matchItems : [
-          { id: generateMockId(), leftText: "", rightText: "" },
-          { id: generateMockId(), leftText: "", rightText: "" },
-          { id: generateMockId(), leftText: "", rightText: "" },
-          { id: generateMockId(), leftText: "", rightText: "" }
-        ];
-        delete updated.answers;
-        delete updated.sequenceItems;
-        delete updated.dragDropItems;
-      } else if (newType === "sequence") {
-        updated.sequenceItems = prev.sequenceItems?.length ? prev.sequenceItems : [
-          { id: generateMockId(), text: "", correctPosition: 1 },
-          { id: generateMockId(), text: "", correctPosition: 2 },
-          { id: generateMockId(), text: "", correctPosition: 3 },
-          { id: generateMockId(), text: "", correctPosition: 4 }
+        delete updated.dropdownItems;
+      } else if (newType === "dropdown") {
+        updated.dropdownItems = prev.dropdownItems?.length ? prev.dropdownItems : [
+          { 
+            id: generateMockId(), 
+            statement: "", 
+            correctAnswer: "", 
+            options: ["Option 1", "Option 2", "Option 3"], 
+            position: 0 
+          },
+          { 
+            id: generateMockId(), 
+            statement: "", 
+            correctAnswer: "", 
+            options: ["Option 1", "Option 2", "Option 3"], 
+            position: 1 
+          }
         ];
         delete updated.answers;
-        delete updated.matchItems;
-        delete updated.dragDropItems;
-      } else if (newType === "drag_drop") {
-        updated.dragDropItems = prev.dragDropItems?.length ? prev.dragDropItems : [
-          { id: generateMockId(), content: "", targetZone: "Zone A" },
-          { id: generateMockId(), content: "", targetZone: "Zone A" },
-          { id: generateMockId(), content: "", targetZone: "Zone B" },
-          { id: generateMockId(), content: "", targetZone: "Zone B" }
-        ];
-        delete updated.answers;
-        delete updated.matchItems;
-        delete updated.sequenceItems;
       }
       
       return updated;
@@ -159,119 +135,60 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
     }));
   };
 
-  // Matching items management
-  const handleMatchItemChange = (id: string, field: keyof MatchItem, value: string) => {
+
+  // Dropdown items management
+  const handleDropdownItemChange = (id: string, field: keyof DropdownItem, value: string | string[]) => {
     setFormData(prev => {
-      const matchItems = [...(prev.matchItems || [])];
-      const index = matchItems.findIndex(item => item.id === id);
+      const dropdownItems = [...(prev.dropdownItems || [])];
+      const index = dropdownItems.findIndex(item => item.id === id);
       
       if (index !== -1) {
-        matchItems[index] = { ...matchItems[index], [field]: value };
+        dropdownItems[index] = { ...dropdownItems[index], [field]: value };
       }
       
-      return { ...prev, matchItems };
+      return { ...prev, dropdownItems };
     });
   };
 
-  const addMatchItem = () => {
+  const addDropdownItem = () => {
     setFormData(prev => ({
       ...prev,
-      matchItems: [...(prev.matchItems || []), { id: generateMockId(), leftText: "", rightText: "" }]
-    }));
-  };
-
-  const removeMatchItem = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      matchItems: (prev.matchItems || []).filter(item => item.id !== id)
-    }));
-  };
-
-  // Sequence items management
-  const handleSequenceItemChange = (id: string, text: string) => {
-    setFormData(prev => {
-      const sequenceItems = [...(prev.sequenceItems || [])];
-      const index = sequenceItems.findIndex(item => item.id === id);
-      
-      if (index !== -1) {
-        sequenceItems[index] = { ...sequenceItems[index], text };
-      }
-      
-      return { ...prev, sequenceItems };
-    });
-  };
-
-  const moveSequenceItem = (index: number, direction: 'up' | 'down') => {
-    setFormData(prev => {
-      const sequenceItems = [...(prev.sequenceItems || [])];
-      if (direction === 'up' && index > 0) {
-        [sequenceItems[index], sequenceItems[index - 1]] = [sequenceItems[index - 1], sequenceItems[index]];
-      } else if (direction === 'down' && index < sequenceItems.length - 1) {
-        [sequenceItems[index], sequenceItems[index + 1]] = [sequenceItems[index + 1], sequenceItems[index]];
-      }
-      
-      // Update correct positions
-      sequenceItems.forEach((item, idx) => {
-        item.correctPosition = idx + 1;
-      });
-      
-      return { ...prev, sequenceItems };
-    });
-  };
-
-  const addSequenceItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      sequenceItems: [...(prev.sequenceItems || []), { 
+      dropdownItems: [...(prev.dropdownItems || []), { 
         id: generateMockId(), 
-        text: "", 
-        correctPosition: (prev.sequenceItems?.length || 0) + 1 
+        statement: "", 
+        correctAnswer: "", 
+        options: ["Option 1", "Option 2", "Option 3"], 
+        position: (prev.dropdownItems?.length || 0) 
       }]
     }));
   };
 
-  const removeSequenceItem = (id: string) => {
-    setFormData(prev => {
-      const filtered = (prev.sequenceItems || []).filter(item => item.id !== id);
-      // Update positions
-      filtered.forEach((item, idx) => {
-        item.correctPosition = idx + 1;
-      });
-      return { ...prev, sequenceItems: filtered };
-    });
-  };
-
-  // Drag drop items management
-  const handleDragDropItemChange = (id: string, field: keyof DragDropItem, value: string) => {
-    setFormData(prev => {
-      const dragDropItems = [...(prev.dragDropItems || [])];
-      const index = dragDropItems.findIndex(item => item.id === id);
-      
-      if (index !== -1) {
-        dragDropItems[index] = { ...dragDropItems[index], [field]: value };
-      }
-      
-      return { ...prev, dragDropItems };
-    });
-  };
-
-  const addDragDropItem = () => {
+  const removeDropdownItem = (id: string) => {
     setFormData(prev => ({
       ...prev,
-      dragDropItems: [...(prev.dragDropItems || []), { id: generateMockId(), content: "", targetZone: "Zone A" }]
+      dropdownItems: (prev.dropdownItems || []).filter(item => item.id !== id)
     }));
   };
 
-  const removeDragDropItem = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      dragDropItems: (prev.dragDropItems || []).filter(item => item.id !== id)
-    }));
+  const updateDropdownOptions = (id: string, options: string[]) => {
+    handleDropdownItemChange(id, 'options', options);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Clean up form data before submitting
+    const cleanedFormData = { ...formData };
+    
+    // For dropdown questions, filter out empty options
+    if (cleanedFormData.type === 'dropdown' && cleanedFormData.dropdownItems) {
+      cleanedFormData.dropdownItems = cleanedFormData.dropdownItems.map(item => ({
+        ...item,
+        options: item.options.filter(opt => opt.trim() !== '')
+      }));
+    }
+    
+    onSubmit(cleanedFormData);
   };
 
   return (
@@ -308,10 +225,7 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
               >
                 <option value="single_choice">Single Choice</option>
                 <option value="multiple_choice">Multiple Choice</option>
-                <option value="true_false">True/False</option>
-                <option value="matching">Matching</option>
-                <option value="sequence">Sequence</option>
-                <option value="drag_drop">Drag and Drop</option>
+                <option value="dropdown">Dropdown</option>
               </select>
             </div>
 
@@ -435,202 +349,85 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
             </div>
           )}
 
-          {/* True/False */}
-          {formData.type === "true_false" && (
-            <div className="space-y-4">
-              <h3 className="text-md font-medium">Select the correct answer</h3>
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="trueFalseAnswer"
-                    checked={formData.answers?.[0]?.isCorrect === true}
-                    onChange={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        answers: [
-                          { ...prev.answers![0], isCorrect: true },
-                          { ...prev.answers![1], isCorrect: false }
-                        ]
-                      }));
-                    }}
-                    className="h-4 w-4"
-                  />
-                  <span>True</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="trueFalseAnswer"
-                    checked={formData.answers?.[1]?.isCorrect === true}
-                    onChange={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        answers: [
-                          { ...prev.answers![0], isCorrect: false },
-                          { ...prev.answers![1], isCorrect: true }
-                        ]
-                      }));
-                    }}
-                    className="h-4 w-4"
-                  />
-                  <span>False</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* Matching items */}
-          {formData.type === "matching" && (
+          {/* Dropdown items */}
+          {formData.type === "dropdown" && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-md font-medium">Matching Pairs</h3>
-                <Button type="button" variant="outline" size="sm" onClick={addMatchItem}>
-                  Add Pair
+                <h3 className="text-md font-medium">Dropdown Statements</h3>
+                <Button type="button" variant="outline" size="sm" onClick={addDropdownItem}>
+                  Add Statement
                 </Button>
               </div>
               
-              {(formData.matchItems || []).map((item, index) => (
-                <div key={item.id} className="grid grid-cols-5 items-center gap-2">
-                  <input
-                    type="text"
-                    value={item.leftText}
-                    onChange={(e) => handleMatchItemChange(item.id!, "leftText", e.target.value)}
-                    placeholder={`Left Item ${index + 1}`}
-                    className="col-span-2 p-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                  <div className="text-center">→</div>
-                  <input
-                    type="text"
-                    value={item.rightText}
-                    onChange={(e) => handleMatchItemChange(item.id!, "rightText", e.target.value)}
-                    placeholder={`Right Item ${index + 1}`}
-                    className="col-span-1 p-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeMatchItem(item.id!)}
-                    disabled={(formData.matchItems || []).length <= 2}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              
-              <div className="text-sm text-gray-500">
-                Create matching pairs. You must have at least 2 pairs.
-              </div>
-            </div>
-          )}
-
-          {/* Sequence items */}
-          {formData.type === "sequence" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-md font-medium">Sequence Items (in correct order)</h3>
-                <Button type="button" variant="outline" size="sm" onClick={addSequenceItem}>
-                  Add Item
-                </Button>
-              </div>
-              
-              {(formData.sequenceItems || []).map((item, index) => (
-                <div key={item.id} className="flex items-center space-x-2">
-                  <span className="text-sm font-medium w-6">{index + 1}.</span>
-                  <input
-                    type="text"
-                    value={item.text}
-                    onChange={(e) => handleSequenceItemChange(item.id!, e.target.value)}
-                    placeholder={`Step ${index + 1}`}
-                    className="flex-1 p-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                  <div className="flex space-x-1">
+              {(formData.dropdownItems || []).map((item, index) => (
+                <div key={item.id} className="space-y-3 p-4 border border-gray-200 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-medium">Statement {index + 1}</h4>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => moveSequenceItem(index, 'up')}
-                      disabled={index === 0}
-                    >
-                      ↑
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => moveSequenceItem(index, 'down')}
-                      disabled={index === (formData.sequenceItems?.length || 0) - 1}
-                    >
-                      ↓
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeSequenceItem(item.id!)}
-                      disabled={(formData.sequenceItems || []).length <= 2}
+                      onClick={() => removeDropdownItem(item.id!)}
+                      disabled={(formData.dropdownItems || []).length <= 1}
+                      className="text-red-600 hover:text-red-700"
                     >
                       Remove
                     </Button>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Statement</label>
+                    <input
+                      type="text"
+                      value={item.statement}
+                      onChange={(e) => handleDropdownItemChange(item.id!, "statement", e.target.value)}
+                      placeholder="Enter the statement..."
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Dropdown Options</label>
+                      <p className="text-xs text-gray-500 mb-2">Enter each option on a new line. Press Enter to add more options.</p>
+                      <textarea
+                        value={item.options.join('\n')}
+                        onChange={(e) => {
+                          // Split by newlines but keep empty lines during editing for better UX
+                          const allLines = e.target.value.split('\n');
+                          // Only filter out completely empty lines, keep lines with just spaces for now
+                          const options = allLines.map(line => line.trimEnd()); // Remove trailing spaces but keep the line
+                          updateDropdownOptions(item.id!, options);
+                        }}
+                        placeholder="Option 1
+Option 2
+Option 3"
+                        className="w-full p-2 border border-gray-300 rounded-md h-24"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Correct Answer</label>
+                      <select
+                        value={item.correctAnswer}
+                        onChange={(e) => handleDropdownItemChange(item.id!, "correctAnswer", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        required
+                      >
+                        <option value="">Select correct answer...</option>
+                        {item.options.filter(opt => opt.trim() !== '').map((option, optIndex) => (
+                          <option key={optIndex} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               ))}
               
               <div className="text-sm text-gray-500">
-                Enter items in the correct sequence order. Use the arrows to reorder. You must have at least 2 items.
-              </div>
-            </div>
-          )}
-
-          {/* Drag and drop items */}
-          {formData.type === "drag_drop" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-md font-medium">Drag and Drop Items</h3>
-                <Button type="button" variant="outline" size="sm" onClick={addDragDropItem}>
-                  Add Item
-                </Button>
-              </div>
-              
-              {(formData.dragDropItems || []).map((item, index) => (
-                <div key={item.id} className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={item.content}
-                    onChange={(e) => handleDragDropItemChange(item.id!, "content", e.target.value)}
-                    placeholder={`Item ${index + 1}`}
-                    className="flex-1 p-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                  <select
-                    value={item.targetZone}
-                    onChange={(e) => handleDragDropItemChange(item.id!, "targetZone", e.target.value)}
-                    className="p-2 border border-gray-300 rounded-md"
-                    required
-                  >
-                    <option value="Zone A">Zone A</option>
-                    <option value="Zone B">Zone B</option>
-                    <option value="Zone C">Zone C</option>
-                    <option value="Zone D">Zone D</option>
-                  </select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeDragDropItem(item.id!)}
-                    disabled={(formData.dragDropItems || []).length <= 2}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              
-              <div className="text-sm text-gray-500">
-                Define items and their target zones. You must have at least 2 items.
+                Create statements with dropdown options. Each statement should have multiple options with one correct answer. Type each option on a separate line in the options box.
               </div>
             </div>
           )}
@@ -647,10 +444,9 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
                 !formData.text ||
                 ((formData.type === "multiple_choice" || formData.type === "single_choice") && 
                   (!formData.answers || formData.answers.length < 2 || formData.answers.some(a => !a.text) || !formData.answers.some(a => a.isCorrect))) ||
-                (formData.type === "true_false" && (!formData.answers || !formData.answers.some(a => a.isCorrect))) ||
-                (formData.type === "matching" && (!formData.matchItems || formData.matchItems.length < 2 || formData.matchItems.some(m => !m.leftText || !m.rightText))) ||
-                (formData.type === "sequence" && (!formData.sequenceItems || formData.sequenceItems.length < 2 || formData.sequenceItems.some(s => !s.text))) ||
-                (formData.type === "drag_drop" && (!formData.dragDropItems || formData.dragDropItems.length < 2 || formData.dragDropItems.some(d => !d.content)))
+                (formData.type === "dropdown" && 
+                  (!formData.dropdownItems || formData.dropdownItems.length < 1 || 
+                   formData.dropdownItems.some(d => !d.statement || !d.correctAnswer || d.options.filter(opt => opt.trim()).length < 2)))
               }
             >
               {isSubmitting ? 'Saving...' : (initialData ? "Update Question" : "Create Question")}

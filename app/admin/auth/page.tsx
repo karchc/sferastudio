@@ -25,9 +25,9 @@ export default function AdminAuthPage() {
       setSuccess(true);
       
       // In a real app, we'd wait for the auth state to change
-      // For demo purposes, redirect to admin dashboard
+      // For demo purposes, redirect to admin tests
       setTimeout(() => {
-        router.push("/admin/dashboard");
+        router.push("/admin/tests");
       }, 1500);
     } catch (err) {
       console.error("Sign in error:", err);
@@ -37,10 +37,10 @@ export default function AdminAuthPage() {
     }
   };
 
-  // If already authenticated and is admin, redirect to dashboard
+  // If already authenticated and is admin, redirect to tests
   if (user && isAdmin && !loading) {
-    router.push("/admin/dashboard");
-    return <div className="flex items-center justify-center min-h-screen">Redirecting to dashboard...</div>;
+    router.push("/admin/tests");
+    return <div className="flex items-center justify-center min-h-screen">Redirecting to tests...</div>;
   }
 
   return (
@@ -53,7 +53,7 @@ export default function AdminAuthPage() {
           {success ? (
             <div className="text-center">
               <div className="mb-4 text-green-600 font-medium">Authentication successful!</div>
-              <p className="text-gray-600">Redirecting to admin dashboard...</p>
+              <p className="text-gray-600">Redirecting to admin tests...</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

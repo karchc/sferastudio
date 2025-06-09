@@ -14,7 +14,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const questionId = params.id;
+    const questionId = (await params).id;
     
     // Load question
     const questionRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${questionId}&select=*`, {
@@ -28,7 +28,7 @@ export async function GET(
     // Load answers based on question type
     let fullQuestion = { ...questionData };
     
-    if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice' || questionData.type === 'true_false') {
+    if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice') {
       const answersRes = await fetch(`${SUPABASE_URL}/rest/v1/answers?question_id=eq.${questionId}&order=position`, {
         headers
       });
@@ -42,44 +42,24 @@ export async function GET(
           position: a.position
         }));
       }
-    } else if (questionData.type === 'matching') {
-      const matchRes = await fetch(`${SUPABASE_URL}/rest/v1/matching_answers?question_id=eq.${questionId}&order=position`, {
+    } else if (questionData.type === 'dropdown') {
+      const dropdownRes = await fetch(`${SUPABASE_URL}/rest/v1/dropdown_answers?question_id=eq.${questionId}&order=position`, {
         headers
       });
       
-      if (matchRes.ok) {
-        const matchItems = await matchRes.json();
-        fullQuestion.matchItems = matchItems.map((m: any) => ({
-          id: m.id,
-          leftText: m.left_text,
-          rightText: m.right_text
-        }));
-      }
-    } else if (questionData.type === 'sequence') {
-      const seqRes = await fetch(`${SUPABASE_URL}/rest/v1/sequence_answers?question_id=eq.${questionId}&order=correct_position`, {
-        headers
-      });
-      
-      if (seqRes.ok) {
-        const sequenceItems = await seqRes.json();
-        fullQuestion.sequenceItems = sequenceItems.map((s: any) => ({
-          id: s.id,
-          text: s.text,
-          correctPosition: s.correct_position
-        }));
-      }
-    } else if (questionData.type === 'drag_drop') {
-      const dragRes = await fetch(`${SUPABASE_URL}/rest/v1/drag_drop_answers?question_id=eq.${questionId}&order=position`, {
-        headers
-      });
-      
-      if (dragRes.ok) {
-        const dragDropItems = await dragRes.json();
-        fullQuestion.dragDropItems = dragDropItems.map((d: any) => ({
+      if (dropdownRes.ok) {
+        const dropdownItems = await dropdownRes.json();
+        console.log('Loaded dropdown items for question:', questionId, dropdownItems);
+        fullQuestion.dropdownItems = dropdownItems.map((d: any) => ({
           id: d.id,
-          content: d.content,
-          targetZone: d.target_zone
+          statement: d.statement,
+          correctAnswer: d.correct_answer,
+          options: d.options,
+          position: d.position
         }));
+      } else {
+        console.error('Failed to load dropdown items:', dropdownRes.status, await dropdownRes.text());
+        fullQuestion.dropdownItems = [];
       }
     }
     
@@ -98,7 +78,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const questionId = params.id;
+    const questionId = (await params).id;
     const questionData = await request.json();
     
     // Update the question
@@ -120,9 +100,15 @@ export async function PATCH(
     }
     
     // Update answers based on question type
-    if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice' || questionData.type === 'true_false') {
+    if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice') {
       // Delete existing answers
       await fetch(`${SUPABASE_URL}/rest/v1/answers?question_id=eq.${questionId}`, {
+        method: 'DELETE',
+        headers
+      });
+      
+      // Delete existing dropdown answers if changing from dropdown
+      await fetch(`${SUPABASE_URL}/rest/v1/dropdown_answers?question_id=eq.${questionId}`, {
         method: 'DELETE',
         headers
       });
@@ -146,81 +132,43 @@ export async function PATCH(
           throw new Error('Failed to update answers');
         }
       }
-    } else if (questionData.type === 'matching') {
-      // Delete existing matching answers
-      await fetch(`${SUPABASE_URL}/rest/v1/matching_answers?question_id=eq.${questionId}`, {
+    } else if (questionData.type === 'dropdown') {
+      console.log('Updating dropdown question with items:', questionData.dropdownItems);
+      
+      // Delete existing dropdown answers
+      await fetch(`${SUPABASE_URL}/rest/v1/dropdown_answers?question_id=eq.${questionId}`, {
         method: 'DELETE',
         headers
       });
       
-      // Create new matching items
-      if (questionData.matchItems && questionData.matchItems.length > 0) {
-        const matchingData = questionData.matchItems.map((item: any, index: number) => ({
+      // Delete existing regular answers if changing to dropdown
+      await fetch(`${SUPABASE_URL}/rest/v1/answers?question_id=eq.${questionId}`, {
+        method: 'DELETE',
+        headers
+      });
+      
+      // Create new dropdown items
+      if (questionData.dropdownItems && questionData.dropdownItems.length > 0) {
+        const dropdownData = questionData.dropdownItems.map((item: any, index: number) => ({
           question_id: questionId,
-          left_text: item.leftText,
-          right_text: item.rightText,
+          statement: item.statement,
+          correct_answer: item.correctAnswer,
+          options: item.options,
           position: index
         }));
         
-        const matchingRes = await fetch(`${SUPABASE_URL}/rest/v1/matching_answers`, {
+        const dropdownRes = await fetch(`${SUPABASE_URL}/rest/v1/dropdown_answers`, {
           method: 'POST',
           headers,
-          body: JSON.stringify(matchingData)
+          body: JSON.stringify(dropdownData)
         });
         
-        if (!matchingRes.ok) {
-          throw new Error('Failed to update matching items');
-        }
-      }
-    } else if (questionData.type === 'sequence') {
-      // Delete existing sequence answers
-      await fetch(`${SUPABASE_URL}/rest/v1/sequence_answers?question_id=eq.${questionId}`, {
-        method: 'DELETE',
-        headers
-      });
-      
-      // Create new sequence items
-      if (questionData.sequenceItems && questionData.sequenceItems.length > 0) {
-        const sequenceData = questionData.sequenceItems.map((item: any) => ({
-          question_id: questionId,
-          text: item.text,
-          correct_position: item.correctPosition
-        }));
-        
-        const sequenceRes = await fetch(`${SUPABASE_URL}/rest/v1/sequence_answers`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(sequenceData)
-        });
-        
-        if (!sequenceRes.ok) {
-          throw new Error('Failed to update sequence items');
-        }
-      }
-    } else if (questionData.type === 'drag_drop') {
-      // Delete existing drag drop answers
-      await fetch(`${SUPABASE_URL}/rest/v1/drag_drop_answers?question_id=eq.${questionId}`, {
-        method: 'DELETE',
-        headers
-      });
-      
-      // Create new drag drop items
-      if (questionData.dragDropItems && questionData.dragDropItems.length > 0) {
-        const dragDropData = questionData.dragDropItems.map((item: any, index: number) => ({
-          question_id: questionId,
-          content: item.content,
-          target_zone: item.targetZone,
-          position: index
-        }));
-        
-        const dragDropRes = await fetch(`${SUPABASE_URL}/rest/v1/drag_drop_answers`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(dragDropData)
-        });
-        
-        if (!dragDropRes.ok) {
-          throw new Error('Failed to update drag drop items');
+        if (!dropdownRes.ok) {
+          const errorText = await dropdownRes.text();
+          console.error('Dropdown answers update failed:', dropdownRes.status, errorText);
+          throw new Error(`Failed to update dropdown items: ${dropdownRes.status} - ${errorText}`);
+        } else {
+          console.log('Successfully updated dropdown items');
         }
       }
     }
@@ -240,7 +188,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const questionId = params.id;
+    const questionId = (await params).id;
     
     const response = await fetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${questionId}`, {
       method: 'DELETE',

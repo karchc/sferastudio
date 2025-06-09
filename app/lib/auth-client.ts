@@ -1,10 +1,17 @@
 import { createBrowserClient } from '@supabase/ssr'
 
+let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
+
 export function createClientSupabase() {
-  return createBrowserClient(
+  // Return existing client if already created to prevent multiple instances
+  if (supabaseClient) return supabaseClient
+  
+  supabaseClient = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
+  
+  return supabaseClient
 }
 
 export async function signUp(email: string, password: string, fullName: string) {

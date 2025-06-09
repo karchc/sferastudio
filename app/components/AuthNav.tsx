@@ -25,55 +25,95 @@ export default function AuthNav() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const supabaseRef = useRef(createClientSupabase())
 
   useEffect(() => {
-    const supabase = createClientSupabase()
+    let isMounted = true;
 
-    // Get initial session
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user as any || null)
-      
-      if (session?.user) {
-        // Fetch user profile
-        try {
-          const response = await fetch('/api/auth/profile')
-          if (response.ok) {
-            const profileData = await response.json()
-            setProfile(profileData)
+    // Get initial session and profile
+    const loadUserData = async () => {
+      try {
+        // Fetch session from API (using getUser for security)
+        const sessionResponse = await fetch('/api/auth/session');
+        if (!sessionResponse.ok) {
+          setLoading(false);
+          return;
+        }
+        
+        const { session } = await sessionResponse.json();
+        if (!isMounted) return;
+        
+        if (session?.user) {
+          setUser(session.user);
+          
+          // Fetch user profile
+          try {
+            const profileResponse = await fetch('/api/auth/profile', {
+              // Add cache header to speed up subsequent loads
+              headers: {
+                'Cache-Control': 'max-age=60' // Cache for 1 minute
+              }
+            });
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              if (isMounted) {
+                setProfile(profileData);
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
           }
-        } catch (error) {
-          console.error('Error fetching profile:', error)
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
-      
-      setLoading(false)
-    }
+    };
 
-    getSession()
+    loadUserData();
 
-    // Listen for auth changes
+    // Listen for auth changes with debouncing
+    const supabase = supabaseRef.current;
+    let profileFetchTimeout: NodeJS.Timeout;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user as any || null)
+      if (!isMounted) return;
       
-      if (session?.user) {
-        try {
-          const response = await fetch('/api/auth/profile')
-          if (response.ok) {
-            const profileData = await response.json()
-            setProfile(profileData)
-          }
-        } catch (error) {
-          console.error('Error fetching profile:', error)
-        }
-      } else {
-        setProfile(null)
+      setUser(session?.user as any || null);
+      
+      // Clear any pending profile fetch
+      if (profileFetchTimeout) {
+        clearTimeout(profileFetchTimeout);
       }
       
-      setLoading(false)
-    })
+      if (session?.user && event !== 'TOKEN_REFRESHED') {
+        // Debounce profile fetch to avoid multiple requests
+        profileFetchTimeout = setTimeout(async () => {
+          try {
+            const response = await fetch('/api/auth/profile');
+            if (response.ok && isMounted) {
+              const profileData = await response.json();
+              setProfile(profileData);
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
+          }
+        }, 300); // Wait 300ms before fetching profile
+      } else if (!session?.user) {
+        setProfile(null);
+      }
+    });
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false;
+      if (profileFetchTimeout) {
+        clearTimeout(profileFetchTimeout);
+      }
+      subscription.unsubscribe();
+    };
   }, [])
 
   // Close dropdown when clicking outside
@@ -112,7 +152,8 @@ export default function AuthNav() {
                   alt="Test Engine Logo"
                   width={150}
                   height={50}
-                  className="mr-3"
+                  className="mr-3 h-8 w-auto"
+                  priority
                 />
               </Link>
             </div>
@@ -136,19 +177,10 @@ export default function AuthNav() {
                 alt="Test Engine Logo"
                 width={120}
                 height={30}
-                className="mr-3 transition-transform group-hover:scale-110 overflow-hidden"
+                className="mr-3 h-8 w-auto transition-transform group-hover:scale-105"
+                priority
               />
             </Link>
-              {user && (
-              <div className="flex space-x-1">
-                <Link 
-                  href="/test" 
-                  className="flex items-center px-4 py-2 text-[#5C677D] hover:text-[#0B1F3A] hover:bg-[#F6F7FA] rounded-md transition-all duration-200 font-medium"
-                >
-                  TESTS
-                </Link>
-              </div>
-            )}
           </div>
           <div className="flex items-center space-x-4">
             {user ? (
@@ -168,45 +200,47 @@ export default function AuthNav() {
                   <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                    {profile?.is_admin ? (
-                      <Link
-                        href="/admin"
-                        className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        <BarChart3 className="h-4 w-4 mr-3" />
-                        Admin Dashboard
-                      </Link>
-                    ) : (
-                      <Link
-                        href="/dashboard"
-                        className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        <BarChart3 className="h-4 w-4 mr-3" />
-                        Dashboard
-                      </Link>
-                    )}
+                <div className={`absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50 transition-all duration-200 ${
+                  isDropdownOpen 
+                    ? 'opacity-100 translate-y-0 pointer-events-auto' 
+                    : 'opacity-0 -translate-y-2 pointer-events-none'
+                }`}>
+                  {profile?.is_admin ? (
                     <Link
-                      href="/test"
+                      href="/admin"
                       className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
                       onClick={() => setIsDropdownOpen(false)}
                     >
-                      <BookOpen className="h-4 w-4 mr-3" />
-                      My Tests
+                      <BarChart3 className="h-4 w-4 mr-3" />
+                      Admin Dashboard
                     </Link>
-                    <hr className="my-1 border-gray-200" />
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                  ) : (
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                      onClick={() => setIsDropdownOpen(false)}
                     >
-                      <LogOut className="h-4 w-4 mr-3" />
-                      Sign Out
-                    </button>
-                  </div>
-                )}
+                      <BarChart3 className="h-4 w-4 mr-3" />
+                      Dashboard
+                    </Link>
+                  )}
+                  <Link
+                    href="/test"
+                    className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    <BookOpen className="h-4 w-4 mr-3" />
+                    My Tests
+                  </Link>
+                  <hr className="my-1 border-gray-200" />
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center w-full px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                  >
+                    <LogOut className="h-4 w-4 mr-3" />
+                    Sign Out
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center space-x-3">

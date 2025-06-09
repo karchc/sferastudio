@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
-import { getSession } from './lib/auth-server';
-import { BookOpen, Trophy, Target, Clock, Users, CheckCircle, ArrowRight, Star, Zap, Award, TrendingUp } from "lucide-react";
-import { supabase } from "./lib/supabaseClient";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { BookOpen, Trophy, Target, Clock, Users, CheckCircle, ArrowRight, Zap, Award, TrendingUp, Eye, ShoppingCart } from "lucide-react";
 
 interface Test {
   id: string;
@@ -14,29 +16,191 @@ interface Test {
   categories?: Array<{ id: string; name: string }>;
 }
 
-async function getAvailableTests(): Promise<Test[]> {
-  try {
-    const { data: tests, error } = await supabase
-      .from("tests")
-      .select("*")
-      .order("id");
+export default function Home() {
+  const router = useRouter();
+  const [session, setSession] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [tests, setTests] = useState<Test[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    if (error) {
-      console.error("Error fetching tests:", error);
-      return [];
+  useEffect(() => {
+    let isMounted = true;
+    let loadDataTimeout: NodeJS.Timeout;
+    let loadingStatus = {
+      sessionStarted: false,
+      sessionCompleted: false,
+      testsStarted: false,
+      testsCompleted: false,
+      startTime: Date.now()
+    };
+
+    async function loadData() {
+      console.log('🚀 Homepage: Loading data...');
+      
+      try {
+        // Fetch session from API
+        loadingStatus.sessionStarted = true;
+        console.log('📡 Fetching session...');
+        const sessionStart = performance.now();
+        const sessionResponse = await fetch('/api/auth/session');
+        const sessionData = await sessionResponse.json();
+        
+        if (!isMounted) return;
+        setSession(sessionData.session);
+        loadingStatus.sessionCompleted = true;
+        console.log(`✅ Session loaded in ${(performance.now() - sessionStart).toFixed(2)}ms`);
+        
+        // Fetch profile if user is logged in
+        if (sessionData.session?.user) {
+          try {
+            const profileResponse = await fetch('/api/auth/profile');
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              if (isMounted) {
+                setProfile(profileData);
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
+          }
+        }
+
+        // Fetch tests from API
+        loadingStatus.testsStarted = true;
+        console.log('📡 Fetching tests...');
+        const testsStart = performance.now();
+        const testsResponse = await fetch('/api/tests/public');
+        
+        if (!isMounted) return;
+        
+        if (!testsResponse.ok) {
+          console.error("Error fetching tests:", testsResponse.status);
+        } else {
+          const testsData = await testsResponse.json();
+          setTests(testsData || []);
+          loadingStatus.testsCompleted = true;
+          console.log(`✅ Loaded ${testsData?.length || 0} tests in ${(performance.now() - testsStart).toFixed(2)}ms`);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        console.log('🔍 Loading status at error:', loadingStatus);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          const totalTime = Date.now() - loadingStatus.startTime;
+          console.log(`✅ Homepage: Data loading complete in ${totalTime}ms`);
+          console.log('🔍 Final loading status:', loadingStatus);
+        }
+      }
     }
 
-    console.log("Fetched tests:", tests);
-    return tests || [];
-  } catch (error) {
-    console.error("Error fetching tests:", error);
-    return [];
-  }
-}
+    // Add timeout to prevent infinite loading
+    // loadDataTimeout = setTimeout(() => {
+    //   if (loading && isMounted) {
+    //     console.error('❌ Homepage: Loading timeout reached - showing partial data');
+    //     console.log('🔍 Loading status at timeout:', {
+    //       ...loadingStatus,
+    //       timeElapsed: Date.now() - loadingStatus.startTime,
+    //       currentSession: session,
+    //       currentTestsCount: tests.length
+    //     });
+    //     setLoading(false);
+    //   }
+    // }, 15000); // 15 second timeout
 
-export default async function Home() {
-  const session = await getSession();
-  const tests = await getAvailableTests();
+    loadData();
+
+    return () => {
+      isMounted = false;
+      // clearTimeout(loadDataTimeout);
+    };
+  }, []); // Empty dependency array - only run once on mount
+
+  // Add debug helpers to window (outside useEffect to avoid recreation)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).debugHomepage = {
+        clearCache: () => {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.reload();
+        },
+        reloadData: async () => {
+          setLoading(true);
+          try {
+            const sessionResponse = await fetch('/api/auth/session');
+            const sessionData = await sessionResponse.json();
+            setSession(sessionData.session);
+            
+            const testsResponse = await fetch('/api/tests/public');
+            const testsData = await testsResponse.json();
+            setTests(testsData || []);
+          } catch (error) {
+            console.error('Debug reload error:', error);
+          } finally {
+            setLoading(false);
+          }
+        },
+        currentState: () => ({ session, tests: tests.length, loading })
+      };
+      console.log('🛠️ Debug tools available: window.debugHomepage');
+    }
+  }, [session, tests.length, loading]); // This is fine for debug tools
+
+  const handlePurchase = async (testId: string) => {
+    if (!session) {
+      // User not logged in, redirect to sign up
+      router.push(`/auth/signup?redirect=${encodeURIComponent(`/?purchased=${testId}`)}`);
+      return;
+    }
+
+    try {
+      // Add test to user's library
+      const response = await fetch('/api/user/purchased-tests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          test_id: testId,
+          status: 'active'
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(result.message || 'Test successfully added to your library!');
+        // Optionally redirect to dashboard or test page
+        router.push('/dashboard');
+      } else {
+        const error = await response.json();
+        if (error.error === 'You already own this test') {
+          alert('You already own this test! You can access it from your dashboard.');
+          router.push('/dashboard');
+        } else {
+          alert(`Error: ${error.error || 'Failed to purchase test'}`);
+        }
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      alert('An error occurred while purchasing the test. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+            <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+              Loading...
+            </span>
+          </div>
+          <p className="mt-4 text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -117,13 +281,15 @@ export default async function Home() {
                       <span className="relative">Start Practicing Now</span>
                       <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
                     </Link>
-                    <Link
-                      href="/dashboard"
-                      className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-base font-medium rounded-lg text-white hover:bg-white/10 hover:border-white transition-all duration-300 backdrop-blur-sm"
-                    >
-                      <TrendingUp className="mr-2 h-5 w-5" />
-                      My Dashboard
-                    </Link>
+                    {!profile?.is_admin && (
+                      <Link
+                        href="/dashboard"
+                        className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-base font-medium rounded-lg text-white hover:bg-white/10 hover:border-white transition-all duration-300 backdrop-blur-sm"
+                      >
+                        <TrendingUp className="mr-2 h-5 w-5" />
+                        My Dashboard
+                      </Link>
+                    )}
                   </>
                 ) : (
                   <>
@@ -284,47 +450,56 @@ export default async function Home() {
           {tests.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tests.map((test: Test) => (
-                <Link 
+                <div 
                   key={test.id} 
-                  href={`/test-detail/${test.id}`}
-                  className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 border border-transparent hover:border-[#3EB3E7] cursor-pointer block"
+                  className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 border border-transparent hover:border-[#3EB3E7] flex flex-col h-full"
                 >
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-[#0B1F3A] mb-1 group-hover:text-[#3EB3E7] transition-colors">
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="mb-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-xl font-semibold text-[#0B1F3A]">
                           {test.title}
                         </h3>
-                        {test.categories && test.categories.length > 0 && (
-                          <span className="inline-block px-3 py-1 text-xs font-medium text-[#0B1F3A] bg-[#B1E5D3] rounded-full">
-                            {test.categories[0].name}
-                          </span>
-                        )}
                       </div>
-                      <div className="flex items-center">
-                        <Star className="h-5 w-5 text-[#3EB3E7] fill-current" />
-                        <span className="ml-1 text-sm text-[#5C677D]">4.8</span>
-                      </div>
+                      {test.categories && test.categories.length > 0 && (
+                        <span className="inline-block px-3 py-1 text-xs font-medium text-[#0B1F3A] bg-[#B1E5D3] rounded-full">
+                          {test.categories[0].name}
+                        </span>
+                      )}
                     </div>
                     
-                    <p className="text-[#5C677D] mb-4 line-clamp-2">
+                    <p className="text-[#5C677D] mb-4 flex-1 line-clamp-3">
                       {test.description || 'Test your knowledge and prepare for certification'}
                     </p>
                     
-                    <div className="flex items-center justify-between text-sm text-[#5C677D]">
+                    <div className="flex items-center justify-between text-sm text-[#5C677D] mb-6">
                       <span className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
                         {Math.floor(test.time_limit / 60)} mins
                       </span>
                       <span>{test.question_count || 25} questions</span>
                     </div>
-                    
-                    <div className="mt-4 text-sm font-medium text-[#3EB3E7] group-hover:text-[#2da0d4] transition-colors flex items-center">
-                      View Details
-                      <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                  
+                  <div className="p-6 pt-0">
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/preview-test/${test.id}`}
+                        className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-[#3EB3E7] text-sm font-medium rounded-lg text-[#3EB3E7] hover:bg-[#3EB3E7] hover:text-white transition-all"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Preview Test
+                      </Link>
+                      <button 
+                        onClick={() => handlePurchase(test.id)}
+                        className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-[#3EB3E7] text-sm font-medium rounded-lg text-white hover:bg-[#2da0d4] transition-all"
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-1" />
+                        Purchase Now
+                      </button>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           ) : (

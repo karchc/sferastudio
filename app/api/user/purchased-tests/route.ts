@@ -68,3 +68,74 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = await createServerSupabase();
+
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { test_id, status = 'active' } = await req.json();
+
+    if (!test_id) {
+      return NextResponse.json({ error: "Test ID is required" }, { status: 400 });
+    }
+
+    // Check if test exists
+    const { data: test, error: testError } = await supabase
+      .from("tests")
+      .select("id, title, price, currency, is_free")
+      .eq("id", test_id)
+      .single();
+
+    if (testError || !test) {
+      return NextResponse.json({ error: "Test not found" }, { status: 404 });
+    }
+
+    // Check if user already owns this test
+    const { data: existingPurchase, error: existingError } = await supabase
+      .from("user_test_purchases")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("test_id", test_id)
+      .eq("status", "active")
+      .single();
+
+    if (existingPurchase) {
+      return NextResponse.json({ error: "You already own this test" }, { status: 409 });
+    }
+
+    // Create purchase record
+    const { data: purchase, error: purchaseError } = await supabase
+      .from("user_test_purchases")
+      .insert({
+        user_id: user.id,
+        test_id: test_id,
+        status: status,
+        purchase_date: new Date().toISOString(),
+        payment_amount: test.is_free ? 0 : (test.price || 0),
+        currency: test.currency || 'USD'
+      })
+      .select()
+      .single();
+
+    if (purchaseError) {
+      console.error("Error creating purchase:", purchaseError);
+      return NextResponse.json({ error: "Failed to purchase test" }, { status: 500 });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      purchase: purchase,
+      message: `Successfully purchased ${test.title}!`
+    });
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

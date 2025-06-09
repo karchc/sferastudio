@@ -195,85 +195,12 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
           
           {/* Main Navigation */}
           <List component="nav">
-            <Link href="/admin/dashboard" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton selected={isActive('/admin/dashboard')}>
-                <ListItemIcon>
-                  <DashboardIcon color={isActive('/admin/dashboard') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Dashboard" />
-              </ListItemButton>
-            </Link>
-
             <Link href="/admin/tests" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
               <ListItemButton selected={isActive('/admin/tests')}>
                 <ListItemIcon>
                   <AssessmentIcon color={isActive('/admin/tests') ? 'primary' : undefined} />
                 </ListItemIcon>
                 <ListItemText primary="Tests" />
-              </ListItemButton>
-            </Link>
-
-            <Link href="/admin/questions" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton selected={isActive('/admin/questions')}>
-                <ListItemIcon>
-                  <QuestionIcon color={isActive('/admin/questions') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Questions" />
-              </ListItemButton>
-            </Link>
-
-            <Link href="/admin/categories" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton selected={isActive('/admin/categories')}>
-                <ListItemIcon>
-                  <CategoryIcon color={isActive('/admin/categories') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Categories" />
-              </ListItemButton>
-            </Link>
-
-            <Divider sx={{ my: 1 }} />
-            
-            {/* Reports Section */}
-            <ListSubheader component="div" inset>
-              Reports
-            </ListSubheader>
-
-            <Link href="/admin/test-sessions" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton selected={isActive('/admin/test-sessions')}>
-                <ListItemIcon>
-                  <TimerIcon color={isActive('/admin/test-sessions') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Test Sessions" />
-              </ListItemButton>
-            </Link>
-
-            <Link href="/admin/users" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton selected={isActive('/admin/users')}>
-                <ListItemIcon>
-                  <PeopleIcon color={isActive('/admin/users') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Users" />
-              </ListItemButton>
-            </Link>
-
-            <Link href="/admin/analytics" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton selected={isActive('/admin/analytics')}>
-                <ListItemIcon>
-                  <BarChartIcon color={isActive('/admin/analytics') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Analytics" />
-              </ListItemButton>
-            </Link>
-
-            <Divider sx={{ my: 1 }} />
-            
-            {/* Settings */}
-            <Link href="/admin/settings" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton selected={isActive('/admin/settings')}>
-                <ListItemIcon>
-                  <SettingsIcon color={isActive('/admin/settings') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Settings" />
               </ListItemButton>
             </Link>
 

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn, signInWithMagicLink } from '../../lib/auth-client'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [success, setSuccess] = useState('')
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic-link'>('password')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,7 +41,9 @@ export default function LoginPage() {
           const response = await fetch('/api/auth/profile')
           const profile = await response.json()
           
-          if (profile.is_admin) {
+          if (redirectUrl) {
+            router.push(redirectUrl)
+          } else if (profile.is_admin) {
             router.push('/admin')
           } else {
             router.push('/dashboard')
@@ -173,5 +177,13 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div>Loading...</div></div>}>
+      <LoginForm />
+    </Suspense>
   )
 }

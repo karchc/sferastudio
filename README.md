@@ -10,7 +10,48 @@ Practice SAP allows users to:
 - Review test performance and analytics
 - Better prepare for certification exams
 
-## Recent Updates (January 2025)
+## Recent Updates (June 2025)
+
+### 250609-02 Question Management & UI Enhancements
+
+1. **New Question Type: Dropdown Questions**
+   - Added support for dropdown-style questions with statement-option pairs
+   - Each dropdown question can have multiple statements, each with its own dropdown selection
+   - Database schema includes new `dropdown_answers` table with JSONB options storage
+   - Form interface allows adding/removing dropdown statements with inline option management
+   - Validation ensures each statement has a correct answer and multiple options
+
+2. **Enhanced Question Management Interface**
+   - **Complete Question Editing**: Edit button now loads full question data including answers and dropdown items
+   - **Custom Confirmation Modals**: Replaced browser alerts with professional modal dialogs
+   - **Glass Effect Modals**: Backdrop-blur transparency instead of dark overlays
+   - **Context-Aware Messages**: Modals show question/category previews and counts
+   - **Improved Question Form**: Better initialization of dropdown options with multi-line textarea support
+
+3. **Streamlined Question Types**
+   - **Single Choice**: Multiple answer options, exactly one correct (radio button behavior)
+   - **Multiple Choice**: Multiple answer options, one or more correct (checkbox behavior)  
+   - **Dropdown**: Statement-dropdown pairs for complex matching scenarios
+   - Removed legacy question types (matching, sequence, drag-drop) for focused user experience
+
+4. **Admin Interface Improvements**
+   - **Consolidated Admin Navigation**: Questions and Categories management moved into Tests tab
+   - **Direct Question Management**: Add, edit, and remove questions directly from test management page
+   - **Simplified Admin Dashboard**: Only Tests and "Back to Website" navigation items
+   - **Improved Question Loading**: Fetches complete question data for accurate editing
+   - **Enhanced Preview Management**: Toggle questions for preview mode with visual indicators
+
+5. **Performance & Accessibility**
+   - **Async Route Handlers**: Updated for Next.js 15 compatibility with awaited params
+   - **Row Level Security**: Proper RLS policies for new dropdown_answers table
+   - **Form Validation**: Comprehensive validation for all question types
+   - **Database Optimization**: Added proper indexes and constraints for dropdown questions
+
+6. **User Experience Enhancements**
+   - **Intuitive Question Creation**: Type-specific form layouts with clear instructions
+   - **Visual Question Types**: Clear labeling and help text for each question format
+   - **Smooth Interactions**: Eliminate loading states and provide immediate feedback
+   - **Mobile-Friendly**: Responsive modal and form layouts for all devices
 
 ### 250606-02 Test Detail Page & Homepage Updates
 
@@ -226,12 +267,16 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - Real-time test session tracking
 
 ### Test Features
-- Multiple question types (single choice, multiple choice, true/false, matching, sequence, drag-drop)
+- **Three Core Question Types**:
+  - **Single Choice**: Multiple options, one correct answer (radio button selection)
+  - **Multiple Choice**: Multiple options, multiple correct answers (checkbox selection)
+  - **Dropdown Questions**: Statement-dropdown pairs for complex matching scenarios
 - Timed tests with automatic submission
 - Question flagging for review
 - Progress tracking and navigation
 - Immediate feedback on completion
 - Image support in questions
+- Preview mode for testing questions before publishing
 
 ### UI/UX Features
 - Responsive design for all devices
@@ -288,19 +333,103 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 The system uses Supabase with the following key tables:
 
-- `profiles` - User profile information
+- `profiles` - User profile information with admin role support
 - `categories` - Subject areas for tests
-- `tests` - Test definitions with metadata, pricing, and availability
-- `questions` - Question bank with various question types
-- `answers` - Answers for choice questions
-- `match_items`, `sequence_items`, `drag_drop_items` - Specialized question type data
+- `tests` - Test definitions with metadata, pricing, availability, and instructions
+- `questions` - Question bank with enhanced fields (difficulty, points, explanation, is_preview)
+- `answers` - Answers for single-choice and multiple-choice questions (with position ordering)
+- `dropdown_answers` - Statement-option pairs for dropdown questions (JSONB options storage)
 - `test_sessions` - Records of user attempts
 - `user_answers` - User responses to questions
 - `user_test_purchases` - Tracks which tests users have purchased
 
+### Enhanced Table Features
+- **questions table**: Added `difficulty`, `points`, `explanation`, and `is_preview` columns
+- **answers table**: Added `position` column for proper ordering
+- **dropdown_answers table**: New table with JSONB options storage and position ordering
+- **Row Level Security**: Comprehensive RLS policies for all admin operations
+- **Database Indexes**: Optimized indexes for performance on position-based queries
+
 > **Important Note:** The question and answer tables are named `questions` and `answers`. All code should reference these table names.
 
 ## Technical Implementation Details
+
+### Dropdown Question Implementation
+The dropdown question system provides complex statement-answer matching functionality:
+
+```typescript
+// Dropdown item structure
+interface DropdownItem {
+  id?: string;
+  questionId?: string;
+  statement: string;
+  correctAnswer: string;
+  options: string[];
+  position?: number;
+}
+```
+
+**Database Schema:**
+```sql
+CREATE TABLE dropdown_answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  statement TEXT NOT NULL,
+  correct_answer TEXT NOT NULL,
+  options JSONB NOT NULL DEFAULT '[]'::jsonb,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+**Key Features:**
+- **JSONB Options Storage**: Flexible array storage for dropdown options
+- **Position-Based Ordering**: Maintains statement order within questions
+- **Cascading Deletes**: Automatic cleanup when questions are removed
+- **RLS Security**: Admin-only access with proper authentication
+- **Form Validation**: Ensures each statement has valid options and correct answers
+
+### Question Form Management
+The enhanced question form handles three distinct question types with type-specific validation:
+
+```typescript
+// Type-specific form initialization
+if (newType === "dropdown") {
+  updated.dropdownItems = [{
+    id: generateMockId(),
+    statement: "",
+    correctAnswer: "",
+    options: ["Option 1", "Option 2", "Option 3"],
+    position: 0
+  }];
+}
+```
+
+**Form Features:**
+- **Dynamic Type Switching**: Form adapts based on selected question type
+- **Multi-line Option Input**: Textarea with newline support for dropdown options
+- **Real-time Validation**: Immediate feedback on form completion
+- **Data Cleanup**: Filters empty options before submission
+
+### Custom Confirmation Modals
+Professional modal system replacing browser alerts:
+
+```typescript
+interface ConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  variant?: 'danger' | 'warning' | 'info';
+}
+```
+
+**Modal Features:**
+- **Glass Morphism Effect**: Backdrop blur without dark overlay
+- **Keyboard Navigation**: ESC key support and focus management
+- **Responsive Design**: Mobile-friendly layout with proper button ordering
+- **Context-Aware Content**: Dynamic messages with question/category previews
 
 ### Admin Interface Architecture
 The admin interface uses a clean, sidebar-only navigation approach:
@@ -418,20 +547,27 @@ The hero section includes custom CSS animations defined in `globals.css`:
 7. **User Separation**: Redirect admin users appropriately to maintain clean UX
 
 ### Testing Considerations
-- Test flag functionality across different question types
-- Verify navbar behavior in all test phases
-- Check image display in questions with various aspect ratios
-- Ensure proper TypeScript types for all new props
+- Test all three question types (single choice, multiple choice, dropdown)
+- Verify question editing loads complete data for all question types
+- Test dropdown option creation with multi-line textarea input
+- Check modal functionality (keyboard navigation, backdrop clicks, mobile layout)
+- Ensure proper form validation for each question type
+- **Dropdown Question Testing**:
+  - Test statement creation/removal functionality
+  - Verify option input with newlines and empty line handling
+  - Check correct answer selection from populated dropdown
+  - Ensure proper data persistence and loading
 - **Admin Interface Testing**:
+  - Test complete question editing workflow (load → edit → save)
   - Verify admin redirection works correctly
   - Test sidebar collapse/expand functionality
-  - Ensure all admin navigation links work properly
-  - Check responsive behavior on different screen sizes
-- **Hero Section Testing**:
-  - Verify animations work across different browsers
-  - Test responsive behavior on mobile devices
-  - Ensure accessibility with reduced motion preferences
-  - Check performance with multiple animated elements
+  - Check confirmation modals for question/category removal
+  - Ensure responsive behavior on different screen sizes
+- **Database Testing**:
+  - Verify RLS policies allow proper admin operations
+  - Test cascading deletes for dropdown_answers
+  - Check position ordering for all answer types
+  - Ensure data integrity with JSONB options storage
 
 ## Next Steps
 

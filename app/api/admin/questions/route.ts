@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get('category_id');
     const type = searchParams.get('type');
     
-    let url = `${SUPABASE_URL}/rest/v1/questions?select=*,category:categories!questions_category_id_fkey(*),test_questions(test_id)&order=created_at.desc`;
+    let url = `${SUPABASE_URL}/rest/v1/questions?select=*,category:categories!questions_category_id_fkey(*),test_questions(test_id),answers(*),dropdown_answers(*)&order=created_at.desc`;
     
     if (categoryId && categoryId !== 'all') {
       url += `&category_id=eq.${categoryId}`;
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const [newQuestion] = await questionRes.json();
     
     // Handle different answer types based on question type
-    if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice' || questionData.type === 'true_false') {
+    if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice') {
       if (questionData.answers && questionData.answers.length > 0) {
         const answersData = questionData.answers.map((answer: any, index: number) => ({
           question_id: newQuestion.id,
@@ -97,54 +97,34 @@ export async function POST(request: NextRequest) {
           throw new Error('Failed to create answers');
         }
       }
-    } else if (questionData.type === 'matching' && questionData.matchItems) {
-      const matchItemsData = questionData.matchItems.map((item: any, index: number) => ({
+    } else if (questionData.type === 'dropdown' && questionData.dropdownItems) {
+      // Validate dropdown items before inserting
+      const validDropdownItems = questionData.dropdownItems.filter((item: any) => 
+        item.statement && item.correctAnswer && item.options && item.options.length > 0
+      );
+      
+      if (validDropdownItems.length === 0) {
+        throw new Error('No valid dropdown items provided');
+      }
+      
+      const dropdownData = validDropdownItems.map((item: any, index: number) => ({
         question_id: newQuestion.id,
-        left_text: item.leftText,
-        right_text: item.rightText,
+        statement: item.statement,
+        correct_answer: item.correctAnswer,
+        options: item.options, // This should be a JSON array
         position: index
       }));
       
-      const matchRes = await fetch(`${SUPABASE_URL}/rest/v1/matching_answers`, {
+      const dropdownRes = await fetch(`${SUPABASE_URL}/rest/v1/dropdown_answers`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(matchItemsData)
+        body: JSON.stringify(dropdownData)
       });
       
-      if (!matchRes.ok) {
-        throw new Error('Failed to create matching items');
-      }
-    } else if (questionData.type === 'sequence' && questionData.sequenceItems) {
-      const sequenceData = questionData.sequenceItems.map((item: any) => ({
-        question_id: newQuestion.id,
-        text: item.text,
-        correct_position: item.correctPosition
-      }));
-      
-      const sequenceRes = await fetch(`${SUPABASE_URL}/rest/v1/sequence_answers`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(sequenceData)
-      });
-      
-      if (!sequenceRes.ok) {
-        throw new Error('Failed to create sequence items');
-      }
-    } else if (questionData.type === 'drag_drop' && questionData.dragDropItems) {
-      const dragDropData = questionData.dragDropItems.map((item: any) => ({
-        question_id: newQuestion.id,
-        content: item.content,
-        target_zone: item.targetZone
-      }));
-      
-      const dragDropRes = await fetch(`${SUPABASE_URL}/rest/v1/drag_drop_answers`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(dragDropData)
-      });
-      
-      if (!dragDropRes.ok) {
-        throw new Error('Failed to create drag-drop items');
+      if (!dropdownRes.ok) {
+        const errorText = await dropdownRes.text();
+        console.error('Dropdown creation failed:', dropdownRes.status, errorText);
+        throw new Error(`Failed to create dropdown items: ${dropdownRes.status} - ${errorText}`);
       }
     }
     
