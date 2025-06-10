@@ -39,8 +39,10 @@ export async function GET(
         id: testData.id,
         title: testData.title,
         description: testData.description,
+        instructions: testData.instructions,
         timeLimit: 1800, // 30 minutes for preview
         isActive: testData.is_active,
+        allow_backward_navigation: testData.allow_backward_navigation ?? true,
         questions: [],
         sessionId: `preview-session-${Date.now()}`,
         startTime: new Date(),
@@ -49,10 +51,10 @@ export async function GET(
       });
     }
     
-    // Get only preview questions from the test questions
+    // Get only preview questions from the test questions with category names
     const questionIds = testQuestionIds.map((tq: any) => tq.question_id).join(',');
     const questionsRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/questions?select=*&id=in.(${questionIds})&is_preview=eq.true`,
+      `${SUPABASE_URL}/rest/v1/questions?select=*,categories!inner(id,name)&id=in.(${questionIds})&is_preview=eq.true`,
       { headers }
     );
     
@@ -62,8 +64,10 @@ export async function GET(
     // Get answers for the preview questions
     const previewQuestionIds = questionsData.map((q: any) => q.id).join(',');
     let answersData = [];
+    let dropdownAnswersData = [];
     
     if (previewQuestionIds) {
+      // Fetch regular answers
       const answersRes = await fetch(
         `${SUPABASE_URL}/rest/v1/answers?select=*&question_id=in.(${previewQuestionIds})`,
         { headers }
@@ -72,12 +76,23 @@ export async function GET(
       if (answersRes.ok) {
         answersData = await answersRes.json();
       }
+
+      // Fetch dropdown answers
+      const dropdownAnswersRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/dropdown_answers?select=*&question_id=in.(${previewQuestionIds})&order=position`,
+        { headers }
+      );
+      
+      if (dropdownAnswersRes.ok) {
+        dropdownAnswersData = await dropdownAnswersRes.json();
+      }
     }
     
     // Transform questions with their answers and positions
     const questions = questionsData.map((question: any) => {
       const testQuestion = testQuestionIds.find((tq: any) => tq.question_id === question.id);
       const questionAnswers = answersData.filter((a: any) => a.question_id === question.id);
+      const questionDropdownAnswers = dropdownAnswersData.filter((d: any) => d.question_id === question.id);
       
       return {
         id: question.id,
@@ -85,11 +100,21 @@ export async function GET(
         type: question.type,
         difficulty: question.difficulty || 'medium',
         points: question.points || 1,
+        categoryId: question.category_id,
+        category: question.categories,
         position: testQuestion?.position || 0,
         answers: questionAnswers.map((answer: any) => ({
           id: answer.id,
           text: answer.text,
           isCorrect: answer.is_correct
+        })),
+        dropdownItems: questionDropdownAnswers.map((d: any) => ({
+          id: d.id,
+          questionId: d.question_id,
+          statement: d.statement,
+          correctAnswer: d.correct_answer,
+          options: Array.isArray(d.options) ? d.options : [],
+          position: d.position
         })),
         // Add other question type specific data if needed
         matchItems: question.match_items || [],
@@ -103,8 +128,10 @@ export async function GET(
       id: testData.id,
       title: `${testData.title} (Preview)`,
       description: testData.description,
+      instructions: testData.instructions,
       timeLimit: 1800, // 30 minutes in seconds
       isActive: testData.is_active,
+      allow_backward_navigation: testData.allow_backward_navigation ?? true,
       questions,
       sessionId: `preview-session-${Date.now()}`,
       startTime: new Date(),

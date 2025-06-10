@@ -383,6 +383,7 @@ export default function PrepExamPage() {
       onNext={handleNextQuestion}
       onPrev={handlePrevQuestion}
       onComplete={handleComplete}
+      allowBackwardNavigation={testData.allow_backward_navigation ?? true}
     >
       <div className="mb-4">
         <PrepTimer 

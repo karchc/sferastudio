@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn, signInWithMagicLink } from '../../lib/auth-client'
+import { Button } from '@/app/components/ui/button'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -150,18 +151,15 @@ function LoginForm() {
           )}
 
           <div>
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              loading={loading}
+              loadingText={loginMethod === 'magic-link' ? 'Sending Magic Link...' : 'Signing in...'}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+              size="lg"
             >
-              {loading 
-                ? 'Sending...' 
-                : loginMethod === 'magic-link' 
-                  ? 'Send Magic Link' 
-                  : 'Sign in'
-              }
-            </button>
+              {loginMethod === 'magic-link' ? 'Send Magic Link' : 'Sign in'}
+            </Button>
           </div>
           
           {loginMethod === 'password' && (

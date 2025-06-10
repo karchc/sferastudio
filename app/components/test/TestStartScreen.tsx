@@ -41,12 +41,23 @@ export function TestStartScreen({ test, onStart }: TestStartScreenProps) {
             </ul>
           </div>
           
+          {test.instructions && (
+            <div className="bg-amber-50 p-4 rounded-md border border-amber-200">
+              <h3 className="font-medium text-amber-800 mb-2">Test Instructions</h3>
+              <p className="text-sm text-amber-700 whitespace-pre-wrap">{test.instructions}</p>
+            </div>
+          )}
+          
           <div className="space-y-3">
-            <h3 className="font-medium">Instructions</h3>
+            <h3 className="font-medium">General Instructions</h3>
             <ul className="space-y-1 text-sm list-disc pl-5">
               <li>Read each question carefully before answering.</li>
               <li>Some questions may have multiple correct answers - select all that apply.</li>
-              <li>You can navigate between questions using the next/previous buttons.</li>
+              {test.allow_backward_navigation !== false ? (
+                <li>You can navigate between questions using the next/previous buttons.</li>
+              ) : (
+                <li className="text-orange-600 font-medium">You cannot go back to previous questions once you proceed.</li>
+              )}
               <li>Your time remaining will be displayed at the top of the screen.</li>
               <li>Your answers are saved automatically when you proceed to the next question.</li>
             </ul>

@@ -12,6 +12,7 @@ interface QuestionNavigationProps {
   flaggedQuestions: Set<string>;
   questionIds: string[];
   onNavigate: (index: number) => void;
+  allowBackwardNavigation?: boolean;
 }
 
 export function QuestionNavigation({ 
@@ -20,7 +21,8 @@ export function QuestionNavigation({
   userAnswers, 
   flaggedQuestions,
   questionIds,
-  onNavigate 
+  onNavigate,
+  allowBackwardNavigation = true
 }: QuestionNavigationProps) {
   // Create an array of question indexes
   const indexes = Array.from({ length: totalQuestions }, (_, i) => i);
@@ -66,13 +68,15 @@ export function QuestionNavigation({
               <button
                 key={index}
                 onClick={() => onNavigate(index)}
+                disabled={!allowBackwardNavigation && index < currentIndex}
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-sm border relative",
                   currentIndex === index 
                     ? "bg-blue-500 text-white border-blue-500" 
                     : answered
                       ? "bg-green-100 text-green-800 border-green-500"
-                      : "bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200"
+                      : "bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200",
+                  !allowBackwardNavigation && index < currentIndex && "opacity-50 cursor-not-allowed hover:bg-gray-100"
                 )}
               >
                 <span>{index + 1}</span>

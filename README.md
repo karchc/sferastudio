@@ -12,6 +12,41 @@ Practice SAP allows users to:
 
 ## Recent Updates (June 2025)
 
+### 250610-01 UI Enhancements & Performance Improvements
+
+1. **Loading Button System**
+   - **Enhanced Button Component**: Added loading prop with spinning loader animation using Lucide React icons
+   - **Admin Interface**: All form submission buttons now show loading states with custom loading text
+   - **Authentication**: Login and signup forms display "Signing in..." and "Creating account..." feedback
+   - **Consistent UX**: Prevents double-clicks and provides immediate visual feedback across the platform
+   - **Performance**: Buttons automatically disable during loading to prevent duplicate submissions
+
+2. **Multiple Choice Selection Restrictions**
+   - **Smart Limiting**: Users can only select up to the number of correct answers defined in the question
+   - **Visual Feedback**: Unselected options become disabled and grayed out when limit is reached
+   - **Intuitive UX**: Users must uncheck an answer to select a different one when at capacity
+   - **Clear Instructions**: Shows "Select X correct answer(s)" without progress counters for clean interface
+   - **Maintains Functionality**: Single choice and true/false questions remain unaffected
+
+3. **Dropdown Question Display Improvements**
+   - **Side-by-Side Layout**: Statement appears on left, dropdown select on right for better readability
+   - **Responsive Design**: Flexbox layout adapts to different screen sizes while maintaining usability
+   - **Proper Hierarchy**: Main question text displays in header, followed by statement-dropdown pairs
+   - **Consistent Styling**: Matches overall question card design with proper spacing and borders
+
+4. **React Performance Optimization**
+   - **Fixed Infinite Render Loops**: Resolved "Maximum update depth exceeded" errors in TestContainer
+   - **Memoized Event Handlers**: Wrapped all event handlers in useCallback for stable dependencies
+   - **Optimized State Management**: Moved setState calls out of render cycle to prevent re-render cascades
+   - **Timer Optimization**: Changed startTime from Date object to timestamp number for consistent comparisons
+   - **Component Stability**: Improved performance and eliminated React warnings
+
+5. **Technical Improvements**
+   - **Proper useEffect Dependencies**: Fixed dependency arrays to prevent stale closures
+   - **Event Handler Memoization**: handleAnswer, handleNext, handlePrevious, handleComplete all optimized
+   - **State Update Patterns**: Separated render-time logic from side effects using useEffect properly
+   - **Memory Leak Prevention**: Proper cleanup of intervals and event listeners
+
 ### 250609-02 Question Management & UI Enhancements
 
 1. **New Question Type: Dropdown Questions**
@@ -269,11 +304,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ### Test Features
 - **Three Core Question Types**:
   - **Single Choice**: Multiple options, one correct answer (radio button selection)
-  - **Multiple Choice**: Multiple options, multiple correct answers (checkbox selection)
-  - **Dropdown Questions**: Statement-dropdown pairs for complex matching scenarios
-- Timed tests with automatic submission
-- Question flagging for review
-- Progress tracking and navigation
+  - **Multiple Choice**: Multiple options, multiple correct answers with smart selection limiting
+  - **Dropdown Questions**: Statement-dropdown pairs displayed side-by-side for complex matching scenarios
+- **Smart Selection Controls**: Multiple choice questions limit selections to the number of correct answers
+- **Enhanced Question Display**: Improved layout with category information in question headers
+- **Loading States**: All buttons show loading animations with descriptive text during actions
+- Timed tests with automatic submission and backward navigation controls
+- Question flagging for review with visual indicators
+- Progress tracking and navigation with answered question display
 - Immediate feedback on completion
 - Image support in questions
 - Preview mode for testing questions before publishing
@@ -281,13 +319,16 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ### UI/UX Features
 - Responsive design for all devices
 - Dynamic navbar visibility during tests
-- Progressive loading states
-- Smooth animations and transitions
+- **Universal Loading System**: Spinning loader animations on all interactive buttons
+- **Smart User Feedback**: Context-aware loading text ("Saving...", "Creating...", "Signing in...")
+- **Prevention of Double Actions**: Automatic button disabling during operations
+- Progressive loading states with smooth transitions
 - **Enhanced Hero Section Animations**:
   - Staggered fade-in-up animations with custom timing
   - Floating geometric shapes with different animation patterns
   - Interactive button hover effects with gradient overlays
   - Glassmorphism design elements
+- **Optimized Performance**: Memoized components and stable event handlers
 - Accessibility-focused components
 
 ## Project Structure
@@ -353,6 +394,109 @@ The system uses Supabase with the following key tables:
 > **Important Note:** The question and answer tables are named `questions` and `answers`. All code should reference these table names.
 
 ## Technical Implementation Details
+
+### Loading Button System
+The universal loading button system provides consistent user feedback across the platform:
+
+```typescript
+// Enhanced Button component with loading support
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  loading?: boolean;
+  loadingText?: string;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ loading, loadingText, children, disabled, ...props }, ref) => {
+    return (
+      <button
+        disabled={disabled || loading}
+        {...props}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {loadingText || children}
+          </>
+        ) : (
+          children
+        )}
+      </button>
+    );
+  }
+);
+```
+
+**Key Features:**
+- **Automatic Disabling**: Buttons become non-interactive during loading
+- **Visual Feedback**: Spinning Lucide React icon with customizable text
+- **Consistent API**: Works with existing button implementations
+- **Context-Aware Text**: Different loading messages for different actions
+
+### Multiple Choice Selection Limiting
+Smart selection control prevents users from over-selecting answers:
+
+```typescript
+// Selection logic with intelligent limiting
+const toggleAnswer = (answerId: string) => {
+  if (normalizeQuestionType(question.type) === 'multiple_choice') {
+    setSelectedAnswers(prev => {
+      const isAlreadySelected = prev.includes(answerId);
+      const correctAnswersCount = question.answers?.filter(a => a.isCorrect).length || 0;
+      
+      if (isAlreadySelected) {
+        // Always allow unselecting
+        return prev.filter(id => id !== answerId);
+      } else {
+        // Only allow selecting if we haven't reached the limit
+        if (prev.length < correctAnswersCount) {
+          return [...prev, answerId];
+        }
+        return prev; // Don't change if limit reached
+      }
+    });
+  }
+};
+```
+
+**Features:**
+- **Dynamic Limiting**: Based on actual number of correct answers in question
+- **Visual Indicators**: Disabled answers show with reduced opacity and gray styling
+- **Flexible Deselection**: Users can always uncheck to make different selections
+
+### React Performance Optimization
+Comprehensive optimization to eliminate render loops and improve performance:
+
+```typescript
+// Memoized event handlers to prevent unnecessary re-renders
+const handleAnswer = useCallback((answerId: string[]) => {
+  // Answer processing logic
+}, [test.questions, currentQuestionIndex]);
+
+const handleNextQuestion = useCallback(() => {
+  // Navigation logic
+}, [currentQuestionIndex, test.questions.length, handleComplete]);
+
+// Optimized timer using timestamp instead of Date objects
+const [startTime, setStartTime] = useState<number | null>(null);
+
+useEffect(() => {
+  if (phase === "in-progress" && startTime) {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+      setTimeSpent(elapsed);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }
+}, [phase, startTime]);
+```
+
+**Optimizations:**
+- **useCallback Memoization**: All event handlers wrapped to prevent recreating functions
+- **Stable Dependencies**: Fixed dependency arrays to prevent stale closures
+- **Separated Side Effects**: Moved setState out of render cycle using useEffect
+- **Timer Efficiency**: Timestamp-based timing instead of Date object comparisons
 
 ### Dropdown Question Implementation
 The dropdown question system provides complex statement-answer matching functionality:
@@ -552,16 +696,33 @@ The hero section includes custom CSS animations defined in `globals.css`:
 - Test dropdown option creation with multi-line textarea input
 - Check modal functionality (keyboard navigation, backdrop clicks, mobile layout)
 - Ensure proper form validation for each question type
+- **Loading Button Testing**:
+  - Test all form submissions show loading states (admin, auth, test management)
+  - Verify buttons disable during loading to prevent double submissions
+  - Check custom loading text displays correctly for different actions
+  - Ensure loading state clears properly on success/error
+- **Multiple Choice Selection Testing**:
+  - Test selection limiting based on number of correct answers
+  - Verify visual feedback when selection limit is reached
+  - Check that users can uncheck to select different answers
+  - Ensure single choice and true/false questions remain unaffected
 - **Dropdown Question Testing**:
   - Test statement creation/removal functionality
   - Verify option input with newlines and empty line handling
   - Check correct answer selection from populated dropdown
+  - Test side-by-side layout on different screen sizes
   - Ensure proper data persistence and loading
+- **React Performance Testing**:
+  - Verify no infinite render loops or "Maximum update depth" errors
+  - Test timer functionality during test sessions
+  - Check that event handlers don't cause unnecessary re-renders
+  - Ensure stable component behavior during navigation
 - **Admin Interface Testing**:
   - Test complete question editing workflow (load → edit → save)
   - Verify admin redirection works correctly
   - Test sidebar collapse/expand functionality
   - Check confirmation modals for question/category removal
+  - Test loading states on all admin form submissions
   - Ensure responsive behavior on different screen sizes
 - **Database Testing**:
   - Verify RLS policies allow proper admin operations

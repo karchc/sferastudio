@@ -29,9 +29,14 @@ export default function PrepQuestionCard({
     }
   }, [selectedAnswer]);
 
+  // Normalize question type (handle both underscore and hyphen formats)
+  const normalizeQuestionType = (type: string) => {
+    return type.replace(/-/g, '_');
+  };
+
   const toggleAnswer = (answerId: string) => {
     // If multiple answers are permitted (multiple-choice)
-    if (question.type === 'multiple-choice') {
+    if (normalizeQuestionType(question.type) === 'multiple_choice') {
       setSelectedAnswers(prev => {
         const newSelection = prev.includes(answerId)
           ? prev.filter(id => id !== answerId)
@@ -67,10 +72,12 @@ export default function PrepQuestionCard({
       );
     }
     
-    switch (question.type) {
-      case 'multiple-choice':
-      case 'single-choice':
-      case 'true-false':
+    const normalizedType = normalizeQuestionType(question.type);
+    
+    switch (normalizedType) {
+      case 'multiple_choice':
+      case 'single_choice':
+      case 'true_false':
         return (
           <div className="space-y-2">
             {(question.answers || []).map((answer) => (
@@ -187,7 +194,22 @@ export default function PrepQuestionCard({
         );
       
       default:
-        return <p>Unknown question type</p>;
+        return (
+          <div className="p-6 text-center">
+            <p className="text-lg text-red-600 mb-2">
+              Unknown question type: "{question.type}"
+            </p>
+            <p className="text-gray-500 mb-4">
+              This question type is not yet supported. Please contact support.
+            </p>
+            <div className="mt-6 p-4 bg-gray-100 rounded-md text-left">
+              <p className="font-semibold mb-2">Question details for debugging:</p>
+              <pre className="text-sm text-gray-700 bg-gray-200 p-2 rounded">
+                {JSON.stringify({ type: question.type, id: question.id }, null, 2)}
+              </pre>
+            </div>
+          </div>
+        );
     }
   };
 
@@ -196,7 +218,7 @@ export default function PrepQuestionCard({
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-            {question.type.replace('-', ' ')}
+            {question.type.replace(/[-_]/g, ' ')}
           </span>
         </div>
         <h2 className="text-xl font-medium">{question.text}</h2>

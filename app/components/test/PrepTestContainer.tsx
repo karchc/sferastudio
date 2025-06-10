@@ -10,6 +10,7 @@ interface PrepTestContainerProps {
   onPrev: () => void;
   onComplete: () => void;
   children: React.ReactNode;
+  allowBackwardNavigation?: boolean;
 }
 
 export default function PrepTestContainer({
@@ -19,7 +20,8 @@ export default function PrepTestContainer({
   onNext,
   onPrev,
   onComplete,
-  children
+  children,
+  allowBackwardNavigation = true
 }: PrepTestContainerProps) {
   return (
     <div className="min-h-screen flex flex-col p-4 md:p-8">
@@ -43,13 +45,17 @@ export default function PrepTestContainer({
       </div>
 
       <div className="flex justify-between mt-6">
-        <Button 
-          variant="outline" 
-          onClick={onPrev}
-          disabled={currentIndex === 0}
-        >
-          Previous
-        </Button>
+        {allowBackwardNavigation ? (
+          <Button 
+            variant="outline" 
+            onClick={onPrev}
+            disabled={currentIndex === 0}
+          >
+            Previous
+          </Button>
+        ) : (
+          <div></div>
+        )}
         
         <div className="flex gap-2">
           {currentIndex < questionCount - 1 ? (

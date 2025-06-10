@@ -17,6 +17,7 @@ interface Test {
   time_limit?: number;
   category_ids?: string[];
   is_active?: boolean;
+  allow_backward_navigation?: boolean;
 }
 
 interface Question {
@@ -60,6 +61,17 @@ export default function TestManagePage() {
   const [selectedCategoryForQuestion, setSelectedCategoryForQuestion] = useState<string | null>(null);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [isEditingCategory, setIsEditingCategory] = useState<string | null>(null);
+  
+  // Loading states
+  const [loadingStates, setLoadingStates] = useState({
+    updateTest: false,
+    createCategory: false,
+    createQuestion: false,
+    updateQuestion: false,
+    deleteQuestion: false,
+    addCategory: false,
+    removeCategory: false
+  });
   
   // Form states
   const [testForm, setTestForm] = useState<Partial<Test>>({});
@@ -109,6 +121,8 @@ export default function TestManagePage() {
 
   async function updateTest() {
     try {
+      setLoadingStates(prev => ({ ...prev, updateTest: true }));
+      
       // Validate required fields
       if (!testForm.title?.trim()) {
         setError('Test title is required');
@@ -143,11 +157,15 @@ export default function TestManagePage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update test');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, updateTest: false }));
     }
   }
 
   async function createCategory() {
     try {
+      setLoadingStates(prev => ({ ...prev, createCategory: true }));
+      
       const response = await fetch('/api/admin/categories', {
         method: 'POST',
         headers: {
@@ -179,6 +197,8 @@ export default function TestManagePage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create category');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, createCategory: false }));
     }
   }
 
@@ -440,8 +460,29 @@ export default function TestManagePage() {
                   These instructions will be displayed to users before they start the test.
                 </p>
               </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="allow-backward-navigation"
+                  checked={testForm.allow_backward_navigation ?? true}
+                  onChange={(e) => setTestForm({ ...testForm, allow_backward_navigation: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <label htmlFor="allow-backward-navigation" className="text-sm font-medium text-gray-700">
+                  Allow backward navigation
+                </label>
+                <p className="text-xs text-gray-500 ml-2">
+                  When enabled, test takers can go back to previous questions
+                </p>
+              </div>
               <div className="flex gap-2">
-                <Button onClick={updateTest}>Save Changes</Button>
+                <Button 
+                  onClick={updateTest} 
+                  loading={loadingStates.updateTest}
+                  loadingText="Saving..."
+                >
+                  Save Changes
+                </Button>
                 <Button variant="outline" onClick={() => setIsEditingTest(false)}>Cancel</Button>
               </div>
             </div>
@@ -464,6 +505,11 @@ export default function TestManagePage() {
                     test.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
                     {test.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                  <span className={`text-sm px-2 py-1 rounded ${
+                    test.allow_backward_navigation !== false ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
+                  }`}>
+                    {test.allow_backward_navigation !== false ? 'Backward Navigation: On' : 'Backward Navigation: Off'}
                   </span>
                 </div>
               </div>
@@ -529,7 +575,12 @@ export default function TestManagePage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={createCategory} disabled={!categoryForm.name.trim()}>
+                  <Button 
+                    onClick={createCategory} 
+                    disabled={!categoryForm.name.trim()}
+                    loading={loadingStates.createCategory}
+                    loadingText="Creating..."
+                  >
                     Create Category
                   </Button>
                   <Button variant="outline" onClick={() => {

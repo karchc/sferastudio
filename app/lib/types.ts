@@ -31,12 +31,17 @@ export interface Test {
   questionCount?: number;
   alreadyStarted?: boolean;
   lastScore?: number;
+  allow_backward_navigation?: boolean;
 }
 
-// Question types
+// Question types - support both underscore and hyphen formats
 export type QuestionType = 
-  'single_choice' | 
-  'multiple_choice' | 
+  'single_choice' | 'single-choice' |
+  'multiple_choice' | 'multiple-choice' |
+  'true_false' | 'true-false' |
+  'matching' |
+  'sequence' |
+  'drag_drop' | 'drag-drop' |
   'dropdown';
 
 export interface Question {
@@ -244,6 +249,7 @@ export interface TestData {
   sessionId: string;
   startTime: Date;
   timeRemaining: number;
+  allow_backward_navigation?: boolean;
 }
 
 export interface ActiveTestState {

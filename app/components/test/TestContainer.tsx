@@ -1,8 +1,11 @@
+'use client';
+
 import { TestData, UserAnswer, Question } from "@/app/lib/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { TestStartScreen } from "./TestStartScreen";
 import { QuestionCard } from "./QuestionCard";
+// import { QuestionCard2 as QuestionCard } from "./QuestionCard2";
 import { Timer } from "./Timer";
 import { TestSummary } from "./TestSummary";
 import { QuestionNavigation } from "./QuestionNavigation";
@@ -27,7 +30,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
   const [timeSpent, setTimeSpent] = useState(0);
-  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [startTime, setStartTime] = useState<number | null>(null);
   
   // Control navbar visibility - hide only during "in-progress" phase
   useNavbarVisibility(phase !== "in-progress");
@@ -35,13 +38,13 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
   // Handle test start
   const handleStart = () => {
     setPhase("in-progress");
-    setStartTime(new Date());
+    setStartTime(Date.now());
     setTimeSpent(0);
     setUserAnswers([]);
   };
 
   // Handle test completion
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     if (isPreview) {
       // For preview mode, navigate directly to completion page without showing summary
       if (onNavigate) {
@@ -69,25 +72,25 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
       setPhase("completed");
     }
     // If user clicked cancel on confirmation, they stay on the test
-  };
+  }, [isPreview, onNavigate, test.id, test.questions, userAnswers]);
 
   // Handle question navigation
-  const handleNextQuestion = () => {
+  const handleNextQuestion = useCallback(() => {
     if (currentQuestionIndex < test.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       handleComplete();
     }
-  };
+  }, [currentQuestionIndex, test.questions.length, handleComplete]);
 
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
+  const handlePreviousQuestion = useCallback(() => {
+    if (currentQuestionIndex > 0 && test.allow_backward_navigation !== false) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
-  };
+  }, [currentQuestionIndex, test.allow_backward_navigation]);
 
   // Handle answer selection
-  const handleAnswer = (answerId: string[]) => {
+  const handleAnswer = useCallback((answerId: string[]) => {
     const currentQuestion = test.questions[currentQuestionIndex];
     const questionId = currentQuestion.id;
     
@@ -146,7 +149,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
         }];
       }
     });
-  };
+  }, [test.questions, currentQuestionIndex]);
 
   // Handle retry
   const handleRetry = () => {
@@ -162,7 +165,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
   };
 
   // Handle flag toggle
-  const handleFlagToggle = (questionId: string) => {
+  const handleFlagToggle = useCallback((questionId: string) => {
     setFlaggedQuestions(prev => {
       const newFlags = new Set(prev);
       if (newFlags.has(questionId)) {
@@ -172,14 +175,14 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
       }
       return newFlags;
     });
-  };
+  }, []);
 
   // Calculate time spent
   useEffect(() => {
     if (phase === "in-progress" && startTime) {
       const interval = setInterval(() => {
-        const now = new Date();
-        const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTime) / 1000);
         setTimeSpent(elapsed);
       }, 1000);
       
@@ -221,6 +224,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
                 isLast={currentQuestionIndex === test.questions.length - 1}
                 currentIndex={currentQuestionIndex}
                 totalQuestions={test.questions.length}
+                allowBackwardNavigation={test.allow_backward_navigation !== false}
               />
               
               <div className="max-w-4xl mx-auto px-4">
@@ -230,7 +234,13 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
                   userAnswers={userAnswers}
                   flaggedQuestions={flaggedQuestions}
                   questionIds={test.questions.map(q => q.id)}
-                  onNavigate={(index) => setCurrentQuestionIndex(index)}
+                  onNavigate={(index) => {
+                    // Only allow navigation if backward navigation is enabled or moving forward
+                    if (test.allow_backward_navigation !== false || index > currentQuestionIndex) {
+                      setCurrentQuestionIndex(index);
+                    }
+                  }}
+                  allowBackwardNavigation={test.allow_backward_navigation !== false}
                 />
               </div>
             </div>
