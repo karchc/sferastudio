@@ -12,6 +12,20 @@ Practice SAP allows users to:
 
 ## Recent Updates (June 2025)
 
+### 250612-01 Time Limit Consistency Fix
+
+1. **Time Limit Display and Storage**
+   - Fixed inconsistency between database storage (seconds) and UI display (minutes)
+   - **Database**: Continues to store time_limit in seconds as designed
+   - **Admin UI**: Now properly displays and accepts input in minutes
+   - **Conversion Logic**:
+     - Admin test list: Displays `Math.round(time_limit / 60)` to show minutes
+     - Test creation: Converts minutes to seconds before saving to database
+     - Test editing: Loads seconds from database and converts to minutes for form
+     - Test saving: Converts minutes back to seconds for database storage
+   - **User Experience**: Admins see and work with minutes throughout the interface
+   - **Test Taking**: Uses seconds directly from database (no conversion needed)
+
 ### 250610-01 UI Enhancements & Performance Improvements
 
 1. **Loading Button System**

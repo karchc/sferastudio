@@ -63,7 +63,17 @@ export async function GET(
       }
     }
     
-    return NextResponse.json(fullQuestion);
+    // Map database fields to frontend fields
+    const mappedQuestion = {
+      ...fullQuestion,
+      mediaUrl: fullQuestion.media_url, // Map media_url to mediaUrl
+      category_id: fullQuestion.category_id // Keep for backwards compatibility
+    };
+    
+    console.log('Question fetch - Original media_url:', fullQuestion.media_url);
+    console.log('Question fetch - Mapped mediaUrl:', mappedQuestion.mediaUrl);
+    
+    return NextResponse.json(mappedQuestion);
   } catch (error) {
     console.error('Error in GET /api/admin/questions/[id]:', error);
     return NextResponse.json(
@@ -81,6 +91,8 @@ export async function PATCH(
     const questionId = (await params).id;
     const questionData = await request.json();
     
+    console.log('Question update - Received mediaUrl:', questionData.mediaUrl);
+    
     // Update the question
     const questionRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${questionId}`, {
       method: 'PATCH',
@@ -88,6 +100,7 @@ export async function PATCH(
       body: JSON.stringify({
         type: questionData.type,
         text: questionData.text,
+        media_url: questionData.mediaUrl || null,
         category_id: questionData.categoryId,
         difficulty: questionData.difficulty || 'medium',
         points: questionData.points || 1,

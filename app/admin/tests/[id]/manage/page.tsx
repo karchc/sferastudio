@@ -24,6 +24,7 @@ interface Question {
   id: string;
   type: string;
   text: string;
+  mediaUrl?: string;
   category_id: string;
   difficulty: string;
   points: number;
@@ -107,7 +108,11 @@ export default function TestManagePage() {
       const data = await response.json();
       
       setTest(data.test);
-      setTestForm(data.test);
+      // Convert seconds to minutes for the form
+      setTestForm({
+        ...data.test,
+        time_limit: Math.round(data.test.time_limit / 60)
+      });
       setAllCategories(data.allCategories || []);
       setCategories(data.categories || []);
       
@@ -130,15 +135,16 @@ export default function TestManagePage() {
       }
       
       // Ensure time_limit has a valid value
-      const timeLimit = testForm.time_limit || 60;
-      if (timeLimit < 1) {
+      const timeLimitMinutes = testForm.time_limit || 60;
+      if (timeLimitMinutes < 1) {
         setError('Time limit must be at least 1 minute');
         return;
       }
       
+      // Convert minutes to seconds for database
       const updateData = {
         ...testForm,
-        time_limit: timeLimit
+        time_limit: timeLimitMinutes * 60
       };
       
       const response = await fetch(`/api/admin/tests/${testId}`, {
@@ -499,7 +505,7 @@ export default function TestManagePage() {
                 )}
                 <div className="mt-3 flex gap-3">
                   <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    {test.time_limit} minutes
+                    {Math.round(test.time_limit / 60)} minutes
                   </span>
                   <span className={`text-sm px-2 py-1 rounded ${
                     test.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -750,6 +756,17 @@ export default function TestManagePage() {
                             <p className="text-gray-900">{question.text}</p>
                           </div>
                           <div className="ml-4 flex gap-2">
+                            {/* Preview Toggle - First */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleQuestionPreview(question.id, question.is_preview || false)}
+                              className={question.is_preview ? 'bg-blue-100 text-blue-700 border-blue-300' : ''}
+                            >
+                              {question.is_preview ? 'Remove from Preview' : 'Add to Preview'}
+                            </Button>
+                            
+                            {/* Edit - Second */}
                             <Button
                               variant="outline"
                               size="sm"
@@ -787,14 +804,8 @@ export default function TestManagePage() {
                             >
                               Edit
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toggleQuestionPreview(question.id, question.is_preview || false)}
-                              className={question.is_preview ? 'bg-blue-100 text-blue-700 border-blue-300' : ''}
-                            >
-                              {question.is_preview ? 'Remove from Preview' : 'Add to Preview'}
-                            </Button>
+                            
+                            {/* Remove - Third */}
                             <Button
                               variant="outline"
                               size="sm"

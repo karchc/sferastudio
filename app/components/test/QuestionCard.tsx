@@ -20,6 +20,7 @@ interface QuestionCardProps {
   currentIndex: number;
   totalQuestions: number;
   allowBackwardNavigation?: boolean;
+  isCompleting?: boolean;
 }
 
 export function QuestionCard({
@@ -34,7 +35,8 @@ export function QuestionCard({
   isLast,
   currentIndex,
   totalQuestions,
-  allowBackwardNavigation = true
+  allowBackwardNavigation = true,
+  isCompleting = false
 }: QuestionCardProps) {
   // Use existing selected answers or default to empty array
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>(
@@ -266,6 +268,7 @@ export function QuestionCard({
             <Button
               onClick={onNext}
               disabled={(() => {
+                if (isCompleting) return true;
                 if (isFlagged) return false;
                 const normalizedType = normalizeQuestionType(question.type);
                 if (normalizedType === 'dropdown') {
@@ -274,6 +277,8 @@ export function QuestionCard({
                 }
                 return selectedAnswers.length === 0;
               })()}
+              loading={isCompleting && isLast}
+              loadingText="Finishing..."
             >
               {isLast ? "Finish" : "Next"}
             </Button>

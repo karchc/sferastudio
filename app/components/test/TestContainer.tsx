@@ -31,6 +31,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
   const [timeSpent, setTimeSpent] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
   
   // Control navbar visibility - hide only during "in-progress" phase
   useNavbarVisibility(phase !== "in-progress");
@@ -44,12 +45,15 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
   };
 
   // Handle test completion
-  const handleComplete = useCallback(() => {
+  const handleComplete = useCallback(async () => {
+    setIsCompleting(true);
+    
     if (isPreview) {
       // For preview mode, navigate directly to completion page without showing summary
       if (onNavigate) {
         onNavigate(`/preview-test/${test.id}/complete`);
       }
+      setIsCompleting(false);
       return;
     }
     
@@ -66,12 +70,17 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
     if (skippedQuestions.length > 0 && confirm(
       `You have ${skippedQuestions.length} unanswered question(s). Are you sure you want to finish the test? Click 'Cancel' to return and answer these questions.`
     )) {
+      // Add small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
       setPhase("completed");
     } else if (skippedQuestions.length === 0) {
       // No skipped questions, proceed directly
+      // Add small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
       setPhase("completed");
     }
     // If user clicked cancel on confirmation, they stay on the test
+    setIsCompleting(false);
   }, [isPreview, onNavigate, test.id, test.questions, userAnswers]);
 
   // Handle question navigation
@@ -225,6 +234,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }:
                 currentIndex={currentQuestionIndex}
                 totalQuestions={test.questions.length}
                 allowBackwardNavigation={test.allow_backward_navigation !== false}
+                isCompleting={isCompleting}
               />
               
               <div className="max-w-4xl mx-auto px-4">

@@ -118,8 +118,7 @@ export async function POST(req: NextRequest) {
         test_id: test_id,
         status: status,
         purchase_date: new Date().toISOString(),
-        payment_amount: test.is_free ? 0 : (test.price || 0),
-        currency: test.currency || 'USD'
+        payment_amount: test.is_free ? 0 : (test.price || 0)
       })
       .select()
       .single();

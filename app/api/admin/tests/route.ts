@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         ...body,
+        // Convert minutes to seconds for database storage
+        time_limit: (body.time_limit || 60) * 60,
         is_archived: false,
         created_at: new Date().toISOString()
       })
