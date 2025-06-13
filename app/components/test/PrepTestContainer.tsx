@@ -11,6 +11,7 @@ interface PrepTestContainerProps {
   onComplete: () => void;
   children: React.ReactNode;
   allowBackwardNavigation?: boolean;
+  isCompleting?: boolean;
 }
 
 export default function PrepTestContainer({
@@ -21,7 +22,8 @@ export default function PrepTestContainer({
   onPrev,
   onComplete,
   children,
-  allowBackwardNavigation = true
+  allowBackwardNavigation = true,
+  isCompleting = false
 }: PrepTestContainerProps) {
   return (
     <div className="min-h-screen flex flex-col p-4 md:p-8">
@@ -69,6 +71,9 @@ export default function PrepTestContainer({
             <Button 
               variant="default" 
               onClick={onComplete}
+              loading={isCompleting}
+              loadingText="Completing..."
+              disabled={isCompleting}
             >
               Complete Exam
             </Button>

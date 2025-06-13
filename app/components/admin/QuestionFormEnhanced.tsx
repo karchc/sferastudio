@@ -5,6 +5,7 @@ import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Question, QuestionType, Answer, DropdownItem, Category, QuestionFormData } from "@/app/lib/types";
 import { generateMockId } from "@/app/components/admin/MockData";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface QuestionFormProps {
   initialData?: Question;
@@ -20,6 +21,7 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
       return {
         type: initialData.type,
         text: initialData.text,
+        mediaUrl: initialData.mediaUrl || '',
         categoryId: initialData.category_id || categories[0]?.id || "",
         difficulty: initialData.difficulty || 'medium',
         points: initialData.points || 1,
@@ -32,6 +34,7 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
     return {
       text: "",
       type: "single_choice",
+      mediaUrl: '',
       categoryId: categories[0]?.id || "",
       difficulty: 'medium',
       points: 1,
@@ -174,6 +177,25 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
     handleDropdownItemChange(id, 'options', options);
   };
 
+  // Image upload handlers
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // For now, we'll use a simple base64 data URL
+      // In production, you'd upload to a cloud storage service
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setFormData(prev => ({ ...prev, mediaUrl: dataUrl }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, mediaUrl: '' }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -208,6 +230,71 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
               className="w-full p-2 border border-gray-300 rounded-md"
               required
             />
+          </div>
+
+          {/* Image Upload Section */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Question Image (Optional)
+            </label>
+            
+            {formData.mediaUrl ? (
+              <div className="space-y-3">
+                {/* Image Preview */}
+                <div className="relative inline-block">
+                  <img 
+                    src={formData.mediaUrl} 
+                    alt="Question image" 
+                    className="max-w-xs max-h-48 object-contain border border-gray-300 rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                
+                {/* Replace Image Button */}
+                <div>
+                  <label className="inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200 transition-colors">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Replace Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : (
+              /* Upload Button */
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <label className="cursor-pointer">
+                  <div className="space-y-2">
+                    <ImageIcon className="h-12 w-12 mx-auto text-gray-400" />
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium text-blue-600 hover:text-blue-500">
+                        Click to upload
+                      </span> or drag and drop
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

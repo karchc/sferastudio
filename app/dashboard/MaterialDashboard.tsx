@@ -33,6 +33,8 @@ import {
   Assessment as AssessmentIcon,
   CreditCard as CreditCardIcon
 } from '@mui/icons-material';
+import { PurchaseModal } from "../components/ui/purchase-modal";
+import { AuthRequiredModal } from "../components/ui/auth-required-modal";
 
 // Material UI Dashboard with TabPanel component for better organization
 function TabPanel(props: any) {
@@ -69,6 +71,12 @@ export default function MaterialDashboard() {
   const [availableTests, setAvailableTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [testsLoading, setTestsLoading] = useState(false);
+  const [takingTestId, setTakingTestId] = useState<string | null>(null);
+  const [previewingTestId, setPreviewingTestId] = useState<string | null>(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<any>(null);
+  const [purchasingTestId, setPurchasingTestId] = useState<string | null>(null);
   const { user } = useAuth();
   const router = useRouter();
   
@@ -99,6 +107,84 @@ export default function MaterialDashboard() {
     } catch (error) {
       console.error('Error fetching available tests:', error);
     }
+  };
+
+  const handleTakeTest = (testId: string) => {
+    setTakingTestId(testId);
+    router.push(`/test/${testId}`);
+  };
+
+  const handlePreviewTest = (testId: string) => {
+    setPreviewingTestId(testId);
+    router.push(`/test/${testId}/preview`);
+  };
+
+  const handlePurchase = (test: any) => {
+    setSelectedTest(test);
+
+    if (!user) {
+      // User not logged in, show auth modal
+      setShowAuthModal(true);
+      return;
+    }
+
+    // User is logged in, show purchase confirmation modal
+    setShowPurchaseModal(true);
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!selectedTest) return;
+
+    setPurchasingTestId(selectedTest.id);
+    try {
+      // Add test to user's library
+      const response = await fetch('/api/user/purchased-tests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          test_id: selectedTest.id,
+          status: 'active'
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setShowPurchaseModal(false);
+        
+        // Refresh purchased tests
+        fetchPurchasedTests();
+        
+        // Show success message
+        alert(result.message || 'Test successfully added to your library!');
+      } else {
+        const error = await response.json();
+        if (error.error === 'You already own this test') {
+          setShowPurchaseModal(false);
+          alert('You already own this test! You can see it in your purchased tests.');
+          fetchPurchasedTests();
+        } else {
+          alert(`Error: ${error.error || 'Failed to purchase test'}`);
+        }
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      alert('An error occurred while purchasing the test. Please try again.');
+    } finally {
+      setPurchasingTestId(null);
+    }
+  };
+
+  const handleClosePurchaseModal = () => {
+    setShowPurchaseModal(false);
+    setSelectedTest(null);
+    setPurchasingTestId(null);
+  };
+
+  const handleCloseAuthModal = () => {
+    setShowAuthModal(false);
+    setSelectedTest(null);
   };
 
   useEffect(() => {
@@ -355,11 +441,18 @@ export default function MaterialDashboard() {
                         </Button>
                         <Button 
                           variant="contained" 
-                          component={Link} 
-                          href={`/test/${purchase.test?.id}`}
-                          startIcon={<StarIcon />}
+                          onClick={() => handleTakeTest(purchase.test?.id)}
+                          startIcon={!takingTestId || takingTestId !== purchase.test?.id ? <StarIcon /> : undefined}
+                          disabled={takingTestId === purchase.test?.id}
                         >
-                          Take Test
+                          {takingTestId === purchase.test?.id ? (
+                            <>
+                              <CircularProgress size={16} sx={{ mr: 1 }} />
+                              Loading...
+                            </>
+                          ) : (
+                            'Take Test'
+                          )}
                         </Button>
                       </Box>
                     </Box>
@@ -429,31 +522,50 @@ export default function MaterialDashboard() {
                         <Button 
                           variant="contained" 
                           fullWidth
-                          component={Link} 
-                          href={`/test/${test.id}`}
+                          onClick={() => handleTakeTest(test.id)}
+                          disabled={takingTestId === test.id}
                         >
-                          Take Free Test
+                          {takingTestId === test.id ? (
+                            <>
+                              <CircularProgress size={16} sx={{ mr: 1 }} />
+                              Loading...
+                            </>
+                          ) : (
+                            'Take Free Test'
+                          )}
                         </Button>
                       ) : (
                         <Stack spacing={1}>
                           <Button 
                             variant="outlined" 
                             fullWidth
-                            component={Link} 
-                            href={`/test/${test.id}/preview`}
+                            onClick={() => handlePreviewTest(test.id)}
+                            disabled={previewingTestId === test.id}
                           >
-                            Preview Test
+                            {previewingTestId === test.id ? (
+                              <>
+                                <CircularProgress size={16} sx={{ mr: 1 }} />
+                                Loading...
+                              </>
+                            ) : (
+                              'Preview Test'
+                            )}
                           </Button>
                           <Button 
                             variant="contained" 
                             fullWidth
                             startIcon={<ShoppingCartIcon />}
-                            onClick={() => {
-                              // TODO: Implement purchase flow
-                              alert('Purchase functionality coming soon!');
-                            }}
+                            onClick={() => handlePurchase(test)}
+                            disabled={purchasingTestId === test.id}
                           >
-                            Purchase ${test.price || 0}
+                            {purchasingTestId === test.id ? (
+                              <>
+                                <CircularProgress size={16} sx={{ mr: 1 }} />
+                                Adding...
+                              </>
+                            ) : (
+                              `Add to Library - Free`
+                            )}
                           </Button>
                         </Stack>
                       )}
@@ -475,6 +587,21 @@ export default function MaterialDashboard() {
           )}
         </Box>
       </TabPanel>
+
+      {/* Modals */}
+      <PurchaseModal
+        isOpen={showPurchaseModal}
+        onClose={handleClosePurchaseModal}
+        onConfirm={handleConfirmPurchase}
+        test={selectedTest || { id: '', title: '', time_limit: 0 }}
+        isLoading={purchasingTestId === selectedTest?.id}
+      />
+
+      <AuthRequiredModal
+        isOpen={showAuthModal}
+        onClose={handleCloseAuthModal}
+        test={selectedTest || undefined}
+      />
     </Container>
   );
 }

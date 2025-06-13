@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Calendar, CreditCard, BookOpen } from "lucide-react";
+import { Clock, Calendar, CreditCard, BookOpen, Loader2 } from "lucide-react";
+import { formatTimeLimit } from "@/app/lib/formatTimeLimit";
 
 type Test = {
   id: string;
@@ -36,6 +37,7 @@ export default function MyTestsPage() {
   const [loading, setLoading] = useState(true);
   const [userTests, setUserTests] = useState<UserTestsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [navigatingTestId, setNavigatingTestId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -62,22 +64,17 @@ export default function MyTestsPage() {
     loadUserTests();
   }, [router]);
 
-  const formatTimeLimit = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleTestClick = (testId: string) => {
+    setNavigatingTestId(testId);
+    router.push(`/test/${testId}`);
   };
 
   if (loading) {
@@ -143,8 +140,10 @@ export default function MyTestsPage() {
               {userTests.purchasedTests.map((purchase) => (
                 <div
                   key={purchase.purchaseId}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => router.push(`/test/${purchase.test.id}`)}
+                  className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer relative ${
+                    navigatingTestId === purchase.test.id ? 'opacity-50 pointer-events-none' : ''
+                  }`}
+                  onClick={() => handleTestClick(purchase.test.id)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-lg font-semibold text-[#0B1F3A] line-clamp-2">
@@ -177,6 +176,15 @@ export default function MyTestsPage() {
                       </div>
                     )}
                   </div>
+                  
+                  {navigatingTestId === purchase.test.id && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
+                      <div className="flex items-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-[#3EB3E7] mr-2" />
+                        <span className="text-[#3EB3E7] font-medium">Loading test...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -5,6 +5,9 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, Trophy, Target, Clock, Users, CheckCircle, ArrowRight, Zap, Award, TrendingUp, Eye, ShoppingCart } from "lucide-react";
+import { Button } from "./components/ui/button";
+import { PurchaseModal } from "./components/ui/purchase-modal";
+import { AuthRequiredModal } from "./components/ui/auth-required-modal";
 
 interface Test {
   id: string;
@@ -22,6 +25,11 @@ export default function Home() {
   const [profile, setProfile] = useState<any>(null);
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
+  const [purchasingTestId, setPurchasingTestId] = useState<string | null>(null);
+  const [previewingTestId, setPreviewingTestId] = useState<string | null>(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<Test | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -147,13 +155,26 @@ export default function Home() {
     }
   }, [session, tests.length, loading]); // This is fine for debug tools
 
-  const handlePurchase = async (testId: string) => {
+  const handlePurchase = (testId: string) => {
+    const test = tests.find(t => t.id === testId);
+    if (!test) return;
+
+    setSelectedTest(test);
+
     if (!session) {
-      // User not logged in, redirect to sign up
-      router.push(`/auth/signup?redirect=${encodeURIComponent(`/?purchased=${testId}`)}`);
+      // User not logged in, show auth modal
+      setShowAuthModal(true);
       return;
     }
 
+    // User is logged in, show purchase confirmation modal
+    setShowPurchaseModal(true);
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!selectedTest) return;
+
+    setPurchasingTestId(selectedTest.id);
     try {
       // Add test to user's library
       const response = await fetch('/api/user/purchased-tests', {
@@ -162,20 +183,58 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          test_id: testId,
+          test_id: selectedTest.id,
           status: 'active'
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
-        alert(result.message || 'Test successfully added to your library!');
-        // Optionally redirect to dashboard or test page
-        router.push('/dashboard');
+        setShowPurchaseModal(false);
+        
+        // Show success message using a temporary notification
+        const successMessage = result.message || 'Test successfully added to your library!';
+        
+        // Create a temporary success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-[10000] flex items-center gap-2';
+        notification.innerHTML = `
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          ${successMessage}
+        `;
+        document.body.appendChild(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 3000);
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
       } else {
         const error = await response.json();
         if (error.error === 'You already own this test') {
-          alert('You already own this test! You can access it from your dashboard.');
+          setShowPurchaseModal(false);
+          
+          // Show info message
+          const notification = document.createElement('div');
+          notification.className = 'fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-[10000] flex items-center gap-2';
+          notification.innerHTML = `
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            You already own this test! Redirecting to your dashboard...
+          `;
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 3000);
+          
           router.push('/dashboard');
         } else {
           alert(`Error: ${error.error || 'Failed to purchase test'}`);
@@ -184,7 +243,25 @@ export default function Home() {
     } catch (error) {
       console.error('Purchase error:', error);
       alert('An error occurred while purchasing the test. Please try again.');
+    } finally {
+      setPurchasingTestId(null);
     }
+  };
+
+  const handleClosePurchaseModal = () => {
+    setShowPurchaseModal(false);
+    setSelectedTest(null);
+    setPurchasingTestId(null);
+  };
+
+  const handleCloseAuthModal = () => {
+    setShowAuthModal(false);
+    setSelectedTest(null);
+  };
+
+  const handlePreviewClick = (testId: string) => {
+    setPreviewingTestId(testId);
+    router.push(`/preview-test/${testId}`);
   };
 
   if (loading) {
@@ -483,20 +560,28 @@ export default function Home() {
                   
                   <div className="p-6 pt-0">
                     <div className="flex gap-2">
-                      <Link
-                        href={`/preview-test/${test.id}`}
-                        className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-[#3EB3E7] text-sm font-medium rounded-lg text-[#3EB3E7] hover:bg-[#3EB3E7] hover:text-white transition-all"
+                      <Button
+                        variant="outline"
+                        size="default"
+                        className="flex-1 border-[#3EB3E7] text-[#3EB3E7] hover:bg-[#3EB3E7] hover:text-white"
+                        loading={previewingTestId === test.id}
+                        loadingText="Loading..."
+                        onClick={() => handlePreviewClick(test.id)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Preview Test
-                      </Link>
-                      <button 
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="default"
+                        className="flex-1 bg-[#3EB3E7] hover:bg-[#2da0d4]"
+                        loading={purchasingTestId === test.id}
+                        loadingText="Purchasing..."
                         onClick={() => handlePurchase(test.id)}
-                        className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-[#3EB3E7] text-sm font-medium rounded-lg text-white hover:bg-[#2da0d4] transition-all"
                       >
                         <ShoppingCart className="h-4 w-4 mr-1" />
                         Purchase Now
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -624,6 +709,21 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Modals */}
+      <PurchaseModal
+        isOpen={showPurchaseModal}
+        onClose={handleClosePurchaseModal}
+        onConfirm={handleConfirmPurchase}
+        test={selectedTest || { id: '', title: '', time_limit: 0 }}
+        isLoading={purchasingTestId === selectedTest?.id}
+      />
+
+      <AuthRequiredModal
+        isOpen={showAuthModal}
+        onClose={handleCloseAuthModal}
+        test={selectedTest || undefined}
+      />
     </div>
   );
 }

@@ -66,6 +66,7 @@ export async function GET(
                   const testQuestion = testQuestionIds.find((tq: any) => tq.question_id === q.id);
                   return {
                     ...q,
+                    mediaUrl: q.media_url, // Map media_url to mediaUrl
                     position: testQuestion?.position || 0
                   };
                 }).sort((a: any, b: any) => (a.position || 0) - (b.position || 0));

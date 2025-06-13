@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Test {
   id: string;
@@ -24,6 +25,8 @@ export default function TestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [managingTestId, setManagingTestId] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     loadTests();
@@ -71,6 +74,11 @@ export default function TestsPage() {
       setDeletingId(null);
     }
   }
+
+  const handleManageTest = (testId: string) => {
+    setManagingTestId(testId);
+    router.push(`/admin/tests/${testId}/manage`);
+  };
 
   if (loading) {
     return (
@@ -137,7 +145,7 @@ export default function TestsPage() {
                     
                     <div className="mt-4 flex flex-wrap items-center gap-3">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {test.time_limit} minutes
+                        {Math.round(test.time_limit / 60)} minutes
                       </span>
                       
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -171,14 +179,15 @@ export default function TestsPage() {
                   </div>
                   
                   <div className="flex gap-3 ml-6">
-                    <Link href={`/admin/tests/${test.id}/manage`}>
-                      <Button 
-                        variant="outline"
-                        disabled={deletingId === test.id}
-                      >
-                        Manage
-                      </Button>
-                    </Link>
+                    <Button 
+                      variant="outline"
+                      disabled={deletingId === test.id || managingTestId === test.id}
+                      loading={managingTestId === test.id}
+                      loadingText="Loading..."
+                      onClick={() => handleManageTest(test.id)}
+                    >
+                      Manage
+                    </Button>
                     
                     <Button 
                       variant="outline"

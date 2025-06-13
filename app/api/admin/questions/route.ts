@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     
     const questionsWithCount = (questionsData || []).map((q: any) => ({
       ...q,
+      mediaUrl: q.media_url, // Map media_url to mediaUrl
       _count: {
         test_questions: q.test_questions?.length || 0
       }
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         type: questionData.type,
         text: questionData.text,
+        media_url: questionData.mediaUrl || null,
         category_id: questionData.categoryId,
         difficulty: questionData.difficulty || 'medium',
         points: questionData.points || 1,
