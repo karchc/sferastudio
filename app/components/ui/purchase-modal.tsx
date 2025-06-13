@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Button } from "./button";
 import { Clock, BookOpen, Award } from "lucide-react";
+import { formatTimeLimit } from "@/app/lib/formatTimeLimit";
 
 interface PurchaseModalProps {
   isOpen: boolean;
@@ -47,16 +48,6 @@ export function PurchaseModal({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-
-  const formatTimeLimit = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) {
-      return `${minutes} minutes`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours} hours`;
-  };
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto">

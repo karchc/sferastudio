@@ -12,6 +12,19 @@ Practice SAP allows users to:
 
 ## Recent Updates (June 2025)
 
+### 250613-01 Profile Page Edit Functionality
+
+1. **User Profile Name Editing**
+   - Added inline editing capability for user's full name on `/profile` page
+   - Converted profile page from server component to client component for interactivity
+   - **Edit Mode Toggle**: "Edit Name" button switches to edit mode with input field
+   - **Save/Cancel Actions**: Users can save changes or cancel to revert
+   - **Real-time Updates**: Profile updates immediately without page refresh
+   - **Loading States**: Shows "Saving..." during update operations
+   - **Error Handling**: Displays error messages if update fails
+   - **Read-only Fields**: Email, account type, and member since date remain non-editable
+   - **Avatar Updates**: Profile initial automatically updates when name changes
+
 ### 250612-01 Time Limit Consistency Fix
 
 1. **Time Limit Display and Storage**
@@ -25,6 +38,16 @@ Practice SAP allows users to:
      - Test saving: Converts minutes back to seconds for database storage
    - **User Experience**: Admins see and work with minutes throughout the interface
    - **Test Taking**: Uses seconds directly from database (no conversion needed)
+
+2. **Test Page Time Display Fix**
+   - Fixed incorrect time display showing "40h 0m" instead of "40m" on test pages
+   - **Root Cause**: API was incorrectly multiplying time_limit by 60 (treating seconds as minutes)
+   - **Fixed Files**:
+     - `/app/test/page.tsx`: Now uses shared `formatTimeLimit` function
+     - `/app/components/ui/purchase-modal.tsx`: Removed buggy local implementation
+     - `/app/api/test/[id]/route.ts`: Removed incorrect multiplication by 60
+   - **Shared Function**: All components now use consistent `formatTimeLimit` from `/app/lib/formatTimeLimit.ts`
+   - **Result**: Time limits now display correctly (e.g., "40m" for 2400 seconds)
 
 ### 250610-01 UI Enhancements & Performance Improvements
 

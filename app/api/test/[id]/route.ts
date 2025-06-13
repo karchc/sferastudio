@@ -96,7 +96,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     title: test.title,
     description: test.description || "",
     instructions: test.instructions || "",
-    timeLimit: test.time_limit * 60,
+    timeLimit: test.time_limit,
     categoryIds: test.category_ids || [],
     isActive: test.is_active,
     allow_backward_navigation: test.allow_backward_navigation ?? true,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, Calendar, CreditCard, BookOpen, Loader2 } from "lucide-react";
+import { formatTimeLimit } from "@/app/lib/formatTimeLimit";
 
 type Test = {
   id: string;
@@ -62,16 +63,6 @@ export default function MyTestsPage() {
     }
     loadUserTests();
   }, [router]);
-
-  const formatTimeLimit = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

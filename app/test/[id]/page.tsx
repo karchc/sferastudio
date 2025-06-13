@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TestContainer } from "@/app/components/test/TestContainer";
+import { TestContainer, TestPhase } from "@/app/components/test/TestContainer";
 import { useRouter, useParams } from "next/navigation";
 import { TestData } from "@/app/lib/types";
 import { formatTimeLimit } from "@/app/lib/formatTimeLimit";
@@ -15,6 +15,9 @@ export default function TestPage() {
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState<TestData | null>(null);
   const [progress, setProgress] = useState<any>(null); // You can type this as needed
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [testPhase, setTestPhase] = useState<TestPhase>("idle");
+  const [actualStartTime, setActualStartTime] = useState<number | null>(null);
 
   // Load test data and progress
   useEffect(() => {
@@ -37,22 +40,39 @@ export default function TestPage() {
           setTestData(null);
         } else {
           const data = await res.json();
-          // Use saved startTime if available, else set new
-          const startTime = savedProgress?.startTime
-            ? new Date(savedProgress.startTime)
-            : new Date();
           setTestData({
             ...data,
             sessionId: `session-${Date.now()}`,
-            startTime,
             timeRemaining: data.timeLimit,
           });
-          setProgress(savedProgress || { answers: {}, startTime });
+          
+          const initialProgress = savedProgress || { 
+            answers: [], 
+            phase: "idle",
+            currentQuestionIndex: 0,
+            flaggedQuestions: [],
+            timeSpent: 0,
+            startTime: null
+          };
+          
+          setProgress(initialProgress);
+          
+          // Restore session state if there was saved progress
+          if (savedProgress) {
+            console.log('Restoring test session:', savedProgress);
+            if (savedProgress.phase) {
+              setTestPhase(savedProgress.phase);
+            }
+            if (savedProgress.startTime) {
+              setActualStartTime(new Date(savedProgress.startTime).getTime());
+            }
+          }
+          
           // If no saved progress, save initial state
           if (!savedProgress) {
             localStorage.setItem(
               LOCAL_STORAGE_KEY(testId),
-              JSON.stringify({ answers: {}, startTime })
+              JSON.stringify(initialProgress)
             );
           }
         }
@@ -62,24 +82,108 @@ export default function TestPage() {
       setLoading(false);
     }
     loadTestData();
+    
+    // Add debugging function to window for development
+    if (typeof window !== 'undefined') {
+      (window as any).clearTestSession = () => clearSession();
+      (window as any).showTestSession = () => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY(testId));
+        console.log('Current session data:', saved ? JSON.parse(saved) : 'No session data');
+      };
+    }
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [testId]);
 
   // Handler to update progress (call this from TestContainer when user answers)
   const handleProgress = (newProgress: any) => {
     setProgress((prev: any) => {
-      const updated = { ...prev, ...newProgress, startTime: prev.startTime };
+      const updated = { ...prev, ...newProgress };
+      // Only preserve startTime if it exists
+      if (prev?.startTime) {
+        updated.startTime = prev.startTime;
+      }
       localStorage.setItem(LOCAL_STORAGE_KEY(testId), JSON.stringify(updated));
       return updated;
     });
   };
 
-  // Calculate time left based on startTime
+  // Calculate time left based on actual test start time
   const getTimeLeft = () => {
-    if (!testData || !progress?.startTime) return testData?.timeLimit || 0;
-    const elapsed = Math.floor((Date.now() - new Date(progress.startTime).getTime()) / 1000);
+    if (!testData || !actualStartTime || testPhase !== "in-progress") {
+      return testData?.timeLimit || 0;
+    }
+    const elapsed = Math.floor((Date.now() - actualStartTime) / 1000);
     return Math.max((testData.timeLimit || 0) - elapsed, 0);
   };
+
+  // Handle phase changes from TestContainer
+  const handlePhaseChange = (phase: TestPhase, startTime?: number) => {
+    setTestPhase(phase);
+    if (phase === "in-progress" && startTime) {
+      setActualStartTime(startTime);
+      // Update progress with actual start time
+      setProgress((prev: any) => ({
+        ...prev,
+        startTime: new Date(startTime),
+        phase
+      }));
+    }
+  };
+
+  // Handle session updates from TestContainer
+  const handleSessionUpdate = (sessionData: any) => {
+    setProgress(sessionData);
+    // Save to localStorage immediately
+    localStorage.setItem(LOCAL_STORAGE_KEY(testId), JSON.stringify(sessionData));
+    
+    // Clear session if test is completed
+    if (sessionData.phase === "completed") {
+      setTimeout(() => {
+        localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
+      }, 1000); // Small delay to allow user to see completion
+    }
+  };
+
+  // Function to clear session (can be called manually if needed)
+  const clearSession = () => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
+    setProgress({ 
+      answers: [], 
+      phase: "idle",
+      currentQuestionIndex: 0,
+      flaggedQuestions: [],
+      timeSpent: 0,
+      startTime: null
+    });
+    setTestPhase("idle");
+    setActualStartTime(null);
+    setTimeLeft(testData?.timeLimit || 0);
+  };
+
+  // Update timeLeft every second only when test is in progress
+  useEffect(() => {
+    if (testData && testPhase === "in-progress" && actualStartTime) {
+      // Set initial time
+      setTimeLeft(getTimeLeft());
+      
+      // Update every second
+      const interval = setInterval(() => {
+        const newTimeLeft = getTimeLeft();
+        setTimeLeft(newTimeLeft);
+        
+        // Stop interval if time is up
+        if (newTimeLeft <= 0) {
+          clearInterval(interval);
+        }
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    } else if (testData && testPhase === "idle") {
+      // Reset to full time when idle
+      setTimeLeft(testData.timeLimit || 0);
+    }
+  }, [testData, testPhase, actualStartTime]);
 
   if (loading) {
     return (
@@ -124,7 +228,9 @@ export default function TestPage() {
         progress={progress}
         onProgress={handleProgress}
         onNavigate={(path: string) => router.push(path)}
-        timeLeft={getTimeLeft()}
+        timeLeft={timeLeft}
+        onPhaseChange={handlePhaseChange}
+        onSessionUpdate={handleSessionUpdate}
       />
     </main>
   );

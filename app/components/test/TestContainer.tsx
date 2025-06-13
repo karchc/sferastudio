@@ -12,7 +12,7 @@ import { QuestionNavigation } from "./QuestionNavigation";
 import { useNavbarVisibility } from "@/app/lib/useNavbarVisibility";
 
 // Test phases
-type TestPhase = "idle" | "in-progress" | "completed";
+export type TestPhase = "idle" | "in-progress" | "completed";
 
 interface TestContainerProps {
   test: TestData;
@@ -21,20 +21,44 @@ interface TestContainerProps {
   onNavigate?: (path: string) => void;
   timeLeft?: number;
   isPreview?: boolean;
+  onPhaseChange?: (phase: TestPhase, startTime?: number) => void;
+  onSessionUpdate?: (sessionData: any) => void;
 }
 
-export function TestContainer({ test, onNavigate, timeLeft, isPreview = false }: TestContainerProps) {
-  // Test state
-  const [phase, setPhase] = useState<TestPhase>("idle");
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
-  const [timeSpent, setTimeSpent] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
+export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, onPhaseChange, onSessionUpdate, progress }: TestContainerProps) {
+  // Test state - initialize from progress if available
+  const [phase, setPhase] = useState<TestPhase>(progress?.phase || "idle");
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(progress?.currentQuestionIndex || 0);
+  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>(progress?.answers || []);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set(progress?.flaggedQuestions || []));
+  const [timeSpent, setTimeSpent] = useState(progress?.timeSpent || 0);
+  const [startTime, setStartTime] = useState<number | null>(progress?.startTime ? new Date(progress.startTime).getTime() : null);
   const [isCompleting, setIsCompleting] = useState(false);
   
   // Control navbar visibility - hide only during "in-progress" phase
   useNavbarVisibility(phase !== "in-progress");
+
+  // Notify parent of phase changes
+  useEffect(() => {
+    if (onPhaseChange) {
+      onPhaseChange(phase, startTime || undefined);
+    }
+  }, [phase, startTime, onPhaseChange]);
+
+  // Notify parent of session updates
+  useEffect(() => {
+    if (onSessionUpdate) {
+      const sessionData = {
+        phase,
+        currentQuestionIndex,
+        answers: userAnswers,
+        flaggedQuestions: Array.from(flaggedQuestions),
+        timeSpent,
+        startTime: startTime ? new Date(startTime) : null
+      };
+      onSessionUpdate(sessionData);
+    }
+  }, [phase, currentQuestionIndex, userAnswers, flaggedQuestions, timeSpent, startTime, onSessionUpdate]);
 
   // Handle test start
   const handleStart = () => {
