@@ -184,64 +184,60 @@ export default function AuthNav() {
           </div>
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-2 px-4 py-2 text-[#5C677D] hover:text-[#0B1F3A] hover:bg-[#F6F7FA] rounded-md transition-all duration-200 font-medium"
-                >
-                  <span className="text-sm">
-                    {profile?.full_name || user.email}
-                    {profile?.is_admin && (
-                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#B1E5D3] text-[#0B1F3A]">
-                        ADMIN
+              <>
+                {profile?.is_admin ? (
+                  /* Admin users: Show simple "Admin" text without dropdown */
+                  <div className="flex items-center px-4 py-2">
+                    <span className="text-sm font-medium text-[#0B1F3A]">
+                      Admin
+                    </span>
+                  </div>
+                ) : (
+                  /* Regular users: Show dropdown with full functionality */
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center space-x-2 px-4 py-2 text-[#5C677D] hover:text-[#0B1F3A] hover:bg-[#F6F7FA] rounded-md transition-all duration-200 font-medium"
+                    >
+                      <span className="text-sm">
+                        {profile?.full_name || user.email}
                       </span>
-                    )}
-                  </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
 
-                <div className={`absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50 transition-all duration-200 ${
-                  isDropdownOpen 
-                    ? 'opacity-100 translate-y-0 pointer-events-auto' 
-                    : 'opacity-0 -translate-y-2 pointer-events-none'
-                }`}>
-                  {profile?.is_admin ? (
-                    <Link
-                      href="/admin"
-                      className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-3" />
-                      Admin Dashboard
-                    </Link>
-                  ) : (
-                    <Link
-                      href="/dashboard"
-                      className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-3" />
-                      Dashboard
-                    </Link>
-                  )}
-                  <Link
-                    href="/test"
-                    className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <BookOpen className="h-4 w-4 mr-3" />
-                    My Tests
-                  </Link>
-                  <hr className="my-1 border-gray-200" />
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center w-full px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
-                  >
-                    <LogOut className="h-4 w-4 mr-3" />
-                    Sign Out
-                  </button>
-                </div>
-              </div>
+                    <div className={`absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50 transition-all duration-200 ${
+                      isDropdownOpen 
+                        ? 'opacity-100 translate-y-0 pointer-events-auto' 
+                        : 'opacity-0 -translate-y-2 pointer-events-none'
+                    }`}>
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-3" />
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/test"
+                        className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <BookOpen className="h-4 w-4 mr-3" />
+                        My Tests
+                      </Link>
+                      <hr className="my-1 border-gray-200" />
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center w-full px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                      >
+                        <LogOut className="h-4 w-4 mr-3" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="flex items-center space-x-3">
                 <Link

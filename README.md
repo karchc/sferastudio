@@ -12,6 +12,39 @@ Practice SAP allows users to:
 
 ## Recent Updates (June 2025)
 
+### 250613-02 Admin Navigation System Overhaul
+
+1. **Streamlined Admin Sidebar Navigation**
+   - **Removed "Add Existing Category" functionality**: Admins can now only create new categories for better organization
+   - **Simplified category workflow**: Each test gets purpose-specific categories rather than shared ones
+   - **Enhanced sidebar layout**: Clean navigation with Tests, Sign Out, and Back to Website links
+   - **Removed dropdown complexity**: Eliminated category filtering and selection logic for cleaner code
+
+2. **Complete Loading Indicator System**
+   - **Universal button loading states**: Every action button now shows loading spinners when clicked
+   - **Individual item tracking**: Question and category actions have per-item loading states to prevent confusion
+   - **Granular feedback**: Preview toggle, edit, remove, and category management buttons all show loading
+   - **Enhanced user experience**: Prevents double-clicks and provides immediate visual feedback
+   - **Smart state management**: Loading tracked by specific IDs (question ID, category ID) for precise control
+
+3. **Admin Navbar Simplification**
+   - **Removed admin dropdown**: Admin users now see simple "Admin" text instead of complex dropdown menu
+   - **Role-based UI differentiation**: Admins get streamlined navbar while regular users retain full dropdown functionality
+   - **Clean admin experience**: No redundant navigation since admin functionality is in dedicated admin sidebar
+   - **Maintained user functionality**: Regular users still have Dashboard, My Tests, and Sign Out in dropdown
+
+4. **Enhanced Question Management Performance**
+   - **Optimized Edit Question loading**: Parallel API calls reduced loading time by ~66%
+   - **Individual loading indicators**: Edit buttons show spinners while fetching question details
+   - **Modal-based test editing**: Converted inline test editing to modal for better UX positioning
+   - **Eliminated confusion**: Modal prevents UI conflicts when editing from bottom categories
+
+5. **Technical Improvements**
+   - **Parallel API requests**: Changed sequential to concurrent database calls for faster responses
+   - **Improved error handling**: Better loading state cleanup and error recovery
+   - **Cleaner code architecture**: Removed unused functions and simplified state management
+   - **Type-safe loading states**: Enhanced TypeScript interfaces for loading state tracking
+
 ### 250613-01 Create New Test Performance & Category Management
 
 1. **Create New Test Page Performance Optimization**
@@ -436,8 +469,8 @@ The system uses Supabase with the following key tables:
 
 ## Technical Implementation Details
 
-### Loading Button System
-The universal loading button system provides consistent user feedback across the platform:
+### Universal Loading Indicator System
+The comprehensive loading system provides granular feedback for all user actions:
 
 ```typescript
 // Enhanced Button component with loading support
@@ -467,11 +500,41 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 ```
 
+**Individual Action Loading States:**
+```typescript
+// Admin manage test page loading state structure
+const [loadingStates, setLoadingStates] = useState({
+  updateTest: false,
+  createCategory: false,
+  createQuestion: false,
+  updateQuestion: false,
+  togglePreview: {} as Record<string, boolean>, // Track by question ID
+  removeQuestion: {} as Record<string, boolean>, // Track by question ID
+  editQuestion: {} as Record<string, boolean>, // Track by question ID
+  removeCategoryFromTest: {} as Record<string, boolean> // Track by category ID
+});
+
+// Example: Per-question loading state
+const handleEditQuestion = async (questionId: string) => {
+  setLoadingStates(prev => ({ 
+    ...prev, 
+    editQuestion: { ...prev.editQuestion, [questionId]: true }
+  }));
+  // ... API call
+  setLoadingStates(prev => ({ 
+    ...prev, 
+    editQuestion: { ...prev.editQuestion, [questionId]: false }
+  }));
+};
+```
+
 **Key Features:**
 - **Automatic Disabling**: Buttons become non-interactive during loading
 - **Visual Feedback**: Spinning Lucide React icon with customizable text
-- **Consistent API**: Works with existing button implementations
+- **Individual Tracking**: Each question/category button has independent loading state
 - **Context-Aware Text**: Different loading messages for different actions
+- **Prevents Double Actions**: Multiple rapid clicks are prevented
+- **Non-blocking Interface**: Other buttons remain functional while one is loading
 
 ### Multiple Choice Selection Limiting
 Smart selection control prevents users from over-selecting answers:
@@ -626,10 +689,34 @@ useEffect(() => {
   }
 }, [profile, router]);
 ```
+
+**Enhanced Admin Navigation Features:**
 - **Automatic Redirection**: Admin users are redirected from `/dashboard` to `/admin`
 - **Simplified Layout**: Removed AppBar for cleaner, sidebar-focused design
 - **State Management**: Drawer state controls sidebar collapse/expand with logo visibility
-- **Navigation**: All admin functions accessible through collapsible sidebar menu
+- **Streamlined Sidebar**: Only essential links (Tests, Sign Out, Back to Website)
+- **Modal-based Editing**: Test editing uses modals to prevent UI conflicts
+
+**Admin Navbar Simplification:**
+```typescript
+// Role-based navbar rendering in AuthNav.tsx
+{profile?.is_admin ? (
+  /* Admin users: Show simple "Admin" text without dropdown */
+  <div className="flex items-center px-4 py-2">
+    <span className="text-sm font-medium text-[#0B1F3A]">
+      Admin
+    </span>
+  </div>
+) : (
+  /* Regular users: Show dropdown with full functionality */
+  <div className="relative" ref={dropdownRef}>
+    // ... existing dropdown code
+  </div>
+)}
+```
+- **Role-based UI**: Different navigation experience for admin vs regular users
+- **Simplified Admin Experience**: No dropdown for admins, just "Admin" text
+- **Maintained User Functionality**: Regular users keep full dropdown with Dashboard, My Tests, Sign Out
 
 ### Sidebar Navigation Implementation
 The admin sidebar uses Material-UI's Drawer component with custom theming:
