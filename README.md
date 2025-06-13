@@ -12,42 +12,45 @@ Practice SAP allows users to:
 
 ## Recent Updates (June 2025)
 
-### 250613-01 Profile Page Edit Functionality
+### 250613-01 Create New Test Performance & Category Management
 
-1. **User Profile Name Editing**
-   - Added inline editing capability for user's full name on `/profile` page
-   - Converted profile page from server component to client component for interactivity
-   - **Edit Mode Toggle**: "Edit Name" button switches to edit mode with input field
-   - **Save/Cancel Actions**: Users can save changes or cancel to revert
-   - **Real-time Updates**: Profile updates immediately without page refresh
-   - **Loading States**: Shows "Saving..." during update operations
-   - **Error Handling**: Displays error messages if update fails
-   - **Read-only Fields**: Email, account type, and member since date remain non-editable
-   - **Avatar Updates**: Profile initial automatically updates when name changes
+1. **Create New Test Page Performance Optimization**
+   - **Eliminated Blocking Loading**: Removed categories API fetch that blocked page rendering
+   - **Progressive Loading**: Form displays immediately with categories loading in background
+   - **Instant Navigation**: Page loads immediately when clicking "Create New Test" button
+   - **Background Processing**: Categories load asynchronously without blocking user interaction
+   - **Loading States**: Added skeleton loading for categories section while maintaining form usability
 
-### 250612-01 Time Limit Consistency Fix
+2. **Dynamic Category Creation System**
+   - **Inline Category Creation**: Replaced category selection with dynamic category creation interface
+   - **One-to-One Relationship**: Each category is now unique to one test for better organization
+   - **Add/Remove Categories**: Users can add multiple categories with "Add Category" buttons
+   - **Category Details**: Each category includes name (required) and description/remark fields
+   - **Visual Feedback**: Cards show category numbers (Category 1, Category 2, etc.) with delete buttons
+   - **Empty State**: Professional empty state with call-to-action when no categories exist
+   - **Form Validation**: Ensures all categories have names before allowing test creation
 
-1. **Time Limit Display and Storage**
-   - Fixed inconsistency between database storage (seconds) and UI display (minutes)
-   - **Database**: Continues to store time_limit in seconds as designed
-   - **Admin UI**: Now properly displays and accepts input in minutes
-   - **Conversion Logic**:
-     - Admin test list: Displays `Math.round(time_limit / 60)` to show minutes
-     - Test creation: Converts minutes to seconds before saving to database
-     - Test editing: Loads seconds from database and converts to minutes for form
-     - Test saving: Converts minutes back to seconds for database storage
-   - **User Experience**: Admins see and work with minutes throughout the interface
-   - **Test Taking**: Uses seconds directly from database (no conversion needed)
+3. **Backward Navigation Controls**
+   - **Navigation Settings**: Added always-visible setting for backward navigation control
+   - **Browser Back Support**: Optional backward navigation with browser back button
+   - **Unsaved Changes Protection**: Prevents accidental navigation with confirmation dialogs
+   - **Smart Back Button**: Shows/hides based on navigation setting preference
+   - **Form Change Tracking**: Automatically detects form modifications for protection warnings
 
-2. **Test Page Time Display Fix**
-   - Fixed incorrect time display showing "40h 0m" instead of "40m" on test pages
-   - **Root Cause**: API was incorrectly multiplying time_limit by 60 (treating seconds as minutes)
-   - **Fixed Files**:
-     - `/app/test/page.tsx`: Now uses shared `formatTimeLimit` function
-     - `/app/components/ui/purchase-modal.tsx`: Removed buggy local implementation
-     - `/app/api/test/[id]/route.ts`: Removed incorrect multiplication by 60
-   - **Shared Function**: All components now use consistent `formatTimeLimit` from `/app/lib/formatTimeLimit.ts`
-   - **Result**: Time limits now display correctly (e.g., "40m" for 2400 seconds)
+4. **Enhanced API Architecture**
+   - **Robust Category Creation**: API handles category creation with fallback for schema differences
+   - **Database Migration**: Added test_id column to categories table for proper relationships
+   - **Error Handling**: Comprehensive error handling with detailed logging for debugging
+   - **Supabase Operations**: All database operations properly isolated in API folder
+   - **Schema Compatibility**: Supports both current and future database schema versions
+   - **Cache Optimization**: Enhanced categories API with 5-minute caching for better performance
+
+5. **User Experience Improvements**
+   - **Streamlined Workflow**: Create Test → Add Categories → (Later) Add Questions in Manage Test
+   - **Always-Visible Settings**: Navigation controls moved from collapsible panel to main form
+   - **Clear Visual Hierarchy**: Better form organization with proper sections and spacing
+   - **Responsive Design**: All new components work seamlessly across device sizes
+   - **Professional Loading**: Added dedicated loading.tsx for immediate visual feedback
 
 ### 250610-01 UI Enhancements & Performance Improvements
 
@@ -412,7 +415,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 The system uses Supabase with the following key tables:
 
 - `profiles` - User profile information with admin role support
-- `categories` - Subject areas for tests
+- `categories` - Subject areas linked to specific tests (one-to-one relationship)
 - `tests` - Test definitions with metadata, pricing, availability, and instructions
 - `questions` - Question bank with enhanced fields (difficulty, points, explanation, is_preview)
 - `answers` - Answers for single-choice and multiple-choice questions (with position ordering)
@@ -425,6 +428,7 @@ The system uses Supabase with the following key tables:
 - **questions table**: Added `difficulty`, `points`, `explanation`, and `is_preview` columns
 - **answers table**: Added `position` column for proper ordering
 - **dropdown_answers table**: New table with JSONB options storage and position ordering
+- **categories table**: Added `test_id` column for one-to-one relationship with tests
 - **Row Level Security**: Comprehensive RLS policies for all admin operations
 - **Database Indexes**: Optimized indexes for performance on position-based queries
 
@@ -733,6 +737,14 @@ The hero section includes custom CSS animations defined in `globals.css`:
 - Test dropdown option creation with multi-line textarea input
 - Check modal functionality (keyboard navigation, backdrop clicks, mobile layout)
 - Ensure proper form validation for each question type
+- **Create New Test Page Testing**:
+  - Test immediate page load without waiting for API calls
+  - Verify categories can be added/removed dynamically
+  - Test form validation for category names
+  - Check backward navigation setting functionality
+  - Verify unsaved changes protection works correctly
+  - Test category creation API with error handling
+  - Ensure test creation works with and without categories
 - **Loading Button Testing**:
   - Test all form submissions show loading states (admin, auth, test management)
   - Verify buttons disable during loading to prevent double submissions

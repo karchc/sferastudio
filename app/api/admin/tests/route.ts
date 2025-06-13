@@ -71,27 +71,108 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const { categories, ...testData } = body;
     
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/tests`, {
+    // First, create the test
+    const testResponse = await fetch(`${SUPABASE_URL}/rest/v1/tests`, {
       method: 'POST',
       headers: {
         ...headers,
         'Prefer': 'return=representation'
       },
       body: JSON.stringify({
-        ...body,
-        // Convert minutes to seconds for database storage
-        time_limit: (body.time_limit || 60) * 60,
+        ...testData,
         is_archived: false,
         created_at: new Date().toISOString()
       })
     });
     
-    if (!response.ok) {
+    if (!testResponse.ok) {
       throw new Error('Failed to create test');
     }
     
-    const [newTest] = await response.json();
+    const [newTest] = await testResponse.json();
+    
+    // If categories are provided, create them
+    if (categories && categories.length > 0) {
+      const createdCategoryIds: string[] = [];
+      
+      // Create categories one by one to handle potential schema differences
+      for (const cat of categories) {
+        const categoryData: any = {
+          name: cat.name,
+          description: cat.description || null
+        };
+        
+        // Try to add test_id if the column exists
+        try {
+          categoryData.test_id = newTest.id;
+        } catch (e) {
+          // If test_id column doesn't exist, we'll still create the category
+          console.log('Creating category without test_id (column may not exist yet)');
+        }
+        
+        const categoryResponse = await fetch(`${SUPABASE_URL}/rest/v1/categories`, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(categoryData)
+        });
+        
+        if (!categoryResponse.ok) {
+          const errorText = await categoryResponse.text();
+          console.error('Failed to create category:', errorText);
+          
+          // If the error is about test_id column, try without it
+          if (errorText.includes('test_id') || errorText.includes('column')) {
+            const fallbackData = {
+              name: cat.name,
+              description: cat.description || null
+            };
+            
+            const fallbackResponse = await fetch(`${SUPABASE_URL}/rest/v1/categories`, {
+              method: 'POST',
+              headers: {
+                ...headers,
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify(fallbackData)
+            });
+            
+            if (fallbackResponse.ok) {
+              const [newCategory] = await fallbackResponse.json();
+              createdCategoryIds.push(newCategory.id);
+              console.log('Created category without test_id:', newCategory);
+            } else {
+              console.error('Failed to create category even without test_id');
+            }
+          }
+        } else {
+          const [newCategory] = await categoryResponse.json();
+          createdCategoryIds.push(newCategory.id);
+          console.log('Created category with test_id:', newCategory);
+        }
+      }
+      
+      // Update test with category IDs
+      if (createdCategoryIds.length > 0) {
+        const updateResponse = await fetch(`${SUPABASE_URL}/rest/v1/tests?id=eq.${newTest.id}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ category_ids: createdCategoryIds })
+        });
+        
+        if (!updateResponse.ok) {
+          const updateError = await updateResponse.text();
+          console.error('Failed to update test with category IDs:', updateError);
+        } else {
+          console.log('Updated test with category IDs:', createdCategoryIds);
+        }
+      }
+    }
+    
     return NextResponse.json(newTest);
   } catch (error) {
     console.error('Error in POST /api/admin/tests:', error);

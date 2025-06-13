@@ -9,9 +9,24 @@ const headers = {
   'Content-Type': 'application/json'
 };
 
+// Simple in-memory cache for categories
+let cachedCategories: any[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export async function GET() {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&is_archived=eq.false&order=name.asc`, {
+    // Check cache first
+    const now = Date.now();
+    if (cachedCategories && (now - cacheTimestamp) < CACHE_DURATION) {
+      return NextResponse.json(cachedCategories, {
+        headers: {
+          'Cache-Control': 'public, max-age=300' // 5 minutes
+        }
+      });
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&order=name.asc`, {
       headers
     });
     
@@ -20,7 +35,16 @@ export async function GET() {
     }
     
     const data = await response.json();
-    return NextResponse.json(data || []);
+    
+    // Update cache
+    cachedCategories = data || [];
+    cacheTimestamp = now;
+    
+    return NextResponse.json(data || [], {
+      headers: {
+        'Cache-Control': 'public, max-age=300' // 5 minutes
+      }
+    });
   } catch (error) {
     console.error('Error in GET /api/admin/categories:', error);
     return NextResponse.json(
@@ -40,10 +64,7 @@ export async function POST(request: NextRequest) {
         ...headers,
         'Prefer': 'return=representation'
       },
-      body: JSON.stringify({
-        ...body,
-        is_archived: false
-      })
+      body: JSON.stringify(body)
     });
     
     if (!response.ok) {
@@ -51,6 +72,11 @@ export async function POST(request: NextRequest) {
     }
     
     const [newCategory] = await response.json();
+    
+    // Invalidate cache when new category is created
+    cachedCategories = null;
+    cacheTimestamp = 0;
+    
     return NextResponse.json(newCategory);
   } catch (error) {
     console.error('Error in POST /api/admin/categories:', error);
