@@ -78,6 +78,14 @@ export default function TestHistoryPage() {
         }
 
         const data = await response.json();
+        console.log('Test history data received:', data);
+        console.log('Sessions with scores:', data.sessions?.map((s: any) => ({
+          id: s.id,
+          score: s.score,
+          percentage: s.percentage,
+          correctAnswers: s.correctAnswers,
+          totalQuestions: s.totalQuestions
+        })));
         setHistory(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');

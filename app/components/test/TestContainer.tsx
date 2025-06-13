@@ -71,6 +71,99 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
     }
   }, [phase, currentQuestionIndex, userAnswers.length, flaggedQuestions.size, timeSpent, startTime, onSessionUpdate]);
 
+  // Function to save test results to database
+  const saveTestResults = useCallback(async () => {
+    if (!isPreview && dbSessionId) {
+      try {
+        // Create answers array for ALL questions (including unanswered ones)
+        const allQuestionAnswers = test.questions.map(question => {
+          const userAnswer = userAnswers.find(ua => ua.questionId === question.id);
+          
+          if (userAnswer) {
+            // Question was answered
+            return {
+              questionId: question.id,
+              questionType: question.type,
+              questionText: question.text,
+              answers: userAnswer.answers || [],
+              isCorrect: userAnswer.isCorrect || false,
+              timeSpent: userAnswer.timeSpent || 0
+            };
+          } else {
+            // Question was skipped
+            return {
+              questionId: question.id,
+              questionType: question.type,
+              questionText: question.text,
+              answers: [],
+              isCorrect: false,
+              timeSpent: 0
+            };
+          }
+        });
+
+        // Calculate correct stats
+        const totalQuestions = test.questions.length;
+        const answeredQuestions = userAnswers.filter(ua => ua.answers && ua.answers.length > 0);
+        const correctCount = answeredQuestions.filter(ua => ua.isCorrect).length;
+        const scorePercentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+        console.log('Saving test results:', {
+          totalQuestions,
+          answeredCount: answeredQuestions.length,
+          correctCount,
+          scorePercentage,
+          skippedCount: totalQuestions - answeredQuestions.length
+        });
+
+        console.log('Data being sent to API:', {
+          sessionId: dbSessionId,
+          answers: allQuestionAnswers,
+          totalQuestions: totalQuestions
+        });
+
+        console.log('Sample answer data:', allQuestionAnswers.slice(0, 3));
+
+        // Save user answers to database
+        await fetch('/api/test/session/answers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId: dbSessionId,
+            answers: allQuestionAnswers,
+            totalQuestions: totalQuestions
+          }),
+        });
+
+        // Update session status to completed with correct score
+        await fetch('/api/test/session', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId: dbSessionId,
+            status: 'completed',
+            score: scorePercentage,
+            timeSpent: timeSpent,
+            endTime: new Date().toISOString()
+          }),
+        });
+
+        console.log('Test results saved to database');
+      } catch (error) {
+        console.error('Error saving test results:', error);
+      }
+    }
+
+    // Add small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setPhase("completed");
+    setIsCompleting(false);
+  }, [isPreview, dbSessionId, userAnswers, timeSpent, test.questions]);
+
   // Handle test start
   const handleStart = async () => {
     setPhase("in-progress");
@@ -136,48 +229,6 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
       await saveTestResults();
     }
   }, [isPreview, onNavigate, test.id, test.questions, userAnswers, saveTestResults]);
-
-  // Function to save test results to database
-  const saveTestResults = useCallback(async () => {
-    if (!isPreview && dbSessionId) {
-      try {
-        // Save user answers to database
-        await fetch('/api/test/session/answers', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sessionId: dbSessionId,
-            answers: userAnswers
-          }),
-        });
-
-        // Update session status to completed
-        await fetch('/api/test/session', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sessionId: dbSessionId,
-            status: 'completed',
-            timeSpent: timeSpent,
-            endTime: new Date().toISOString()
-          }),
-        });
-
-        console.log('Test results saved to database');
-      } catch (error) {
-        console.error('Error saving test results:', error);
-      }
-    }
-
-    // Add small delay to show loading state
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setPhase("completed");
-    setIsCompleting(false);
-  }, [isPreview, dbSessionId, userAnswers, timeSpent]);
 
   // Handle confirmation from modal
   const handleConfirmSkip = useCallback(async () => {

@@ -62,12 +62,32 @@ export async function GET(
 
     // Calculate statistics for each session
     const sessionsWithStats = sessions?.map(session => {
-      const totalAnswered = session.user_answers?.length || 0;
-      const correctAnswers = session.user_answers?.filter((a: any) => a.is_correct).length || 0;
-      const percentage = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      // user_answers contains only questions that were attempted (answered or explicitly marked as incorrect)
+      const allAnswers = session.user_answers || [];
+      const correctAnswers = allAnswers.filter((a: any) => a.is_correct).length;
+      const totalAnswered = allAnswers.length; // Total questions attempted
+      const skippedQuestions = (totalQuestions || 0) - totalAnswered;
+      
+      // Use the score from database if available, otherwise calculate it
+      const dbScore = session.score || 0;
+      const calculatedPercentage = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      const percentage = dbScore > 0 ? dbScore : calculatedPercentage;
+      
       const avgTimePerQuestion = totalAnswered > 0 
         ? Math.round((session.time_spent || 0) / totalAnswered)
         : 0;
+
+      console.log(`Session ${session.id}:`, {
+        userAnswersCount: allAnswers.length,
+        correctAnswers,
+        totalQuestions,
+        totalAnswered,
+        skippedQuestions,
+        dbScore,
+        calculatedPercentage,
+        finalPercentage: percentage,
+        rawUserAnswers: allAnswers
+      });
 
       return {
         ...session,
@@ -75,8 +95,8 @@ export async function GET(
         totalAnswered,
         correctAnswers,
         percentage,
-        avgTimePerQuestion,
-        skippedQuestions: (totalQuestions || 0) - totalAnswered
+        avgTimePercentage: percentage,
+        skippedQuestions
       };
     });
 
