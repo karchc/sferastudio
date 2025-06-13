@@ -10,6 +10,7 @@ import { Timer } from "./Timer";
 import { TestSummary } from "./TestSummary";
 import { QuestionNavigation } from "./QuestionNavigation";
 import { useNavbarVisibility } from "@/app/lib/useNavbarVisibility";
+import { ConfirmationModal } from "../ui/confirmation-modal";
 
 // Test phases
 export type TestPhase = "idle" | "in-progress" | "completed";
@@ -34,6 +35,9 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
   const [timeSpent, setTimeSpent] = useState(progress?.timeSpent || 0);
   const [startTime, setStartTime] = useState<number | null>(progress?.startTime ? new Date(progress.startTime).getTime() : null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
+  const [skippedQuestionsCount, setSkippedQuestionsCount] = useState(0);
+  const [dbSessionId, setDbSessionId] = useState<string | null>(null);
   
   // Control navbar visibility - hide only during "in-progress" phase
   useNavbarVisibility(phase !== "in-progress");
@@ -45,9 +49,10 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
     }
   }, [phase, startTime, onPhaseChange]);
 
-  // Notify parent of session updates
+  // Notify parent of session updates - use useCallback to prevent infinite loops
   useEffect(() => {
     if (onSessionUpdate) {
+      // Only update if there's a meaningful change
       const sessionData = {
         phase,
         currentQuestionIndex,
@@ -56,16 +61,46 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
         timeSpent,
         startTime: startTime ? new Date(startTime) : null
       };
-      onSessionUpdate(sessionData);
+      
+      // Debounce the update to prevent rapid firing
+      const timeoutId = setTimeout(() => {
+        onSessionUpdate(sessionData);
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [phase, currentQuestionIndex, userAnswers, flaggedQuestions, timeSpent, startTime, onSessionUpdate]);
+  }, [phase, currentQuestionIndex, userAnswers.length, flaggedQuestions.size, timeSpent, startTime, onSessionUpdate]);
 
   // Handle test start
-  const handleStart = () => {
+  const handleStart = async () => {
     setPhase("in-progress");
-    setStartTime(Date.now());
+    const now = Date.now();
+    setStartTime(now);
     setTimeSpent(0);
     setUserAnswers([]);
+
+    // Create database session for non-preview tests
+    if (!isPreview) {
+      try {
+        const response = await fetch('/api/test/session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ testId: test.id }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setDbSessionId(data.session.id);
+          console.log('Database session created:', data.session.id);
+        } else {
+          console.error('Failed to create database session');
+        }
+      } catch (error) {
+        console.error('Error creating database session:', error);
+      }
+    }
   };
 
   // Handle test completion
@@ -90,22 +125,70 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
       q => !answeredQuestionIds.includes(q.id)
     );
     
-    // If there are skipped questions, show confirmation
-    if (skippedQuestions.length > 0 && confirm(
-      `You have ${skippedQuestions.length} unanswered question(s). Are you sure you want to finish the test? Click 'Cancel' to return and answer these questions.`
-    )) {
-      // Add small delay to show loading state
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setPhase("completed");
-    } else if (skippedQuestions.length === 0) {
+    // If there are skipped questions, show confirmation modal
+    if (skippedQuestions.length > 0) {
+      console.log('Showing skip confirmation modal for', skippedQuestions.length, 'questions');
+      setSkippedQuestionsCount(skippedQuestions.length);
+      setShowSkipConfirmation(true);
+      setIsCompleting(false);
+    } else {
       // No skipped questions, proceed directly
-      // Add small delay to show loading state
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setPhase("completed");
+      await saveTestResults();
     }
-    // If user clicked cancel on confirmation, they stay on the test
+  }, [isPreview, onNavigate, test.id, test.questions, userAnswers, saveTestResults]);
+
+  // Function to save test results to database
+  const saveTestResults = useCallback(async () => {
+    if (!isPreview && dbSessionId) {
+      try {
+        // Save user answers to database
+        await fetch('/api/test/session/answers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId: dbSessionId,
+            answers: userAnswers
+          }),
+        });
+
+        // Update session status to completed
+        await fetch('/api/test/session', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId: dbSessionId,
+            status: 'completed',
+            timeSpent: timeSpent,
+            endTime: new Date().toISOString()
+          }),
+        });
+
+        console.log('Test results saved to database');
+      } catch (error) {
+        console.error('Error saving test results:', error);
+      }
+    }
+
+    // Add small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setPhase("completed");
     setIsCompleting(false);
-  }, [isPreview, onNavigate, test.id, test.questions, userAnswers]);
+  }, [isPreview, dbSessionId, userAnswers, timeSpent]);
+
+  // Handle confirmation from modal
+  const handleConfirmSkip = useCallback(async () => {
+    setShowSkipConfirmation(false);
+    await saveTestResults();
+  }, [saveTestResults]);
+
+  // Handle cancel from modal
+  const handleCancelSkip = useCallback(() => {
+    setShowSkipConfirmation(false);
+  }, []);
 
   // Handle question navigation
   const handleNextQuestion = useCallback(() => {
@@ -192,8 +275,23 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
 
   // Handle navigation to dashboard
   const handleGoToDashboard = () => {
-    if (onNavigate) {
-      onNavigate("/dashboard");
+    console.log('handleGoToDashboard called');
+    console.log('onNavigate type:', typeof onNavigate);
+    console.log('onNavigate:', onNavigate);
+    
+    try {
+      if (onNavigate && typeof onNavigate === 'function') {
+        console.log('Calling onNavigate with /dashboard');
+        onNavigate("/dashboard");
+      } else {
+        console.warn('onNavigate not available, using window.location');
+        // Direct navigation as fallback
+        window.location.href = '/dashboard';
+      }
+    } catch (error) {
+      console.error('Error during navigation:', error);
+      // Force navigation as last resort
+      window.location.href = '/dashboard';
     }
   };
 
@@ -292,6 +390,17 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
           />
         )}
       </AnimatePresence>
+      
+      <ConfirmationModal
+        isOpen={showSkipConfirmation}
+        onClose={handleCancelSkip}
+        onConfirm={handleConfirmSkip}
+        title="Unanswered Questions"
+        message={`You have ${skippedQuestionsCount} unanswered question(s). Are you sure you want to finish the test? You can go back to answer these questions.`}
+        confirmText="Finish Test"
+        cancelText="Go Back"
+        variant="warning"
+      />
     </div>
   );
 }

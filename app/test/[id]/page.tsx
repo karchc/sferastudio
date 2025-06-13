@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { TestContainer, TestPhase } from "@/app/components/test/TestContainer";
 import { useRouter, useParams } from "next/navigation";
 import { TestData } from "@/app/lib/types";
@@ -118,7 +118,7 @@ export default function TestPage() {
   };
 
   // Handle phase changes from TestContainer
-  const handlePhaseChange = (phase: TestPhase, startTime?: number) => {
+  const handlePhaseChange = useCallback((phase: TestPhase, startTime?: number) => {
     setTestPhase(phase);
     if (phase === "in-progress" && startTime) {
       setActualStartTime(startTime);
@@ -129,10 +129,10 @@ export default function TestPage() {
         phase
       }));
     }
-  };
+  }, []);
 
   // Handle session updates from TestContainer
-  const handleSessionUpdate = (sessionData: any) => {
+  const handleSessionUpdate = useCallback((sessionData: any) => {
     setProgress(sessionData);
     // Save to localStorage immediately
     localStorage.setItem(LOCAL_STORAGE_KEY(testId), JSON.stringify(sessionData));
@@ -143,7 +143,7 @@ export default function TestPage() {
         localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
       }, 1000); // Small delay to allow user to see completion
     }
-  };
+  }, [testId]);
 
   // Function to clear session (can be called manually if needed)
   const clearSession = () => {
@@ -227,7 +227,10 @@ export default function TestPage() {
         test={testData}
         progress={progress}
         onProgress={handleProgress}
-        onNavigate={(path: string) => router.push(path)}
+        onNavigate={(path: string) => {
+          console.log('Navigation requested to:', path);
+          router.push(path);
+        }}
         timeLeft={timeLeft}
         onPhaseChange={handlePhaseChange}
         onSessionUpdate={handleSessionUpdate}

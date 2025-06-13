@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
+import Link from "next/link";
 
 interface TestSummaryProps {
   test: TestData;
