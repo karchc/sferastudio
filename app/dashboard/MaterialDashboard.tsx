@@ -77,17 +77,36 @@ export default function MaterialDashboard() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedTest, setSelectedTest] = useState<any>(null);
   const [purchasingTestId, setPurchasingTestId] = useState<string | null>(null);
+  const [testStatistics, setTestStatistics] = useState<Record<string, any>>({});
+  const [hasFetchedTests, setHasFetchedTests] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   
+  // Helper function to format time in seconds to MM:SS
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+  
   // Fetch purchased tests
   const fetchPurchasedTests = async () => {
+    console.log('Fetching purchased tests...');
     setTestsLoading(true);
     try {
       const response = await fetch('/api/user/purchased-tests');
       if (response.ok) {
         const data = await response.json();
-        setPurchasedTests(data.purchasedTests || []);
+        const tests = data.purchasedTests || [];
+        console.log('Purchased tests received:', tests.length);
+        setPurchasedTests(tests);
+        
+        // Fetch statistics for each purchased test
+        tests.forEach((purchase: any) => {
+          if (purchase.test?.id) {
+            fetchTestStatistics(purchase.test.id);
+          }
+        });
       }
     } catch (error) {
       console.error('Error fetching purchased tests:', error);
@@ -109,6 +128,22 @@ export default function MaterialDashboard() {
     }
   };
 
+  // Fetch test statistics for a specific test
+  const fetchTestStatistics = async (testId: string) => {
+    try {
+      const response = await fetch(`/api/test/${testId}/history`);
+      if (response.ok) {
+        const data = await response.json();
+        setTestStatistics(prev => ({
+          ...prev,
+          [testId]: data.overallStats
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching test statistics:', error);
+    }
+  };
+
   const handleTakeTest = (testId: string) => {
     setTakingTestId(testId);
     router.push(`/test/${testId}`);
@@ -116,7 +151,7 @@ export default function MaterialDashboard() {
 
   const handlePreviewTest = (testId: string) => {
     setPreviewingTestId(testId);
-    router.push(`/test/${testId}/preview`);
+    router.push(`/preview-test/${testId}`);
   };
 
   const handlePurchase = (test: any) => {
@@ -213,10 +248,11 @@ export default function MaterialDashboard() {
   useEffect(() => {
     if (profile?.is_admin) {
       router.push('/admin');
-    } else if (profile) {
+    } else if (profile && !hasFetchedTests) {
+      setHasFetchedTests(true);
       fetchPurchasedTests();
     }
-  }, [profile, router]);
+  }, [profile, router, hasFetchedTests]);
   
   const formatDate = (dateString: string) => {
     const options = { year: 'numeric' as const, month: 'short' as const, day: 'numeric' as const };
@@ -274,22 +310,6 @@ export default function MaterialDashboard() {
               )}
             </Typography>
           </Box>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button 
-            variant="contained" 
-            component={Link} 
-            href="/test"
-          >
-            Take New Test
-          </Button>
-          <Button 
-            variant="outlined" 
-            component={Link} 
-            href="/profile"
-          >
-            Edit Profile
-          </Button>
         </Box>
       </Box>
       
@@ -387,45 +407,82 @@ export default function MaterialDashboard() {
                       
                       <Divider />
                       
-                      {/* Test Statistics (Mock data for now) */}
+                      {/* Test Statistics */}
                       <Box>
                         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                           Your Performance
                         </Typography>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 2 }}>
-                          <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                            <Typography variant="h4" fontWeight="bold" color="primary">
-                              0
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Attempts
-                            </Typography>
+                        {testStatistics[purchase.test?.id] ? (
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 2 }}>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="primary">
+                                {testStatistics[purchase.test?.id]?.totalAttempts || 0}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Attempts
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="success.main">
+                                {testStatistics[purchase.test?.id]?.bestScore || 0}%
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Best Score
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="warning.main">
+                                {testStatistics[purchase.test?.id]?.averageScore || 0}%
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Avg Score
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="info.main">
+                                {formatTime(testStatistics[purchase.test?.id]?.averageTime || 0)}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Avg Time
+                              </Typography>
+                            </Box>
                           </Box>
-                          <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                            <Typography variant="h4" fontWeight="bold" color="success.main">
-                              -
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Best Score
-                            </Typography>
+                        ) : (
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 2 }}>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="primary">
+                                0
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Attempts
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="success.main">
+                                -
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Best Score
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="warning.main">
+                                -
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Avg Score
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                              <Typography variant="h4" fontWeight="bold" color="info.main">
+                                -
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Time Spent
+                              </Typography>
+                            </Box>
                           </Box>
-                          <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                            <Typography variant="h4" fontWeight="bold" color="warning.main">
-                              -
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Avg Score
-                            </Typography>
-                          </Box>
-                          <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                            <Typography variant="h4" fontWeight="bold" color="info.main">
-                              -
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Time Spent
-                            </Typography>
-                          </Box>
-                        </Box>
+                        )}
                       </Box>
                       
                       <Divider />
@@ -519,21 +576,39 @@ export default function MaterialDashboard() {
                     
                     <Box sx={{ p: 2, pt: 0 }}>
                       {test.is_free ? (
-                        <Button 
-                          variant="contained" 
-                          fullWidth
-                          onClick={() => handleTakeTest(test.id)}
-                          disabled={takingTestId === test.id}
-                        >
-                          {takingTestId === test.id ? (
-                            <>
-                              <CircularProgress size={16} sx={{ mr: 1 }} />
-                              Loading...
-                            </>
-                          ) : (
-                            'Take Free Test'
-                          )}
-                        </Button>
+                        <Stack spacing={1}>
+                          <Button 
+                            variant="outlined" 
+                            fullWidth
+                            onClick={() => handlePreviewTest(test.id)}
+                            disabled={previewingTestId === test.id}
+                          >
+                            {previewingTestId === test.id ? (
+                              <>
+                                <CircularProgress size={16} sx={{ mr: 1 }} />
+                                Loading...
+                              </>
+                            ) : (
+                              'Preview Test'
+                            )}
+                          </Button>
+                          <Button 
+                            variant="contained" 
+                            fullWidth
+                            startIcon={<ShoppingCartIcon />}
+                            onClick={() => handlePurchase(test)}
+                            disabled={purchasingTestId === test.id}
+                          >
+                            {purchasingTestId === test.id ? (
+                              <>
+                                <CircularProgress size={16} sx={{ mr: 1 }} />
+                                Loading...
+                              </>
+                            ) : (
+                              'Purchase Now'
+                            )}
+                          </Button>
+                        </Stack>
                       ) : (
                         <Stack spacing={1}>
                           <Button 

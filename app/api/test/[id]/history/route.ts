@@ -3,7 +3,7 @@ import { createServerSupabase } from '@/app/lib/auth-server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createServerSupabase();
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const testId = params.id;
+    const { id: testId } = await params;
 
     // Fetch test details
     const { data: test, error: testError } = await supabase
@@ -61,9 +61,9 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch test history' }, { status: 500 });
     }
 
-    // Get total questions count for the test
+    // Get total questions count for the test (through test_questions junction table)
     const { count: totalQuestions, error: questionsCountError } = await supabase
-      .from('questions')
+      .from('test_questions')
       .select('*', { count: 'exact', head: true })
       .eq('test_id', testId);
 
@@ -82,7 +82,7 @@ export async function GET(
     if (!actualTotalQuestions) {
       console.log('totalQuestions is null, trying alternative method...');
       const { data: questionsData, error: altQuestionsError } = await supabase
-        .from('questions')
+        .from('test_questions')
         .select('id')
         .eq('test_id', testId);
       
@@ -97,9 +97,11 @@ export async function GET(
     const sessionsWithStats = sessions?.map(session => {
       // user_answers contains only questions that were attempted (answered or explicitly marked as incorrect)
       const allAnswers = session.user_answers || [];
-      const correctAnswers = allAnswers.filter((a: any) => a.is_correct).length;
-      const totalAnswered = allAnswers.length; // Total questions attempted
-      const skippedQuestions = (actualTotalQuestions || 0) - totalAnswered;
+      const correctAnswers = allAnswers.filter((a: any) => a.is_correct === 'true').length;
+      const incorrectAnswers = allAnswers.filter((a: any) => a.is_correct === 'false').length;
+      const skippedAnswers = allAnswers.filter((a: any) => a.is_correct === 'skipped').length;
+      const totalAnswered = correctAnswers + incorrectAnswers; // Only count answered questions
+      const skippedQuestions = skippedAnswers; // Use the actual skipped count
       
       // Use the score from database if available, otherwise calculate it
       const dbScore = session.score || 0;

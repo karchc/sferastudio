@@ -4,18 +4,25 @@ import { createServerSupabase } from '@/app/lib/auth-server';
 // Create a new test session
 export async function POST(request: NextRequest) {
   try {
+    console.log('Creating new test session...');
     const supabase = await createServerSupabase();
     
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('Unauthorized user trying to create session');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    console.log('User authenticated:', user.id);
 
     const body = await request.json();
     const { testId } = body;
 
+    console.log('Session creation request:', { testId, userId: user.id });
+
     if (!testId) {
+      console.error('No test ID provided');
       return NextResponse.json({ error: 'Test ID is required' }, { status: 400 });
     }
 
@@ -35,9 +42,18 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating test session:', error);
-      return NextResponse.json({ error: 'Failed to create test session' }, { status: 500 });
+      console.error('Failed session data:', {
+        test_id: testId,
+        user_id: user.id,
+        start_time: new Date().toISOString(),
+        status: 'in_progress',
+        score: 0,
+        time_spent: 0
+      });
+      return NextResponse.json({ error: 'Failed to create test session', details: error }, { status: 500 });
     }
 
+    console.log('Successfully created session:', session.id);
     return NextResponse.json({ session });
   } catch (error) {
     console.error('Error in session creation:', error);

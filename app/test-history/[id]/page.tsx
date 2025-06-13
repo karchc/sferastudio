@@ -284,7 +284,7 @@ export default function TestHistoryPage() {
                           {formatDate(session.created_at)}
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div>
                             <p className="text-xs text-gray-500">Score</p>
                             <p className={`font-semibold ${getScoreColor(session.percentage)}`}>
@@ -296,18 +296,20 @@ export default function TestHistoryPage() {
                             <p className="text-xs text-gray-500">Questions</p>
                             <div className="flex items-center gap-1">
                               <CheckCircle className="h-3 w-3 text-green-500" />
-                              <span className="text-sm">{session.correctAnswers}/{session.totalQuestions}</span>
+                              <span className="text-sm">
+                                {session.correctAnswers}/{session.totalQuestions}
+                                {session.skippedQuestions > 0 && (
+                                  <span className="text-gray-500 ml-1">
+                                    ({session.skippedQuestions} skipped)
+                                  </span>
+                                )}
+                              </span>
                             </div>
                           </div>
                           
                           <div>
                             <p className="text-xs text-gray-500">Time Spent</p>
                             <p className="text-sm font-medium">{formatTime(session.time_spent)}</p>
-                          </div>
-                          
-                          <div>
-                            <p className="text-xs text-gray-500">Skipped</p>
-                            <p className="text-sm font-medium">{session.skippedQuestions}</p>
                           </div>
                         </div>
                       </div>

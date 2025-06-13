@@ -12,6 +12,56 @@ Practice SAP allows users to:
 
 ## Recent Updates (June 2025)
 
+### 250613-02 Test History & Analytics Improvements
+
+1. **Test Completion Modal Enhancement**
+   - **Replaced Browser Alerts**: Custom modal popup for skipped questions confirmation
+   - **Professional UI**: Uses existing ConfirmationModal component with warning variant
+   - **Better UX**: Shows exact count of skipped questions with clear messaging
+   - **Smooth Navigation**: Fixed "Back to Dashboard" button navigation after test completion
+
+2. **Test History Implementation**
+   - **New Test History Page**: Created `/test-history/[id]` page showing detailed test attempts
+   - **Overall Statistics**: Displays total attempts, best score, average score, and average time
+   - **Attempt History Cards**: Shows each attempt with:
+     - Score with color coding (green ≥80%, yellow ≥60%, red <60%)
+     - Questions answered vs total (e.g., "3/7")
+     - Skipped questions count in gray text
+     - Time spent per attempt
+     - Visual trending indicators comparing to average
+   - **API Endpoints**: Created `/api/test/[id]/history` for fetching test statistics
+
+3. **Database & Scoring Improvements**
+   - **Skipped Questions Tracking**: Changed `is_correct` to text field with values: 'true', 'false', 'skipped'
+   - **Score Calculation**: Skipped questions count as wrong for final score
+   - **Database Functions Updated**: All PostgreSQL functions updated to handle text comparisons
+   - **Removed Problematic Triggers**: Dropped auto-evaluation triggers that were overriding values
+   - **Fixed Question Count**: Corrected test_questions junction table queries for accurate counts
+
+4. **Dashboard Performance Card Sync**
+   - **Real-time Statistics**: "Your Performance" section now shows actual test data:
+     - Total attempts from test history
+     - Best score achieved
+     - Average score across all attempts
+     - Average time spent formatted as MM:SS
+   - **Automatic Updates**: Statistics refresh when tests are completed
+   - **Loading States**: Shows placeholder values while data loads
+
+5. **User Experience Enhancements**
+   - **Session Management**: Automatically clears test progress on completion/retry
+   - **Loading Indicators**: "Finish" button shows spinner with "Finishing..." text
+   - **Navigation Cleanup**: Removed "Take New Test" and "Edit Profile" buttons from dashboard
+   - **Performance Fix**: Purchased tests now load only once on dashboard refresh
+   - **Preview Navigation**: Preview Test button correctly navigates to `/preview-test/[id]`
+
+6. **Technical Improvements**
+   - **Boolean to Text Migration**: Handled `is_correct` column type change
+   - **API Error Handling**: Better error messages for authentication issues
+   - **Console Debugging**: Added helpful logs for troubleshooting timer issues
+   - **React Optimization**: Fixed dependency arrays and memoization
+
+## Recent Updates (June 2025)
+
 ### 250613-01 Create New Test Performance & Category Management
 
 1. **Create New Test Page Performance Optimization**

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/app/lib/supabaseClient";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const testId = params.id;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: testId } = await params;
 
   // Fetch test details
   const { data: test, error: testError } = await supabase
