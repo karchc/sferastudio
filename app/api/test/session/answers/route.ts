@@ -43,13 +43,32 @@ export async function POST(request: NextRequest) {
       sampleAnswers: answers.slice(0, 3)
     });
 
+    // Verify question IDs exist in database
+    const questionIds = answers.map((a: any) => a.questionId);
+    const { data: existingQuestions, error: questionsError } = await supabase
+      .from('questions')
+      .select('id')
+      .in('id', questionIds);
+    
+    console.log('Question ID verification:', {
+      sentQuestionIds: questionIds,
+      foundInDb: existingQuestions?.map(q => q.id) || [],
+      missingIds: questionIds.filter(id => !existingQuestions?.find(q => q.id === id))
+    });
+
     // Prepare user answers for insertion
     const userAnswers = answers.map((answer: any) => ({
       test_session_id: sessionId,
       question_id: answer.questionId,
       time_spent: answer.timeSpent || 0,
-      is_correct: answer.isCorrect || false
+      is_correct: answer.isCorrect === true ? true : (answer.isCorrect === false ? false : null)
     }));
+
+    console.log('isCorrect value mapping check:', answers.map(a => ({
+      questionId: a.questionId.slice(-4),
+      originalIsCorrect: a.isCorrect,
+      mappedIsCorrect: a.isCorrect === true ? true : (a.isCorrect === false ? false : null)
+    })));
 
     console.log('Prepared user answers for database:', {
       count: userAnswers.length,
@@ -57,14 +76,21 @@ export async function POST(request: NextRequest) {
     });
 
     // Insert user answers
-    const { error: answersError } = await supabase
+    const { data: insertedData, error: answersError } = await supabase
       .from('user_answers')
-      .insert(userAnswers);
+      .insert(userAnswers)
+      .select();
 
     if (answersError) {
       console.error('Error saving user answers:', answersError);
+      console.error('Failed data:', userAnswers);
       return NextResponse.json({ error: 'Failed to save answers' }, { status: 500 });
     }
+
+    console.log('Successfully inserted user answers:', {
+      insertedCount: insertedData?.length || 0,
+      sampleInserted: insertedData?.slice(0, 3)
+    });
 
     // For multiple choice questions, save selected answer choices
     const selectedAnswers = [];

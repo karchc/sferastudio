@@ -23,7 +23,14 @@ export async function GET(
       .eq('id', testId)
       .single();
 
+    console.log('Test details query:', {
+      requestedTestId: testId,
+      foundTest: test,
+      testError
+    });
+
     if (testError || !test) {
+      console.error('Test not found:', { testId, testError });
       return NextResponse.json({ error: 'Test not found' }, { status: 404 });
     }
 
@@ -55,10 +62,36 @@ export async function GET(
     }
 
     // Get total questions count for the test
-    const { count: totalQuestions } = await supabase
+    const { count: totalQuestions, error: questionsCountError } = await supabase
       .from('questions')
       .select('*', { count: 'exact', head: true })
       .eq('test_id', testId);
+
+    console.log('Questions count query:', {
+      testId,
+      totalQuestions,
+      questionsCountError
+    });
+
+    if (questionsCountError) {
+      console.error('Error fetching questions count:', questionsCountError);
+    }
+
+    // Fallback: if totalQuestions is null, try to get it from the test data
+    let actualTotalQuestions = totalQuestions;
+    if (!actualTotalQuestions) {
+      console.log('totalQuestions is null, trying alternative method...');
+      const { data: questionsData, error: altQuestionsError } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('test_id', testId);
+      
+      actualTotalQuestions = questionsData?.length || 0;
+      console.log('Alternative questions count:', {
+        found: questionsData?.length || 0,
+        error: altQuestionsError
+      });
+    }
 
     // Calculate statistics for each session
     const sessionsWithStats = sessions?.map(session => {
@@ -66,11 +99,11 @@ export async function GET(
       const allAnswers = session.user_answers || [];
       const correctAnswers = allAnswers.filter((a: any) => a.is_correct).length;
       const totalAnswered = allAnswers.length; // Total questions attempted
-      const skippedQuestions = (totalQuestions || 0) - totalAnswered;
+      const skippedQuestions = (actualTotalQuestions || 0) - totalAnswered;
       
       // Use the score from database if available, otherwise calculate it
       const dbScore = session.score || 0;
-      const calculatedPercentage = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      const calculatedPercentage = actualTotalQuestions ? Math.round((correctAnswers / actualTotalQuestions) * 100) : 0;
       const percentage = dbScore > 0 ? dbScore : calculatedPercentage;
       
       const avgTimePerQuestion = totalAnswered > 0 
@@ -80,7 +113,7 @@ export async function GET(
       console.log(`Session ${session.id}:`, {
         userAnswersCount: allAnswers.length,
         correctAnswers,
-        totalQuestions,
+        totalQuestions: actualTotalQuestions,
         totalAnswered,
         skippedQuestions,
         dbScore,
@@ -91,7 +124,7 @@ export async function GET(
 
       return {
         ...session,
-        totalQuestions,
+        totalQuestions: actualTotalQuestions,
         totalAnswered,
         correctAnswers,
         percentage,
