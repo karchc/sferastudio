@@ -26,6 +26,22 @@ export async function POST(request: Request) {
   // Sign out the user
   await supabase.auth.signOut()
 
-  // Redirect to the home page
+  // Check if this is a fetch request (Ajax/XHR)
+  const contentType = request.headers.get('content-type')
+  const acceptHeader = request.headers.get('accept')
+  const isFetchRequest = contentType?.includes('application/json') || 
+                         acceptHeader?.includes('application/json')
+
+  if (isFetchRequest) {
+    // Return JSON response for fetch requests
+    return new Response(JSON.stringify({ success: true, redirect: '/' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+  }
+
+  // Redirect for regular navigation
   return createRedirect('/', request)
 }

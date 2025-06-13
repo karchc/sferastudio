@@ -144,6 +144,7 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       });
       
@@ -151,12 +152,15 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
         throw new Error('Failed to sign out');
       }
       
+      // Parse the JSON response
+      const data = await response.json();
+      
       // Clear any local storage
       localStorage.removeItem('authToken');
       sessionStorage.clear();
       
-      // Redirect to home page
-      router.push('/');
+      // Redirect to the path specified in the response
+      router.push(data.redirect || '/');
     } catch (error) {
       console.error('Error signing out:', error);
       // Still redirect even if there's an error
