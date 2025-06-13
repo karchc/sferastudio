@@ -139,7 +139,19 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
   // Sign out function
   const handleSignOut = async () => {
     try {
-      // Clear any auth tokens or session data
+      // Call the signout API route to properly sign out from Supabase
+      const response = await fetch('/auth/signout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to sign out');
+      }
+      
+      // Clear any local storage
       localStorage.removeItem('authToken');
       sessionStorage.clear();
       
