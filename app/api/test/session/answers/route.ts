@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { sessionId, answers } = body;
+    const { sessionId, answers, totalQuestions } = body;
 
     if (!sessionId || !answers) {
       return NextResponse.json({ error: 'Session ID and answers are required' }, { status: 400 });
@@ -37,6 +37,12 @@ export async function POST(request: NextRequest) {
       .delete()
       .eq('test_session_id', sessionId);
 
+    console.log('API received answers data:', {
+      sessionId,
+      answersCount: answers.length,
+      sampleAnswers: answers.slice(0, 3)
+    });
+
     // Prepare user answers for insertion
     const userAnswers = answers.map((answer: any) => ({
       test_session_id: sessionId,
@@ -44,6 +50,11 @@ export async function POST(request: NextRequest) {
       time_spent: answer.timeSpent || 0,
       is_correct: answer.isCorrect || false
     }));
+
+    console.log('Prepared user answers for database:', {
+      count: userAnswers.length,
+      sample: userAnswers.slice(0, 3)
+    });
 
     // Insert user answers
     const { error: answersError } = await supabase
@@ -87,22 +98,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate and update session score
+    // Calculate score based on correct answers vs total questions in test
     const correctCount = answers.filter((a: any) => a.isCorrect).length;
-    const totalQuestions = answers.length;
-    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+    const answeredCount = answers.filter((a: any) => a.answers && a.answers.length > 0).length;
+    const actualTotalQuestions = totalQuestions || answers.length;
+    const score = actualTotalQuestions > 0 ? Math.round((correctCount / actualTotalQuestions) * 100) : 0;
+    const skippedCount = actualTotalQuestions - answeredCount;
 
-    // Update session with score
-    await supabase
-      .from('test_sessions')
-      .update({ score })
-      .eq('id', sessionId);
+    console.log('Score calculation:', {
+      correctCount,
+      answeredCount,
+      actualTotalQuestions,
+      score,
+      skippedCount
+    });
+
+    // Update session with score (don't override if score is already set by frontend)
+    const sessionUpdate: any = {};
+    if (score !== undefined) {
+      sessionUpdate.score = score;
+    }
+    
+    if (Object.keys(sessionUpdate).length > 0) {
+      await supabase
+        .from('test_sessions')
+        .update(sessionUpdate)
+        .eq('id', sessionId);
+    }
 
     return NextResponse.json({ 
       success: true,
       score,
       correctCount,
-      totalQuestions
+      totalQuestions: actualTotalQuestions,
+      answeredCount,
+      skippedCount
     });
   } catch (error) {
     console.error('Error saving answers:', error);

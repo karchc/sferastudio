@@ -4,14 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { createClientSupabase } from '../lib/auth-client'
-import { signOut } from '../lib/auth-client'
+import { useAuth } from '../lib/auth-context'
 import { ChevronDown, BarChart3, BookOpen, LogOut } from 'lucide-react'
-
-interface User {
-  id: string
-  email: string
-}
 
 interface Profile {
   full_name: string
@@ -19,102 +13,43 @@ interface Profile {
 }
 
 export default function AuthNav() {
-  const [user, setUser] = useState<User | null>(null)
+  const { user, signOut, loading } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const supabaseRef = useRef(createClientSupabase())
 
   useEffect(() => {
     let isMounted = true;
 
-    // Get initial session and profile
-    const loadUserData = async () => {
+    // Fetch user profile when user changes
+    const loadProfile = async () => {
+      if (!user) {
+        setProfile(null);
+        return;
+      }
+
       try {
-        // Fetch session from API (using getUser for security)
-        const sessionResponse = await fetch('/api/auth/session');
-        if (!sessionResponse.ok) {
-          setLoading(false);
-          return;
-        }
-        
-        const { session } = await sessionResponse.json();
-        if (!isMounted) return;
-        
-        if (session?.user) {
-          setUser(session.user);
-          
-          // Fetch user profile
-          try {
-            const profileResponse = await fetch('/api/auth/profile', {
-              // Add cache header to speed up subsequent loads
-              headers: {
-                'Cache-Control': 'max-age=60' // Cache for 1 minute
-              }
-            });
-            if (profileResponse.ok) {
-              const profileData = await profileResponse.json();
-              if (isMounted) {
-                setProfile(profileData);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
+        const profileResponse = await fetch('/api/auth/profile', {
+          headers: {
+            'Cache-Control': 'max-age=60' // Cache for 1 minute
           }
+        });
+        if (profileResponse.ok && isMounted) {
+          const profileData = await profileResponse.json();
+          setProfile(profileData);
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        console.error('Error fetching profile:', error);
       }
     };
 
-    loadUserData();
-
-    // Listen for auth changes with debouncing
-    const supabase = supabaseRef.current;
-    let profileFetchTimeout: NodeJS.Timeout;
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return;
-      
-      setUser(session?.user as any || null);
-      
-      // Clear any pending profile fetch
-      if (profileFetchTimeout) {
-        clearTimeout(profileFetchTimeout);
-      }
-      
-      if (session?.user && event !== 'TOKEN_REFRESHED') {
-        // Debounce profile fetch to avoid multiple requests
-        profileFetchTimeout = setTimeout(async () => {
-          try {
-            const response = await fetch('/api/auth/profile');
-            if (response.ok && isMounted) {
-              const profileData = await response.json();
-              setProfile(profileData);
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-          }
-        }, 300); // Wait 300ms before fetching profile
-      } else if (!session?.user) {
-        setProfile(null);
-      }
-    });
+    loadProfile();
 
     return () => {
       isMounted = false;
-      if (profileFetchTimeout) {
-        clearTimeout(profileFetchTimeout);
-      }
-      subscription.unsubscribe();
     };
-  }, [])
+  }, [user])
 
   // Close dropdown when clicking outside
   useEffect(() => {
