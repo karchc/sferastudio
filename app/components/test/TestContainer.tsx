@@ -96,7 +96,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
               questionType: question.type,
               questionText: question.text,
               answers: [],
-              isCorrect: false,
+              isCorrect: false, // Keep as false for frontend logic
               timeSpent: 0
             };
           }
@@ -162,7 +162,14 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
     await new Promise(resolve => setTimeout(resolve, 500));
     setPhase("completed");
     setIsCompleting(false);
-  }, [isPreview, dbSessionId, userAnswers, timeSpent, test.questions]);
+    
+    // Clear the test session from localStorage when test is completed
+    if (typeof window !== 'undefined' && test.id) {
+      const sessionKey = `test-progress-${test.id}`;
+      localStorage.removeItem(sessionKey);
+      console.log('Test session cleared from localStorage');
+    }
+  }, [isPreview, dbSessionId, userAnswers, timeSpent, test.questions, test.id]);
 
   // Handle test start
   const handleStart = async () => {
@@ -188,7 +195,13 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
           setDbSessionId(data.session.id);
           console.log('Database session created:', data.session.id);
         } else {
-          console.error('Failed to create database session');
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Failed to create database session:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          });
+          // Continue with test even if session creation fails
         }
       } catch (error) {
         console.error('Error creating database session:', error);
@@ -320,8 +333,21 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
 
   // Handle retry
   const handleRetry = () => {
+    // Clear session data when retrying
+    if (typeof window !== 'undefined' && test.id) {
+      const sessionKey = `test-progress-${test.id}`;
+      localStorage.removeItem(sessionKey);
+      console.log('Test session cleared for retry');
+    }
+    
+    // Reset state
     setPhase("idle");
     setCurrentQuestionIndex(0);
+    setUserAnswers([]);
+    setFlaggedQuestions(new Set());
+    setTimeSpent(0);
+    setStartTime(null);
+    setDbSessionId(null);
   };
 
   // Handle navigation to dashboard
@@ -329,6 +355,13 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
     console.log('handleGoToDashboard called');
     console.log('onNavigate type:', typeof onNavigate);
     console.log('onNavigate:', onNavigate);
+    
+    // Clear session before navigating away
+    if (typeof window !== 'undefined' && test.id) {
+      const sessionKey = `test-progress-${test.id}`;
+      localStorage.removeItem(sessionKey);
+      console.log('Test session cleared before navigation');
+    }
     
     try {
       if (onNavigate && typeof onNavigate === 'function') {

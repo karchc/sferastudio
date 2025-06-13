@@ -4,6 +4,7 @@ import { createServerSupabase } from '@/app/lib/auth-server';
 // Save user answers for a test session
 export async function POST(request: NextRequest) {
   try {
+    console.log('Received request to save test answers');
     const supabase = await createServerSupabase();
     
     // Get the current user
@@ -11,6 +12,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    console.log('Authenticated user:', user.id);
+
 
     const body = await request.json();
     const { sessionId, answers, totalQuestions } = body;
@@ -43,12 +47,63 @@ export async function POST(request: NextRequest) {
       sampleAnswers: answers.slice(0, 3)
     });
 
-    // Prepare user answers for insertion
-    const userAnswers = answers.map((answer: any) => ({
-      test_session_id: sessionId,
-      question_id: answer.questionId,
-      time_spent: answer.timeSpent || 0,
-      is_correct: answer.isCorrect || false
+    console.log('done deleting existing answers for session:', sessionId);
+
+    // Verify question IDs exist in database
+    const questionIds = answers.map((a: any) => a.questionId);
+    const { data: existingQuestions, error: questionsError } = await supabase
+      .from('questions')
+      .select('id')
+      .in('id', questionIds);
+    
+    console.log('Question ID verification:', {
+      sentQuestionIds: questionIds,
+      foundInDb: existingQuestions?.map(q => q.id) || [],
+      missingIds: questionIds.filter(id => !existingQuestions?.find(q => q.id === id))
+    });
+
+    // Prepare user answers for insertion with text conversion
+    const userAnswers = answers.map((answer: any) => {
+      // Convert is_correct to text value
+      let isCorrectValue: string | null = null;
+      
+      // Check if question was answered
+      if (!answer.answers || answer.answers.length === 0) {
+        // Question was skipped
+        isCorrectValue = 'skipped';
+      } else if (answer.isCorrect === true || answer.isCorrect === 'true') {
+        isCorrectValue = 'true';
+      } else if (answer.isCorrect === false || answer.isCorrect === 'false') {
+        isCorrectValue = 'false';
+      }
+      // Otherwise keep as null
+      
+      return {
+        test_session_id: sessionId,
+        question_id: answer.questionId,
+        time_spent: answer.timeSpent || 0,
+        is_correct: isCorrectValue
+      };
+    });
+
+    console.log('isCorrect value mapping check:', answers.map(a => {
+      let mappedValue: string | null = null;
+      if (!a.answers || a.answers.length === 0) {
+        mappedValue = 'skipped';
+      } else if (a.isCorrect === true || a.isCorrect === 'true') {
+        mappedValue = 'true';
+      } else if (a.isCorrect === false || a.isCorrect === 'false') {
+        mappedValue = 'false';
+      }
+      
+      return {
+        questionId: a.questionId.slice(-4),
+        originalIsCorrect: a.isCorrect,
+        originalType: typeof a.isCorrect,
+        hasAnswers: !!(a.answers && a.answers.length > 0),
+        mappedIsCorrect: mappedValue,
+        mappedType: typeof mappedValue
+      };
     }));
 
     console.log('Prepared user answers for database:', {
@@ -57,14 +112,21 @@ export async function POST(request: NextRequest) {
     });
 
     // Insert user answers
-    const { error: answersError } = await supabase
+    const { data: insertedData, error: answersError } = await supabase
       .from('user_answers')
-      .insert(userAnswers);
+      .insert(userAnswers)
+      .select();
 
     if (answersError) {
       console.error('Error saving user answers:', answersError);
+      console.error('Failed data:', userAnswers);
       return NextResponse.json({ error: 'Failed to save answers' }, { status: 500 });
     }
+
+    console.log('Successfully inserted user answers:', {
+      insertedCount: insertedData?.length || 0,
+      sampleInserted: insertedData?.slice(0, 3)
+    });
 
     // For multiple choice questions, save selected answer choices
     const selectedAnswers = [];
@@ -99,11 +161,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate score based on correct answers vs total questions in test
-    const correctCount = answers.filter((a: any) => a.isCorrect).length;
+    const correctCount = answers.filter((a: any) => a.isCorrect === true).length;
     const answeredCount = answers.filter((a: any) => a.answers && a.answers.length > 0).length;
+    const skippedCount = answers.filter((a: any) => !a.answers || a.answers.length === 0).length;
     const actualTotalQuestions = totalQuestions || answers.length;
+    // Score is calculated based on total questions (skipped questions count as wrong)
     const score = actualTotalQuestions > 0 ? Math.round((correctCount / actualTotalQuestions) * 100) : 0;
-    const skippedCount = actualTotalQuestions - answeredCount;
 
     console.log('Score calculation:', {
       correctCount,

@@ -40,6 +40,11 @@ export default function TestPage() {
           setTestData(null);
         } else {
           const data = await res.json();
+          console.log("Test data loaded:", { 
+            title: data.title, 
+            timeLimit: data.timeLimit,
+            timeLimitInMinutes: data.timeLimit / 60 
+          });
           setTestData({
             ...data,
             sessionId: `session-${Date.now()}`,
@@ -111,10 +116,13 @@ export default function TestPage() {
   // Calculate time left based on actual test start time
   const getTimeLeft = () => {
     if (!testData || !actualStartTime || testPhase !== "in-progress") {
+      console.log("getTimeLeft - returning initial time:", testData?.timeLimit);
       return testData?.timeLimit || 0;
     }
     const elapsed = Math.floor((Date.now() - actualStartTime) / 1000);
-    return Math.max((testData.timeLimit || 0) - elapsed, 0);
+    const remaining = Math.max((testData.timeLimit || 0) - elapsed, 0);
+    console.log("getTimeLeft - elapsed:", elapsed, "remaining:", remaining, "timeLimit:", testData.timeLimit);
+    return remaining;
   };
 
   // Handle phase changes from TestContainer
@@ -134,14 +142,9 @@ export default function TestPage() {
   // Handle session updates from TestContainer
   const handleSessionUpdate = useCallback((sessionData: any) => {
     setProgress(sessionData);
-    // Save to localStorage immediately
-    localStorage.setItem(LOCAL_STORAGE_KEY(testId), JSON.stringify(sessionData));
-    
-    // Clear session if test is completed
-    if (sessionData.phase === "completed") {
-      setTimeout(() => {
-        localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
-      }, 1000); // Small delay to allow user to see completion
+    // Save to localStorage immediately (unless completed - TestContainer handles clearing)
+    if (sessionData.phase !== "completed") {
+      localStorage.setItem(LOCAL_STORAGE_KEY(testId), JSON.stringify(sessionData));
     }
   }, [testId]);
 
@@ -164,12 +167,20 @@ export default function TestPage() {
   // Update timeLeft every second only when test is in progress
   useEffect(() => {
     if (testData && testPhase === "in-progress" && actualStartTime) {
+      // Calculate time left function inline to avoid dependency issues
+      const calculateTimeLeft = () => {
+        const elapsed = Math.floor((Date.now() - actualStartTime) / 1000);
+        const remaining = Math.max((testData.timeLimit || 0) - elapsed, 0);
+        console.log("Timer update - elapsed:", elapsed, "remaining:", remaining, "timeLimit:", testData.timeLimit);
+        return remaining;
+      };
+      
       // Set initial time
-      setTimeLeft(getTimeLeft());
+      setTimeLeft(calculateTimeLeft());
       
       // Update every second
       const interval = setInterval(() => {
-        const newTimeLeft = getTimeLeft();
+        const newTimeLeft = calculateTimeLeft();
         setTimeLeft(newTimeLeft);
         
         // Stop interval if time is up
@@ -181,6 +192,7 @@ export default function TestPage() {
       return () => clearInterval(interval);
     } else if (testData && testPhase === "idle") {
       // Reset to full time when idle
+      console.log("Setting initial timeLeft to:", testData.timeLimit);
       setTimeLeft(testData.timeLimit || 0);
     }
   }, [testData, testPhase, actualStartTime]);

@@ -12,38 +12,55 @@ Practice SAP allows users to:
 
 ## Recent Updates (June 2025)
 
-### 250613-02 Admin Navigation System Overhaul
+### 250613-02 Test History & Analytics Improvements
 
-1. **Streamlined Admin Sidebar Navigation**
-   - **Removed "Add Existing Category" functionality**: Admins can now only create new categories for better organization
-   - **Simplified category workflow**: Each test gets purpose-specific categories rather than shared ones
-   - **Enhanced sidebar layout**: Clean navigation with Tests, Sign Out, and Back to Website links
-   - **Removed dropdown complexity**: Eliminated category filtering and selection logic for cleaner code
+1. **Test Completion Modal Enhancement**
+   - **Replaced Browser Alerts**: Custom modal popup for skipped questions confirmation
+   - **Professional UI**: Uses existing ConfirmationModal component with warning variant
+   - **Better UX**: Shows exact count of skipped questions with clear messaging
+   - **Smooth Navigation**: Fixed "Back to Dashboard" button navigation after test completion
 
-2. **Complete Loading Indicator System**
-   - **Universal button loading states**: Every action button now shows loading spinners when clicked
-   - **Individual item tracking**: Question and category actions have per-item loading states to prevent confusion
-   - **Granular feedback**: Preview toggle, edit, remove, and category management buttons all show loading
-   - **Enhanced user experience**: Prevents double-clicks and provides immediate visual feedback
-   - **Smart state management**: Loading tracked by specific IDs (question ID, category ID) for precise control
+2. **Test History Implementation**
+   - **New Test History Page**: Created `/test-history/[id]` page showing detailed test attempts
+   - **Overall Statistics**: Displays total attempts, best score, average score, and average time
+   - **Attempt History Cards**: Shows each attempt with:
+     - Score with color coding (green ≥80%, yellow ≥60%, red <60%)
+     - Questions answered vs total (e.g., "3/7")
+     - Skipped questions count in gray text
+     - Time spent per attempt
+     - Visual trending indicators comparing to average
+   - **API Endpoints**: Created `/api/test/[id]/history` for fetching test statistics
 
-3. **Admin Navbar Simplification**
-   - **Removed admin dropdown**: Admin users now see simple "Admin" text instead of complex dropdown menu
-   - **Role-based UI differentiation**: Admins get streamlined navbar while regular users retain full dropdown functionality
-   - **Clean admin experience**: No redundant navigation since admin functionality is in dedicated admin sidebar
-   - **Maintained user functionality**: Regular users still have Dashboard, My Tests, and Sign Out in dropdown
+3. **Database & Scoring Improvements**
+   - **Skipped Questions Tracking**: Changed `is_correct` to text field with values: 'true', 'false', 'skipped'
+   - **Score Calculation**: Skipped questions count as wrong for final score
+   - **Database Functions Updated**: All PostgreSQL functions updated to handle text comparisons
+   - **Removed Problematic Triggers**: Dropped auto-evaluation triggers that were overriding values
+   - **Fixed Question Count**: Corrected test_questions junction table queries for accurate counts
 
-4. **Enhanced Question Management Performance**
-   - **Optimized Edit Question loading**: Parallel API calls reduced loading time by ~66%
-   - **Individual loading indicators**: Edit buttons show spinners while fetching question details
-   - **Modal-based test editing**: Converted inline test editing to modal for better UX positioning
-   - **Eliminated confusion**: Modal prevents UI conflicts when editing from bottom categories
+4. **Dashboard Performance Card Sync**
+   - **Real-time Statistics**: "Your Performance" section now shows actual test data:
+     - Total attempts from test history
+     - Best score achieved
+     - Average score across all attempts
+     - Average time spent formatted as MM:SS
+   - **Automatic Updates**: Statistics refresh when tests are completed
+   - **Loading States**: Shows placeholder values while data loads
 
-5. **Technical Improvements**
-   - **Parallel API requests**: Changed sequential to concurrent database calls for faster responses
-   - **Improved error handling**: Better loading state cleanup and error recovery
-   - **Cleaner code architecture**: Removed unused functions and simplified state management
-   - **Type-safe loading states**: Enhanced TypeScript interfaces for loading state tracking
+5. **User Experience Enhancements**
+   - **Session Management**: Automatically clears test progress on completion/retry
+   - **Loading Indicators**: "Finish" button shows spinner with "Finishing..." text
+   - **Navigation Cleanup**: Removed "Take New Test" and "Edit Profile" buttons from dashboard
+   - **Performance Fix**: Purchased tests now load only once on dashboard refresh
+   - **Preview Navigation**: Preview Test button correctly navigates to `/preview-test/[id]`
+
+6. **Technical Improvements**
+   - **Boolean to Text Migration**: Handled `is_correct` column type change
+   - **API Error Handling**: Better error messages for authentication issues
+   - **Console Debugging**: Added helpful logs for troubleshooting timer issues
+   - **React Optimization**: Fixed dependency arrays and memoization
+
+## Recent Updates (June 2025)
 
 ### 250613-01 Create New Test Performance & Category Management
 

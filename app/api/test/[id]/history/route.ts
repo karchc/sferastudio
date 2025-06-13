@@ -3,7 +3,7 @@ import { createServerSupabase } from '@/app/lib/auth-server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createServerSupabase();
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const testId = params.id;
+    const { id: testId } = await params;
 
     // Fetch test details
     const { data: test, error: testError } = await supabase
@@ -23,7 +23,14 @@ export async function GET(
       .eq('id', testId)
       .single();
 
+    console.log('Test details query:', {
+      requestedTestId: testId,
+      foundTest: test,
+      testError
+    });
+
     if (testError || !test) {
+      console.error('Test not found:', { testId, testError });
       return NextResponse.json({ error: 'Test not found' }, { status: 404 });
     }
 
@@ -54,23 +61,51 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch test history' }, { status: 500 });
     }
 
-    // Get total questions count for the test
-    const { count: totalQuestions } = await supabase
-      .from('questions')
+    // Get total questions count for the test (through test_questions junction table)
+    const { count: totalQuestions, error: questionsCountError } = await supabase
+      .from('test_questions')
       .select('*', { count: 'exact', head: true })
       .eq('test_id', testId);
+
+    console.log('Questions count query:', {
+      testId,
+      totalQuestions,
+      questionsCountError
+    });
+
+    if (questionsCountError) {
+      console.error('Error fetching questions count:', questionsCountError);
+    }
+
+    // Fallback: if totalQuestions is null, try to get it from the test data
+    let actualTotalQuestions = totalQuestions;
+    if (!actualTotalQuestions) {
+      console.log('totalQuestions is null, trying alternative method...');
+      const { data: questionsData, error: altQuestionsError } = await supabase
+        .from('test_questions')
+        .select('id')
+        .eq('test_id', testId);
+      
+      actualTotalQuestions = questionsData?.length || 0;
+      console.log('Alternative questions count:', {
+        found: questionsData?.length || 0,
+        error: altQuestionsError
+      });
+    }
 
     // Calculate statistics for each session
     const sessionsWithStats = sessions?.map(session => {
       // user_answers contains only questions that were attempted (answered or explicitly marked as incorrect)
       const allAnswers = session.user_answers || [];
-      const correctAnswers = allAnswers.filter((a: any) => a.is_correct).length;
-      const totalAnswered = allAnswers.length; // Total questions attempted
-      const skippedQuestions = (totalQuestions || 0) - totalAnswered;
+      const correctAnswers = allAnswers.filter((a: any) => a.is_correct === 'true').length;
+      const incorrectAnswers = allAnswers.filter((a: any) => a.is_correct === 'false').length;
+      const skippedAnswers = allAnswers.filter((a: any) => a.is_correct === 'skipped').length;
+      const totalAnswered = correctAnswers + incorrectAnswers; // Only count answered questions
+      const skippedQuestions = skippedAnswers; // Use the actual skipped count
       
       // Use the score from database if available, otherwise calculate it
       const dbScore = session.score || 0;
-      const calculatedPercentage = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      const calculatedPercentage = actualTotalQuestions ? Math.round((correctAnswers / actualTotalQuestions) * 100) : 0;
       const percentage = dbScore > 0 ? dbScore : calculatedPercentage;
       
       const avgTimePerQuestion = totalAnswered > 0 
@@ -80,7 +115,7 @@ export async function GET(
       console.log(`Session ${session.id}:`, {
         userAnswersCount: allAnswers.length,
         correctAnswers,
-        totalQuestions,
+        totalQuestions: actualTotalQuestions,
         totalAnswered,
         skippedQuestions,
         dbScore,
@@ -91,7 +126,7 @@ export async function GET(
 
       return {
         ...session,
-        totalQuestions,
+        totalQuestions: actualTotalQuestions,
         totalAnswered,
         correctAnswers,
         percentage,
