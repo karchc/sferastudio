@@ -10,19 +10,20 @@ import { Upload, X, Image as ImageIcon } from "lucide-react";
 interface QuestionFormProps {
   initialData?: Question;
   categories: Category[];
+  selectedCategoryId?: string | null;
   onSubmit: (data: QuestionFormData) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSubmitting = false }: QuestionFormProps) {
+export function QuestionForm({ initialData, categories, selectedCategoryId, onSubmit, onCancel, isSubmitting = false }: QuestionFormProps) {
   const [formData, setFormData] = useState<QuestionFormData>(() => {
     if (initialData) {
       return {
         type: initialData.type,
         text: initialData.text,
         mediaUrl: initialData.mediaUrl || '',
-        categoryId: initialData.category_id || categories[0]?.id || "",
+        categoryId: initialData.category_id || selectedCategoryId || categories[0]?.id || "",
         difficulty: initialData.difficulty || 'medium',
         points: initialData.points || 1,
         explanation: initialData.explanation || '',
@@ -35,7 +36,7 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
       text: "",
       type: "single_choice",
       mediaUrl: '',
-      categoryId: categories[0]?.id || "",
+      categoryId: selectedCategoryId || categories[0]?.id || "",
       difficulty: 'medium',
       points: 1,
       explanation: '',
@@ -48,12 +49,13 @@ export function QuestionForm({ initialData, categories, onSubmit, onCancel, isSu
     };
   });
 
-  // If categories change and we don't have a category selected, set the first one
+  // If categories change and we don't have a category selected, set the selected one or first one
   useEffect(() => {
     if (categories.length > 0 && !formData.categoryId) {
-      setFormData(prev => ({ ...prev, categoryId: categories[0].id }));
+      const targetCategoryId = selectedCategoryId || categories[0].id;
+      setFormData(prev => ({ ...prev, categoryId: targetCategoryId }));
     }
-  }, [categories, formData.categoryId]);
+  }, [categories, formData.categoryId, selectedCategoryId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -525,8 +527,9 @@ Option 3"
             </Button>
             <Button 
               type="submit" 
+              loading={isSubmitting}
+              loadingText="Saving..."
               disabled={
-                isSubmitting ||
                 categories.length === 0 || 
                 !formData.text ||
                 ((formData.type === "multiple_choice" || formData.type === "single_choice") && 
@@ -536,7 +539,7 @@ Option 3"
                    formData.dropdownItems.some(d => !d.statement || !d.correctAnswer || d.options.filter(opt => opt.trim()).length < 2)))
               }
             >
-              {isSubmitting ? 'Saving...' : (initialData ? "Update Question" : "Create Question")}
+              {initialData ? "Update Question" : "Create Question"}
             </Button>
           </div>
         </form>

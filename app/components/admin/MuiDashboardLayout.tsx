@@ -24,7 +24,7 @@ import {
 import NoSsr from '@mui/material/NoSsr';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 // Icons
 import {
@@ -39,7 +39,8 @@ import {
   TimerOutlined as TimerIcon,
   BarChart as BarChartIcon,
   Settings as SettingsIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 
 const drawerWidth: number = 240;
@@ -118,6 +119,7 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
   const [open, setOpen] = React.useState(false);
   const [initialized, setInitialized] = React.useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   // Initialize state after mounting
   React.useEffect(() => {
@@ -132,6 +134,22 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
   // Function to check if current path matches the navigation item
   const isActive = (path: string) => {
     return pathname === path || pathname.startsWith(`${path}/`);
+  };
+
+  // Sign out function
+  const handleSignOut = async () => {
+    try {
+      // Clear any auth tokens or session data
+      localStorage.removeItem('authToken');
+      sessionStorage.clear();
+      
+      // Redirect to home page
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Still redirect even if there's an error
+      router.push('/');
+    }
   };
 
   // Only render the full UI when initialized
@@ -205,6 +223,14 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
             </Link>
 
             <Divider sx={{ my: 1 }} />
+            
+            {/* Sign Out */}
+            <ListItemButton onClick={handleSignOut}>
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Sign Out" />
+            </ListItemButton>
             
             {/* Navigation */}
             <Link href="/" passHref style={{ textDecoration: 'none', color: 'inherit' }}>

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { ConfirmationModal } from '@/app/components/ui/confirmation-modal';
+import { Modal } from '@/app/components/ui/modal';
 import { QuestionForm } from '@/app/components/admin/QuestionFormEnhanced';
 import Link from 'next/link';
 import { Category, QuestionFormData } from '@/app/lib/types';
@@ -71,7 +72,11 @@ export default function TestManagePage() {
     updateQuestion: false,
     deleteQuestion: false,
     addCategory: false,
-    removeCategory: false
+    removeCategory: false,
+    togglePreview: {} as Record<string, boolean>, // Track by question ID
+    removeQuestion: {} as Record<string, boolean>, // Track by question ID
+    editQuestion: {} as Record<string, boolean>, // Track by question ID
+    removeCategoryFromTest: {} as Record<string, boolean> // Track by category ID
   });
   
   // Form states
@@ -208,31 +213,14 @@ export default function TestManagePage() {
     }
   }
 
-  async function addCategoryToTest(categoryId: string) {
-    try {
-      const response = await fetch(`/api/admin/tests/${testId}/categories`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          categoryId,
-          action: 'add'
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to add category to test');
-      
-      loadTestData();
-      setSuccess('Category added to test');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add category');
-    }
-  }
 
   async function removeCategoryFromTest(categoryId: string) {
     try {
+      setLoadingStates(prev => ({ 
+        ...prev, 
+        removeCategoryFromTest: { ...prev.removeCategoryFromTest, [categoryId]: true }
+      }));
+
       const response = await fetch(`/api/admin/tests/${testId}/categories`, {
         method: 'POST',
         headers: {
@@ -251,11 +239,18 @@ export default function TestManagePage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove category');
+    } finally {
+      setLoadingStates(prev => ({ 
+        ...prev, 
+        removeCategoryFromTest: { ...prev.removeCategoryFromTest, [categoryId]: false }
+      }));
     }
   }
 
   async function createQuestion(questionData: QuestionFormData) {
     try {
+      setLoadingStates(prev => ({ ...prev, createQuestion: true }));
+      
       const response = await fetch('/api/admin/questions', {
         method: 'POST',
         headers: {
@@ -276,12 +271,16 @@ export default function TestManagePage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create question');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, createQuestion: false }));
     }
   }
 
   async function updateQuestion(questionData: QuestionFormData) {
     try {
       if (!editingQuestion) return;
+      
+      setLoadingStates(prev => ({ ...prev, updateQuestion: true }));
       
       const response = await fetch(`/api/admin/questions/${editingQuestion.id}`, {
         method: 'PATCH',
@@ -299,11 +298,18 @@ export default function TestManagePage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update question');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, updateQuestion: false }));
     }
   }
 
   async function removeQuestionFromTest(questionId: string) {
     try {
+      setLoadingStates(prev => ({ 
+        ...prev, 
+        removeQuestion: { ...prev.removeQuestion, [questionId]: true }
+      }));
+
       const response = await fetch(`/api/admin/tests/${testId}/questions?questionId=${questionId}`, {
         method: 'DELETE'
       });
@@ -315,11 +321,21 @@ export default function TestManagePage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove question');
+    } finally {
+      setLoadingStates(prev => ({ 
+        ...prev, 
+        removeQuestion: { ...prev.removeQuestion, [questionId]: false }
+      }));
     }
   }
 
   async function toggleQuestionPreview(questionId: string, currentPreviewStatus: boolean) {
     try {
+      setLoadingStates(prev => ({ 
+        ...prev, 
+        togglePreview: { ...prev.togglePreview, [questionId]: true }
+      }));
+
       const response = await fetch(`/api/admin/questions/${questionId}/preview`, {
         method: 'PATCH',
         headers: {
@@ -348,6 +364,11 @@ export default function TestManagePage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update preview status');
+    } finally {
+      setLoadingStates(prev => ({ 
+        ...prev, 
+        togglePreview: { ...prev.togglePreview, [questionId]: false }
+      }));
     }
   }
 
@@ -376,9 +397,6 @@ export default function TestManagePage() {
     );
   }
 
-  const availableCategories = allCategories.filter(
-    cat => !test.category_ids?.includes(cat.id)
-  );
 
   return (
     <div className="p-6 space-y-6">
@@ -408,122 +426,36 @@ export default function TestManagePage() {
       {/* Test Details */}
       <Card>
         <CardContent className="p-6">
-          {isEditingTest ? (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Edit Test Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Title</label>
-                  <input
-                    type="text"
-                    value={testForm.title || ''}
-                    onChange={(e) => setTestForm({ ...testForm, title: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold">{test.title}</h2>
+              {test.description && <p className="text-gray-600 mt-1">{test.description}</p>}
+              {test.instructions && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <h4 className="text-sm font-semibold text-blue-800 mb-1">Test Instructions:</h4>
+                  <p className="text-sm text-blue-700 whitespace-pre-wrap">{test.instructions}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Time Limit (minutes)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="300"
-                    value={testForm.time_limit || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setTestForm({ 
-                        ...testForm, 
-                        time_limit: value === '' ? undefined : parseInt(value) || 1
-                      });
-                    }}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="60"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Default: 60 minutes (if left empty)
-                  </p>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
-                <textarea
-                  value={testForm.description || ''}
-                  onChange={(e) => setTestForm({ ...testForm, description: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  rows={3}
-                  placeholder="Brief description of the test"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Test Instructions</label>
-                <textarea
-                  value={testForm.instructions || ''}
-                  onChange={(e) => setTestForm({ ...testForm, instructions: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  rows={5}
-                  placeholder="Detailed instructions for test takers (e.g., time management tips, question format information, scoring criteria, etc.)"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  These instructions will be displayed to users before they start the test.
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="allow-backward-navigation"
-                  checked={testForm.allow_backward_navigation ?? true}
-                  onChange={(e) => setTestForm({ ...testForm, allow_backward_navigation: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <label htmlFor="allow-backward-navigation" className="text-sm font-medium text-gray-700">
-                  Allow backward navigation
-                </label>
-                <p className="text-xs text-gray-500 ml-2">
-                  When enabled, test takers can go back to previous questions
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={updateTest} 
-                  loading={loadingStates.updateTest}
-                  loadingText="Saving..."
-                >
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => setIsEditingTest(false)}>Cancel</Button>
+              )}
+              <div className="mt-3 flex gap-3">
+                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  {Math.round(test.time_limit / 60)} minutes
+                </span>
+                <span className={`text-sm px-2 py-1 rounded ${
+                  test.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {test.is_active ? 'Active' : 'Inactive'}
+                </span>
+                <span className={`text-sm px-2 py-1 rounded ${
+                  test.allow_backward_navigation !== false ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
+                }`}>
+                  {test.allow_backward_navigation !== false ? 'Backward Navigation: On' : 'Backward Navigation: Off'}
+                </span>
               </div>
             </div>
-          ) : (
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold">{test.title}</h2>
-                {test.description && <p className="text-gray-600 mt-1">{test.description}</p>}
-                {test.instructions && (
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <h4 className="text-sm font-semibold text-blue-800 mb-1">Test Instructions:</h4>
-                    <p className="text-sm text-blue-700 whitespace-pre-wrap">{test.instructions}</p>
-                  </div>
-                )}
-                <div className="mt-3 flex gap-3">
-                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    {Math.round(test.time_limit / 60)} minutes
-                  </span>
-                  <span className={`text-sm px-2 py-1 rounded ${
-                    test.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {test.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                  <span className={`text-sm px-2 py-1 rounded ${
-                    test.allow_backward_navigation !== false ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
-                  }`}>
-                    {test.allow_backward_navigation !== false ? 'Backward Navigation: On' : 'Backward Navigation: Off'}
-                  </span>
-                </div>
-              </div>
-              <Button variant="outline" onClick={() => setIsEditingTest(true)}>
-                Edit Test
-              </Button>
-            </div>
-          )}
+            <Button variant="outline" onClick={() => setIsEditingTest(true)}>
+              Edit Test
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -532,22 +464,6 @@ export default function TestManagePage() {
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Categories & Questions</h2>
           <div className="flex gap-2">
-            {availableCategories.length > 0 && (
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    addCategoryToTest(e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-                className="p-2 border border-gray-300 rounded-md"
-              >
-                <option value="">Add Existing Category</option>
-                {availableCategories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            )}
             <Button variant="outline" onClick={() => setIsCreatingCategory(true)}>
               Create New Category
             </Button>
@@ -617,6 +533,8 @@ export default function TestManagePage() {
               </div>
               <QuestionForm
                 categories={categories}
+                selectedCategoryId={selectedCategoryForQuestion}
+                isSubmitting={loadingStates.createQuestion}
                 onSubmit={createQuestion}
                 onCancel={() => {
                   setIsCreatingQuestion(false);
@@ -641,6 +559,7 @@ export default function TestManagePage() {
               <QuestionForm
                 initialData={editingQuestion}
                 categories={categories}
+                isSubmitting={loadingStates.updateQuestion}
                 onSubmit={updateQuestion}
                 onCancel={() => setEditingQuestion(null)}
               />
@@ -692,6 +611,7 @@ export default function TestManagePage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      loading={loadingStates.removeCategoryFromTest[category.id]}
                       onClick={() => {
                         setConfirmModal({
                           isOpen: true,
@@ -760,6 +680,7 @@ export default function TestManagePage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              loading={loadingStates.togglePreview[question.id]}
                               onClick={() => toggleQuestionPreview(question.id, question.is_preview || false)}
                               className={question.is_preview ? 'bg-blue-100 text-blue-700 border-blue-300' : ''}
                             >
@@ -770,12 +691,19 @@ export default function TestManagePage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              loading={loadingStates.editQuestion[question.id]}
                               onClick={async () => {
                                 // Close any other forms first
                                 setIsCreatingQuestion(false);
                                 setSelectedCategoryForQuestion(null);
                                 
                                 try {
+                                  // Set loading state for this specific question
+                                  setLoadingStates(prev => ({ 
+                                    ...prev, 
+                                    editQuestion: { ...prev.editQuestion, [question.id]: true }
+                                  }));
+                                  
                                   // Fetch full question details including answers/dropdown items
                                   const response = await fetch(`/api/admin/questions/${question.id}`);
                                   if (!response.ok) throw new Error('Failed to load question details');
@@ -799,6 +727,11 @@ export default function TestManagePage() {
                                 } catch (err) {
                                   console.error('Error loading question details:', err);
                                   setError('Failed to load question details for editing');
+                                } finally {
+                                  setLoadingStates(prev => ({ 
+                                    ...prev, 
+                                    editQuestion: { ...prev.editQuestion, [question.id]: false }
+                                  }));
                                 }
                               }}
                             >
@@ -809,6 +742,7 @@ export default function TestManagePage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              loading={loadingStates.removeQuestion[question.id]}
                               onClick={() => {
                                 setConfirmModal({
                                   isOpen: true,
@@ -832,6 +766,100 @@ export default function TestManagePage() {
           ))
         )}
       </div>
+
+      {/* Edit Test Modal */}
+      <Modal
+        isOpen={isEditingTest}
+        onClose={() => setIsEditingTest(false)}
+        title="Edit Test Details"
+        size="lg"
+      >
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Title</label>
+              <input
+                type="text"
+                value={testForm.title || ''}
+                onChange={(e) => setTestForm({ ...testForm, title: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Enter test title"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Time Limit (minutes)</label>
+              <input
+                type="number"
+                min="1"
+                max="300"
+                value={testForm.time_limit || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setTestForm({ 
+                    ...testForm, 
+                    time_limit: value === '' ? undefined : parseInt(value) || 1
+                  });
+                }}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="60"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Default: 60 minutes (if left empty)
+              </p>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Description</label>
+            <textarea
+              value={testForm.description || ''}
+              onChange={(e) => setTestForm({ ...testForm, description: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              rows={3}
+              placeholder="Brief description of the test"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Test Instructions</label>
+            <textarea
+              value={testForm.instructions || ''}
+              onChange={(e) => setTestForm({ ...testForm, instructions: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              rows={5}
+              placeholder="Detailed instructions for test takers (e.g., time management tips, question format information, scoring criteria, etc.)"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              These instructions will be displayed to users before they start the test.
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="allow-backward-navigation-modal"
+              checked={testForm.allow_backward_navigation ?? true}
+              onChange={(e) => setTestForm({ ...testForm, allow_backward_navigation: e.target.checked })}
+              className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
+            />
+            <label htmlFor="allow-backward-navigation-modal" className="text-sm font-medium text-gray-700">
+              Allow backward navigation
+            </label>
+            <p className="text-xs text-gray-500 ml-2">
+              When enabled, test takers can go back to previous questions
+            </p>
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button 
+              onClick={updateTest} 
+              loading={loadingStates.updateTest}
+              loadingText="Saving..."
+            >
+              Save Changes
+            </Button>
+            <Button variant="outline" onClick={() => setIsEditingTest(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Confirmation Modal */}
       <ConfirmationModal

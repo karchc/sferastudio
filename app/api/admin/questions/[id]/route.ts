@@ -16,62 +16,45 @@ export async function GET(
   try {
     const questionId = (await params).id;
     
-    // Load question
-    const questionRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${questionId}&select=*`, {
-      headers
-    });
+    // Load question with answers and dropdown items in parallel
+    const [questionRes, answersRes, dropdownRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${questionId}&select=*`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/answers?question_id=eq.${questionId}&order=position`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/dropdown_answers?question_id=eq.${questionId}&order=position`, { headers })
+    ]);
 
     if (!questionRes.ok) throw new Error('Failed to load question');
     const [questionData] = await questionRes.json();
     if (!questionData) throw new Error('Question not found');
 
-    // Load answers based on question type
+    // Process answers and dropdown items
     let fullQuestion = { ...questionData };
     
-    if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice') {
-      const answersRes = await fetch(`${SUPABASE_URL}/rest/v1/answers?question_id=eq.${questionId}&order=position`, {
-        headers
-      });
-      
-      if (answersRes.ok) {
-        const answers = await answersRes.json();
-        fullQuestion.answers = answers.map((a: any) => ({
-          id: a.id,
-          text: a.text,
-          isCorrect: a.is_correct,
-          position: a.position
-        }));
-      }
-    } else if (questionData.type === 'dropdown') {
-      const dropdownRes = await fetch(`${SUPABASE_URL}/rest/v1/dropdown_answers?question_id=eq.${questionId}&order=position`, {
-        headers
-      });
-      
-      if (dropdownRes.ok) {
-        const dropdownItems = await dropdownRes.json();
-        console.log('Loaded dropdown items for question:', questionId, dropdownItems);
-        fullQuestion.dropdownItems = dropdownItems.map((d: any) => ({
-          id: d.id,
-          statement: d.statement,
-          correctAnswer: d.correct_answer,
-          options: d.options,
-          position: d.position
-        }));
-      } else {
-        console.error('Failed to load dropdown items:', dropdownRes.status, await dropdownRes.text());
-        fullQuestion.dropdownItems = [];
-      }
+    if ((questionData.type === 'multiple_choice' || questionData.type === 'single_choice') && answersRes.ok) {
+      const answers = await answersRes.json();
+      fullQuestion.answers = answers.map((a: any) => ({
+        id: a.id,
+        text: a.text,
+        isCorrect: a.is_correct,
+        position: a.position
+      }));
+    } else if (questionData.type === 'dropdown' && dropdownRes.ok) {
+      const dropdownItems = await dropdownRes.json();
+      fullQuestion.dropdownItems = dropdownItems.map((d: any) => ({
+        id: d.id,
+        statement: d.statement,
+        correctAnswer: d.correct_answer,
+        options: d.options,
+        position: d.position
+      }));
     }
     
     // Map database fields to frontend fields
     const mappedQuestion = {
       ...fullQuestion,
-      mediaUrl: fullQuestion.media_url, // Map media_url to mediaUrl
-      category_id: fullQuestion.category_id // Keep for backwards compatibility
+      mediaUrl: fullQuestion.media_url,
+      category_id: fullQuestion.category_id
     };
-    
-    console.log('Question fetch - Original media_url:', fullQuestion.media_url);
-    console.log('Question fetch - Mapped mediaUrl:', mappedQuestion.mediaUrl);
     
     return NextResponse.json(mappedQuestion);
   } catch (error) {
