@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "Rollback instructions for the answer duplication fix:"
+echo ""
+echo "1. To see what changed:"
+echo "   git diff app/api/admin/questions/[id]/route.ts"
+echo ""
+echo "2. To rollback using the backup file:"
+echo "   cp app/api/admin/questions/[id]/route.ts.backup app/api/admin/questions/[id]/route.ts"
+echo ""
+echo "3. To rollback using git:"
+echo "   git checkout HEAD -- app/api/admin/questions/[id]/route.ts"
+echo ""
+echo "4. To remove the backup file after testing:"
+echo "   rm app/api/admin/questions/[id]/route.ts.backup"

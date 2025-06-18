@@ -1,0 +1,46 @@
+{
+  "startTime": "2025-06-18T07:33:24.779Z",
+  "processedQuestions": [],
+  "errors": [
+    {
+      "questionId": "018f1767-724b-4b4e-a6ef-0dcd5643e66c",
+      "questionText": "Choose the correct match to the statement.",
+      "error": "Upload failed: 400 - {\"statusCode\":\"403\",\"error\":\"Unauthorized\",\"message\":\"new row violates row-level security policy\"}",
+      "errorAt": "2025-06-18T07:33:28.367Z"
+    },
+    {
+      "questionId": "9705b732-bca8-4601-9d5d-86483c7894ce",
+      "questionText": "What is the primary focus of the Training workstream?",
+      "error": "Upload failed: 400 - {\"statusCode\":\"403\",\"error\":\"Unauthorized\",\"message\":\"new row violates row-level security policy\"}",
+      "errorAt": "2025-06-18T07:33:29.027Z"
+    },
+    {
+      "questionId": "440d1f5f-4254-4eb7-acd1-286f3864169d",
+      "questionText": "Which workstream is responsible for defining SAP security roles?",
+      "error": "Upload failed: 400 - {\"statusCode\":\"403\",\"error\":\"Unauthorized\",\"message\":\"new row violates row-level security policy\"}",
+      "errorAt": "2025-06-18T07:33:29.667Z"
+    },
+    {
+      "questionId": "9ac957cf-47dd-44ee-8e3f-243d2be975fc",
+      "questionText": "Is this a multiple question?",
+      "error": "Upload failed: 400 - {\"statusCode\":\"403\",\"error\":\"Unauthorized\",\"message\":\"new row violates row-level security policy\"}",
+      "errorAt": "2025-06-18T07:33:30.565Z"
+    },
+    {
+      "questionId": "833a8b8e-73be-4522-b1bc-445317f9baca",
+      "questionText": "Please choose the correct match for each statement",
+      "error": "Upload failed: 400 - {\"statusCode\":\"403\",\"error\":\"Unauthorized\",\"message\":\"new row violates row-level security policy\"}",
+      "errorAt": "2025-06-18T07:33:31.538Z"
+    },
+    {
+      "questionId": "0a78dc5e-82a6-4a29-b82d-0903bf38eee8",
+      "questionText": "What color is the sky?",
+      "error": "Upload failed: 400 - {\"statusCode\":\"403\",\"error\":\"Unauthorized\",\"message\":\"new row violates row-level security policy\"}",
+      "errorAt": "2025-06-18T07:33:32.426Z"
+    }
+  ],
+  "totalProcessed": 0,
+  "totalErrors": 6,
+  "endTime": "2025-06-18T07:33:32.526Z",
+  "duration": 7747
+}

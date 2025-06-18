@@ -159,8 +159,9 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
       localStorage.removeItem('authToken');
       sessionStorage.clear();
       
-      // Redirect to the path specified in the response
-      router.push(data.redirect || '/');
+      // Use window.location instead of router.push to force a full page reload
+      // This ensures all cached data (including profile) is cleared
+      window.location.href = data.redirect || '/';
     } catch (error) {
       console.error('Error signing out:', error);
       // Still redirect even if there's an error

@@ -52,6 +52,7 @@ export default function EditQuestionPage() {
   }
 
   async function handleSubmit(formData: QuestionFormData) {
+    console.log('EditQuestionPage - Submitting form data:', formData);
     setSubmitting(true);
     setError(null);
     
@@ -64,14 +65,24 @@ export default function EditQuestionPage() {
         body: JSON.stringify(formData)
       });
 
+      console.log('EditQuestionPage - Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('EditQuestionPage - Error response:', errorData);
         throw new Error(errorData.error || 'Failed to update question');
       }
+      
+      const result = await response.json();
+      console.log('EditQuestionPage - Success response:', result);
+      
+      // Show success message before redirecting
+      alert('Question updated successfully!');
       
       // Redirect back to questions list
       router.push('/admin/questions');
     } catch (err) {
+      console.error('EditQuestionPage - Error during submit:', err);
       setError(err instanceof Error ? err.message : 'Failed to update question');
       setSubmitting(false);
     }

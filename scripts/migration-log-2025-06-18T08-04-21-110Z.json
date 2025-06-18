@@ -1,0 +1,58 @@
+{
+  "startTime": "2025-06-18T08:04:06.486Z",
+  "processedQuestions": [
+    {
+      "questionId": "018f1767-724b-4b4e-a6ef-0dcd5643e66c",
+      "questionText": "Choose the correct match to the statement.",
+      "originalSize": 83594,
+      "newUrl": "https://gezlcxtprkcceizadvre.supabase.co/storage/v1/object/public/question-media/question-018f1767-724b-4b4e-a6ef-0dcd5643e66c-581a9df784afa0fb73d7c0deef3478a3.png",
+      "fileName": "question-018f1767-724b-4b4e-a6ef-0dcd5643e66c-581a9df784afa0fb73d7c0deef3478a3.png",
+      "processedAt": "2025-06-18T08:04:10.769Z"
+    },
+    {
+      "questionId": "9705b732-bca8-4601-9d5d-86483c7894ce",
+      "questionText": "What is the primary focus of the Training workstream?",
+      "originalSize": 83594,
+      "newUrl": "https://gezlcxtprkcceizadvre.supabase.co/storage/v1/object/public/question-media/question-9705b732-bca8-4601-9d5d-86483c7894ce-581a9df784afa0fb73d7c0deef3478a3.png",
+      "fileName": "question-9705b732-bca8-4601-9d5d-86483c7894ce-581a9df784afa0fb73d7c0deef3478a3.png",
+      "processedAt": "2025-06-18T08:04:11.898Z"
+    },
+    {
+      "questionId": "440d1f5f-4254-4eb7-acd1-286f3864169d",
+      "questionText": "Which workstream is responsible for defining SAP security roles?",
+      "originalSize": 83594,
+      "newUrl": "https://gezlcxtprkcceizadvre.supabase.co/storage/v1/object/public/question-media/question-440d1f5f-4254-4eb7-acd1-286f3864169d-581a9df784afa0fb73d7c0deef3478a3.png",
+      "fileName": "question-440d1f5f-4254-4eb7-acd1-286f3864169d-581a9df784afa0fb73d7c0deef3478a3.png",
+      "processedAt": "2025-06-18T08:04:13.434Z"
+    },
+    {
+      "questionId": "9ac957cf-47dd-44ee-8e3f-243d2be975fc",
+      "questionText": "Is this a multiple question?",
+      "originalSize": 6411610,
+      "newUrl": "https://gezlcxtprkcceizadvre.supabase.co/storage/v1/object/public/question-media/question-9ac957cf-47dd-44ee-8e3f-243d2be975fc-b6146899689c25aa175823674e4ba90a.png",
+      "fileName": "question-9ac957cf-47dd-44ee-8e3f-243d2be975fc-b6146899689c25aa175823674e4ba90a.png",
+      "processedAt": "2025-06-18T08:04:16.292Z"
+    },
+    {
+      "questionId": "833a8b8e-73be-4522-b1bc-445317f9baca",
+      "questionText": "Please choose the correct match for each statement",
+      "originalSize": 1509638,
+      "newUrl": "https://gezlcxtprkcceizadvre.supabase.co/storage/v1/object/public/question-media/question-833a8b8e-73be-4522-b1bc-445317f9baca-aa74cfa0870727566a4d7c7d4d6bc3cd.png",
+      "fileName": "question-833a8b8e-73be-4522-b1bc-445317f9baca-aa74cfa0870727566a4d7c7d4d6bc3cd.png",
+      "processedAt": "2025-06-18T08:04:18.873Z"
+    },
+    {
+      "questionId": "0a78dc5e-82a6-4a29-b82d-0903bf38eee8",
+      "questionText": "What color is the sky?",
+      "originalSize": 860766,
+      "newUrl": "https://gezlcxtprkcceizadvre.supabase.co/storage/v1/object/public/question-media/question-0a78dc5e-82a6-4a29-b82d-0903bf38eee8-d4a4c27c9dcb93b2d75c1c3bcdd32089.png",
+      "fileName": "question-0a78dc5e-82a6-4a29-b82d-0903bf38eee8-d4a4c27c9dcb93b2d75c1c3bcdd32089.png",
+      "processedAt": "2025-06-18T08:04:21.009Z"
+    }
+  ],
+  "errors": [],
+  "totalProcessed": 6,
+  "totalErrors": 0,
+  "endTime": "2025-06-18T08:04:21.110Z",
+  "duration": 14624
+}

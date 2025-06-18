@@ -179,27 +179,79 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
     handleDropdownItemChange(id, 'options', options);
   };
 
+  // Image upload state
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   // Image upload handlers
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // For now, we'll use a simple base64 data URL
-      // In production, you'd upload to a cloud storage service
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        setFormData(prev => ({ ...prev, mediaUrl: dataUrl }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setImageUploading(true);
+    setImageError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const result = await response.json();
+      setFormData(prev => ({ ...prev, mediaUrl: result.url }));
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setImageError(error instanceof Error ? error.message : 'Upload failed');
+    } finally {
+      setImageUploading(false);
     }
   };
 
-  const removeImage = () => {
+  const removeImage = async () => {
+    if (formData.mediaUrl && formData.mediaUrl.includes('/storage/v1/object/public/question-media/')) {
+      try {
+        // Extract filename from URL for deletion
+        const urlParts = formData.mediaUrl.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        
+        await fetch(`/api/admin/upload-image?fileName=${fileName}`, {
+          method: 'DELETE'
+        });
+      } catch (error) {
+        console.error('Error deleting image from storage:', error);
+        // Continue with removal from form even if storage deletion fails
+      }
+    }
     setFormData(prev => ({ ...prev, mediaUrl: '' }));
+    setImageError(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation check
+    if (formData.type === "single_choice" || formData.type === "multiple_choice") {
+      const validAnswers = formData.answers?.filter(a => a.text.trim() !== '') || [];
+      const hasCorrectAnswer = formData.answers?.some(a => a.isCorrect) || false;
+      
+      if (validAnswers.length < 2) {
+        alert("Please provide at least 2 answers.");
+        return;
+      }
+      
+      if (!hasCorrectAnswer) {
+        alert("Please select at least one correct answer.");
+        return;
+      }
+    }
     
     // Clean up form data before submitting
     const cleanedFormData = { ...formData };
@@ -212,6 +264,7 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
       }));
     }
     
+    console.log('Submitting question data:', cleanedFormData);
     onSubmit(cleanedFormData);
   };
 
@@ -240,34 +293,56 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
               Question Image (Optional)
             </label>
             
+            {/* Error Message */}
+            {imageError && (
+              <div className="mb-3 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm">
+                {imageError}
+              </div>
+            )}
+            
             {formData.mediaUrl ? (
               <div className="space-y-3">
                 {/* Image Preview */}
                 <div className="relative inline-block">
                   <img 
-                    src={formData.mediaUrl} 
+                    src={formData.mediaUrl.startsWith('data:image/') ? 
+                      formData.mediaUrl : 
+                      formData.mediaUrl} 
                     alt="Question image" 
                     className="max-w-xs max-h-48 object-contain border border-gray-300 rounded-lg"
                   />
                   <button
                     type="button"
                     onClick={removeImage}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    disabled={imageUploading}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors disabled:opacity-50"
                     title="Remove image"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
                 
+                {/* Image Info */}
+                {formData.mediaUrl.startsWith('data:image/') && (
+                  <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                    ⚠️ This is a base64 image (legacy format). Consider replacing with a file upload for better performance.
+                  </div>
+                )}
+                
                 {/* Replace Image Button */}
                 <div>
-                  <label className="inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200 transition-colors">
+                  <label className={`inline-flex items-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${
+                    imageUploading 
+                      ? 'bg-gray-100 border-gray-300 cursor-not-allowed' 
+                      : 'bg-gray-100 border-gray-300 hover:bg-gray-200'
+                  }`}>
                     <Upload className="h-4 w-4 mr-2" />
-                    Replace Image
+                    {imageUploading ? 'Uploading...' : 'Replace Image'}
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
                       onChange={handleImageUpload}
+                      disabled={imageUploading}
                       className="hidden"
                     />
                   </label>
@@ -275,23 +350,38 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
               </div>
             ) : (
               /* Upload Button */
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                <label className="cursor-pointer">
+              <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                imageUploading 
+                  ? 'border-blue-300 bg-blue-50' 
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}>
+                <label className={imageUploading ? 'cursor-not-allowed' : 'cursor-pointer'}>
                   <div className="space-y-2">
-                    <ImageIcon className="h-12 w-12 mx-auto text-gray-400" />
+                    {imageUploading ? (
+                      <div className="animate-spin h-12 w-12 mx-auto border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                    ) : (
+                      <ImageIcon className="h-12 w-12 mx-auto text-gray-400" />
+                    )}
                     <div className="text-sm text-gray-600">
-                      <span className="font-medium text-blue-600 hover:text-blue-500">
-                        Click to upload
-                      </span> or drag and drop
+                      {imageUploading ? (
+                        <span className="text-blue-600">Uploading image...</span>
+                      ) : (
+                        <>
+                          <span className="font-medium text-blue-600 hover:text-blue-500">
+                            Click to upload
+                          </span> or drag and drop
+                        </>
+                      )}
                     </div>
                     <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, GIF, WebP up to 5MB
                     </p>
                   </div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
                     onChange={handleImageUpload}
+                    disabled={imageUploading}
                     className="hidden"
                   />
                 </label>
