@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { SupabaseClient, User } from '@supabase/supabase-js';
-import { createClientSupabase } from './auth-client';
+import { getSupabaseClient } from './supabase-client';
 
 // Types for our auth context
 type AuthContextType = {
@@ -20,29 +20,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Create a provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [supabase] = useState(() => createClientSupabase());
+  const [supabase] = useState(() => getSupabaseClient());
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Effect to handle auth state changes
   useEffect(() => {
-    // Check active session
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
-        
-        // If we have a user, check if they're an admin
-        if (session?.user) {
-          await checkAdminStatus(session.user.id);
-        }
-      } catch (error) {
-        console.error('Error checking session:', error);
-      } finally {
+    if (!supabase || !mounted) return;
+    
+    let cleanup = true;
+    let initialLoadingTimeout: NodeJS.Timeout;
+
+    // Timeout to prevent infinite loading - give more time for token reconstruction
+    initialLoadingTimeout = setTimeout(() => {
+      if (cleanup) {
         setLoading(false);
       }
-    };
+    }, 6000);
 
     // Check admin status
     const checkAdminStatus = async (userId: string) => {
@@ -54,15 +55,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
           
         if (error) throw error;
-        setIsAdmin(!!data?.is_admin);
+        if (cleanup) {
+          setIsAdmin(!!data?.is_admin);
+        }
       } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
+        if (cleanup) {
+          setIsAdmin(false);
+        }
       }
     };
 
+    // First, refresh the session to ensure we have the latest token
+    supabase.auth.refreshSession().then(({ data: { session }, error }) => {
+      if (cleanup && session) {
+        setUser(session.user);
+        checkAdminStatus(session.user.id);
+        setLoading(false);
+        clearTimeout(initialLoadingTimeout);
+      }
+    });
+
     // Set up subscription to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!cleanup) return;
+      
+      // Clear the initial loading timeout since we got an auth event
+      clearTimeout(initialLoadingTimeout);
+      
       setUser(session?.user || null);
       
       if (session?.user) {
@@ -71,16 +90,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
       }
       
+      // Always set loading to false when we get an auth state change
       setLoading(false);
     });
 
-    checkSession();
+    // Try to get initial session with timeout
+    const checkInitialSession = async () => {
+      try {
+        
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Session check timeout')), 3000);
+        });
+        
+        // Race between getSession and timeout
+        const sessionPromise = supabase.auth.getSession();
+        
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+        
+        
+        if (cleanup) {
+          if (session) {
+            setUser(session.user);
+            await checkAdminStatus(session.user.id);
+          } else {
+            setUser(null);
+            setIsAdmin(false);
+          }
+          
+          setLoading(false);
+          clearTimeout(initialLoadingTimeout);
+        }
+      } catch (error) {
+        
+        // If timeout, try alternative method
+        if (error && (error as Error).message === 'Session check timeout') {
+          
+          // Get user from storage directly as fallback
+          try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            
+            if (cleanup) {
+              if (user) {
+                setUser(user);
+                await checkAdminStatus(user.id);
+              } else {
+                setUser(null);
+                setIsAdmin(false);
+              }
+            }
+          } catch (fallbackError) {
+          }
+        }
+        
+        if (cleanup) {
+          setLoading(false);
+          clearTimeout(initialLoadingTimeout);
+        }
+      }
+    };
+    
+    // Run the check immediately
+    checkInitialSession();
+    
 
     // Cleanup subscription
     return () => {
+      cleanup = false;
+      clearTimeout(initialLoadingTimeout);
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, mounted]);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
@@ -93,7 +176,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
     } catch (error) {
-      console.error('Error signing in:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -116,7 +198,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
     } catch (error) {
-      console.error('Error signing up:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -132,7 +213,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setIsAdmin(false);
     } catch (error) {
-      console.error('Error signing out:', error);
       throw error;
     } finally {
       setLoading(false);

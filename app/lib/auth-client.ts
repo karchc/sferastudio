@@ -1,17 +1,7 @@
-import { createBrowserClient } from '@supabase/ssr'
-
-let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
+import { getSupabaseClient } from './supabase-client'
 
 export function createClientSupabase() {
-  // Return existing client if already created to prevent multiple instances
-  if (supabaseClient) return supabaseClient
-  
-  supabaseClient = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  
-  return supabaseClient
+  return getSupabaseClient()
 }
 
 export async function signUp(email: string, password: string, fullName: string) {
@@ -32,12 +22,16 @@ export async function signUp(email: string, password: string, fullName: string) 
 }
 
 export async function signIn(email: string, password: string) {
+  console.log('[Auth Client] Creating Supabase client...')
   const supabase = createClientSupabase()
   
+  console.log('[Auth Client] Calling signInWithPassword...')
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
+  
+  console.log('[Auth Client] Sign in response:', { hasUser: !!data?.user, error: error?.message })
   
   return { data, error }
 }

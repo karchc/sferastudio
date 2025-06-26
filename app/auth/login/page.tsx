@@ -33,22 +33,16 @@ function LoginForm() {
           setSuccess('Check your email for the magic link!')
         }
       } else {
+        console.log('[Login] Starting sign in...')
         const { data, error } = await signIn(email, password)
+        console.log('[Login] Sign in result:', { user: data?.user?.email, error: error?.message })
         
         if (error) {
           setError(error.message)
         } else if (data.user) {
-          // Check if user is admin to redirect appropriately
-          const response = await fetch('/api/auth/profile')
-          const profile = await response.json()
-          
-          if (redirectUrl) {
-            router.push(redirectUrl)
-          } else if (profile.is_admin) {
-            router.push('/admin')
-          } else {
-            router.push('/dashboard')
-          }
+          console.log('[Login] Redirecting to dashboard...')
+          // Redirect immediately to dashboard
+          router.push('/dashboard')
         }
       }
     } catch (err) {

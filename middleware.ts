@@ -8,8 +8,6 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  console.log('Middleware triggered for request:', request.url)
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -60,9 +58,7 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.refreshSession()
   
   // Check auth status - use getUser() for security
-  console.log('Checking user authentication status...')
   const { data: { user }, error } = await supabase.auth.getUser()
-  console.log('User:', user)
   
   // Define protected routes
   const protectedRoutes = ['/dashboard', '/profile', '/admin', '/protected']
