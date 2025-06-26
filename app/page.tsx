@@ -8,6 +8,7 @@ import { BookOpen, Trophy, Target, Clock, Users, CheckCircle, ArrowRight, Zap, A
 import { Button } from "./components/ui/button";
 import { PurchaseModal } from "./components/ui/purchase-modal";
 import { AuthRequiredModal } from "./components/ui/auth-required-modal";
+import { useAuth } from "./lib/auth-context";
 
 interface Test {
   id: string;
@@ -21,8 +22,7 @@ interface Test {
 
 export default function Home() {
   const router = useRouter();
-  const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const { user, profile, loading: authLoading } = useAuth();
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasingTestId, setPurchasingTestId] = useState<string | null>(null);
@@ -33,50 +33,10 @@ export default function Home() {
 
   useEffect(() => {
     let isMounted = true;
-    let loadDataTimeout: NodeJS.Timeout;
-    let loadingStatus = {
-      sessionStarted: false,
-      sessionCompleted: false,
-      testsStarted: false,
-      testsCompleted: false,
-      startTime: Date.now()
-    };
 
-    async function loadData() {
-      console.log('🚀 Homepage: Loading data...');
-      
+    async function loadTests() {
       try {
-        // Fetch session from API
-        loadingStatus.sessionStarted = true;
-        console.log('📡 Fetching session...');
-        const sessionStart = performance.now();
-        const sessionResponse = await fetch('/api/auth/session');
-        const sessionData = await sessionResponse.json();
-        
-        if (!isMounted) return;
-        setSession(sessionData.session);
-        loadingStatus.sessionCompleted = true;
-        console.log(`✅ Session loaded in ${(performance.now() - sessionStart).toFixed(2)}ms`);
-        
-        // Fetch profile if user is logged in
-        if (sessionData.session?.user) {
-          try {
-            const profileResponse = await fetch('/api/auth/profile');
-            if (profileResponse.ok) {
-              const profileData = await profileResponse.json();
-              if (isMounted) {
-                setProfile(profileData);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-          }
-        }
-
-        // Fetch tests from API
-        loadingStatus.testsStarted = true;
         console.log('📡 Fetching tests...');
-        const testsStart = performance.now();
         const testsResponse = await fetch('/api/tests/public');
         
         if (!isMounted) return;
@@ -86,74 +46,24 @@ export default function Home() {
         } else {
           const testsData = await testsResponse.json();
           setTests(testsData || []);
-          loadingStatus.testsCompleted = true;
-          console.log(`✅ Loaded ${testsData?.length || 0} tests in ${(performance.now() - testsStart).toFixed(2)}ms`);
+          console.log(`✅ Loaded ${testsData?.length || 0} tests`);
         }
       } catch (error) {
-        console.error("Error loading data:", error);
-        console.log('🔍 Loading status at error:', loadingStatus);
+        console.error("Error loading tests:", error);
       } finally {
         if (isMounted) {
           setLoading(false);
-          const totalTime = Date.now() - loadingStatus.startTime;
-          console.log(`✅ Homepage: Data loading complete in ${totalTime}ms`);
-          console.log('🔍 Final loading status:', loadingStatus);
         }
       }
     }
 
-    // Add timeout to prevent infinite loading
-    // loadDataTimeout = setTimeout(() => {
-    //   if (loading && isMounted) {
-    //     console.error('❌ Homepage: Loading timeout reached - showing partial data');
-    //     console.log('🔍 Loading status at timeout:', {
-    //       ...loadingStatus,
-    //       timeElapsed: Date.now() - loadingStatus.startTime,
-    //       currentSession: session,
-    //       currentTestsCount: tests.length
-    //     });
-    //     setLoading(false);
-    //   }
-    // }, 15000); // 15 second timeout
-
-    loadData();
+    loadTests();
 
     return () => {
       isMounted = false;
-      // clearTimeout(loadDataTimeout);
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Add debug helpers to window (outside useEffect to avoid recreation)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).debugHomepage = {
-        clearCache: () => {
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.reload();
-        },
-        reloadData: async () => {
-          setLoading(true);
-          try {
-            const sessionResponse = await fetch('/api/auth/session');
-            const sessionData = await sessionResponse.json();
-            setSession(sessionData.session);
-            
-            const testsResponse = await fetch('/api/tests/public');
-            const testsData = await testsResponse.json();
-            setTests(testsData || []);
-          } catch (error) {
-            console.error('Debug reload error:', error);
-          } finally {
-            setLoading(false);
-          }
-        },
-        currentState: () => ({ session, tests: tests.length, loading })
-      };
-      console.log('🛠️ Debug tools available: window.debugHomepage');
-    }
-  }, [session, tests.length, loading]); // This is fine for debug tools
 
   const handlePurchase = (testId: string) => {
     const test = tests.find(t => t.id === testId);
@@ -161,7 +71,7 @@ export default function Home() {
 
     setSelectedTest(test);
 
-    if (!session) {
+    if (!user) {
       // User not logged in, show auth modal
       setShowAuthModal(true);
       return;
@@ -264,7 +174,7 @@ export default function Home() {
     router.push(`/preview-test/${testId}`);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -348,7 +258,7 @@ export default function Home() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in-up delay-800">
-                {session ? (
+                {user ? (
                   <>
                     <Link
                       href="/test"
@@ -617,7 +527,7 @@ export default function Home() {
           <p className="text-xl text-white opacity-90 mb-8">
             Join thousands of professionals who have successfully passed their exams with Test Engine
           </p>
-          {!session && (
+          {!user && (
             <Link
               href="/auth/signup"
               className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-bold rounded-md text-[#0B1F3A] bg-white hover:bg-[#F6F7FA] transition-all transform hover:scale-105 shadow-lg"

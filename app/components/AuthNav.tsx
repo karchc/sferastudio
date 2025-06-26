@@ -13,68 +13,12 @@ interface Profile {
 }
 
 export default function AuthNav() {
-  const { user, signOut, loading } = useAuth()
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const { user, profile, signOut, loading } = useAuth()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [profileLoading, setProfileLoading] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
 
-
-
-
-  useEffect(() => {
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
-
-    // Fetch user profile when user changes
-    const loadProfile = async () => {
-      if (!user) {
-        setProfile(null);
-        setProfileLoading(false);
-        return;
-      }
-
-      setProfileLoading(true);
-
-      // Set a timeout to prevent infinite loading
-      timeoutId = setTimeout(() => {
-        if (isMounted) {
-          console.warn('Profile fetch timeout - using email as fallback');
-          setProfileLoading(false);
-        }
-      }, 5000); // 5 second timeout
-
-      try {
-        const profileResponse = await fetch('/api/auth/profile', {
-          headers: {
-            'Cache-Control': 'max-age=60' // Cache for 1 minute
-          }
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (profileResponse.ok && isMounted) {
-          const profileData = await profileResponse.json();
-          setProfile(profileData);
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      } finally {
-        if (isMounted) {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    loadProfile();
-
-    return () => {
-      isMounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [user])
 
   // Close dropdown when clicking outside
   useEffect(() => {
