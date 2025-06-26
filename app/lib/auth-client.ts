@@ -1,8 +1,6 @@
-import { getSupabaseClient } from './supabase-client'
+import { createClientSupabase } from './supabase'
 
-export function createClientSupabase() {
-  return getSupabaseClient()
-}
+export { createClientSupabase }
 
 export async function signUp(email: string, password: string, fullName: string) {
   const supabase = createClientSupabase()

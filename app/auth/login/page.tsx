@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { signIn, signInWithMagicLink } from '../../lib/auth-client'
+import { useAuth } from '../../lib/auth-context'
+import { signInWithMagicLink } from '../../lib/auth-client'
 import { Button } from '@/app/components/ui/button'
 
 function LoginForm() {
@@ -16,6 +17,24 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectUrl = searchParams.get('redirect')
+  const { signIn, user, loading: authLoading } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      const destination = redirectUrl || '/dashboard'
+      router.push(destination)
+    }
+  }, [user, authLoading, router, redirectUrl])
+
+  // Show loading if auth is still loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,15 +53,13 @@ function LoginForm() {
         }
       } else {
         console.log('[Login] Starting sign in...')
-        const { data, error } = await signIn(email, password)
-        console.log('[Login] Sign in result:', { user: data?.user?.email, error: error?.message })
-        
-        if (error) {
-          setError(error.message)
-        } else if (data.user) {
-          console.log('[Login] Redirecting to dashboard...')
-          // Redirect immediately to dashboard
-          router.push('/dashboard')
+        try {
+          await signIn(email, password)
+          console.log('[Login] Sign in successful, redirect will happen via useEffect')
+          // Redirect will happen automatically via useEffect when user state updates
+        } catch (signInError: any) {
+          console.log('[Login] Sign in error:', signInError.message)
+          setError(signInError.message)
         }
       }
     } catch (err) {

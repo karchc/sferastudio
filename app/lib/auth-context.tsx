@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { SupabaseClient, User } from '@supabase/supabase-js';
-import { getSupabaseClient } from './supabase-client';
+import { createClientSupabase } from './supabase';
 
 // Types for our auth context
 type AuthContextType = {
@@ -20,203 +20,115 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Create a provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [supabase] = useState(() => getSupabaseClient());
+  const [supabase] = useState(() => createClientSupabase());
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
-  // Handle mounting
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Check admin status
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', userId)
+        .single();
+        
+      if (error) throw error;
+      setIsAdmin(!!data?.is_admin);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  };
 
   // Effect to handle auth state changes
   useEffect(() => {
-    if (!supabase || !mounted) return;
-    
-    let cleanup = true;
-    let initialLoadingTimeout: NodeJS.Timeout;
+    let isMounted = true;
 
-    // Timeout to prevent infinite loading - give more time for token reconstruction
-    initialLoadingTimeout = setTimeout(() => {
-      if (cleanup) {
-        setLoading(false);
-      }
-    }, 6000);
-
-    // Check admin status
-    const checkAdminStatus = async (userId: string) => {
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', userId)
-          .single();
-          
-        if (error) throw error;
-        if (cleanup) {
-          setIsAdmin(!!data?.is_admin);
-        }
-      } catch (error) {
-        if (cleanup) {
-          setIsAdmin(false);
-        }
-      }
-    };
-
-    // First, refresh the session to ensure we have the latest token
-    supabase.auth.refreshSession().then(({ data: { session }, error }) => {
-      if (cleanup && session) {
-        setUser(session.user);
-        checkAdminStatus(session.user.id);
-        setLoading(false);
-        clearTimeout(initialLoadingTimeout);
-      }
-    });
-
-    // Set up subscription to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!cleanup) return;
-      
-      // Clear the initial loading timeout since we got an auth event
-      clearTimeout(initialLoadingTimeout);
-      
-      setUser(session?.user || null);
-      
-      if (session?.user) {
-        await checkAdminStatus(session.user.id);
-      } else {
-        setIsAdmin(false);
-      }
-      
-      // Always set loading to false when we get an auth state change
-      setLoading(false);
-    });
-
-    // Try to get initial session with timeout
-    const checkInitialSession = async () => {
-      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        // Create a timeout promise
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session check timeout')), 3000);
-        });
-        
-        // Race between getSession and timeout
-        const sessionPromise = supabase.auth.getSession();
-        
-        const { data: { session }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any;
-        
-        
-        if (cleanup) {
-          if (session) {
+        if (isMounted) {
+          if (session?.user) {
             setUser(session.user);
             await checkAdminStatus(session.user.id);
           } else {
             setUser(null);
             setIsAdmin(false);
           }
-          
           setLoading(false);
-          clearTimeout(initialLoadingTimeout);
         }
       } catch (error) {
-        
-        // If timeout, try alternative method
-        if (error && (error as Error).message === 'Session check timeout') {
-          
-          // Get user from storage directly as fallback
-          try {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            
-            if (cleanup) {
-              if (user) {
-                setUser(user);
-                await checkAdminStatus(user.id);
-              } else {
-                setUser(null);
-                setIsAdmin(false);
-              }
-            }
-          } catch (fallbackError) {
-          }
-        }
-        
-        if (cleanup) {
+        console.error('Error getting session:', error);
+        if (isMounted) {
+          setUser(null);
+          setIsAdmin(false);
           setLoading(false);
-          clearTimeout(initialLoadingTimeout);
         }
       }
     };
-    
-    // Run the check immediately
-    checkInitialSession();
-    
 
-    // Cleanup subscription
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+      
+      if (session?.user) {
+        setUser(session.user);
+        await checkAdminStatus(session.user.id);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+      
+      setLoading(false);
+    });
+
+    // Get initial session
+    getInitialSession();
+
+    // Cleanup
     return () => {
-      cleanup = false;
-      clearTimeout(initialLoadingTimeout);
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase, mounted]);
+  }, [supabase]);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) throw error;
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) throw error;
+    // Auth state change will be handled by the listener
   };
 
   // Sign up with email and password
   const signUp = async (email: string, password: string, fullName: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          full_name: fullName,
         },
-      });
-      
-      if (error) throw error;
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+      },
+    });
+    
+    if (error) throw error;
+    // Auth state change will be handled by the listener
   };
 
   // Sign out
   const signOut = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      setIsAdmin(false);
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    // Auth state change will be handled by the listener
   };
 
   // Provide the auth context to children components

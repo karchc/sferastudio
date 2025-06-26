@@ -54,6 +54,11 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // Don't run auth checks on callback route
+  if (request.nextUrl.pathname.startsWith('/auth/callback')) {
+    return response
+  }
+
   // Refresh session if exists
   await supabase.auth.refreshSession()
   

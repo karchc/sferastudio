@@ -2,13 +2,16 @@
 
 import { AuthProvider } from '../lib/auth-context';
 import MaterialUIProvider from './MaterialUIProvider';
+import AuthErrorBoundary from './AuthErrorBoundary';
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <MaterialUIProvider>
-      <AuthProvider>
-        {children}
-      </AuthProvider>
+      <AuthErrorBoundary>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </AuthErrorBoundary>
     </MaterialUIProvider>
   );
 }

@@ -1,17 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useAuth } from '../lib/auth-context'
 import AuthNav from './AuthNav'
 
 export default function AuthNavWrapper() {
-  const [mounted, setMounted] = useState(false)
+  const { loading } = useAuth()
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // During SSR and initial client render, show loading state
-  if (!mounted) {
+  // During initial auth loading, show loading state
+  if (loading) {
     return (
       <nav className="bg-white shadow-lg border-b-2 border-[#3EB3E7]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
