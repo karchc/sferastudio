@@ -300,6 +300,15 @@ const OptimizedQuestionCard = memo(function QuestionCard({
       <div className="mb-6">
         <div className="text-lg font-bold mb-1">Question {question.position || ''}:</div>
         <div className="text-lg">{processedQuestion.text}</div>
+        {question.mediaUrl && (
+          <div className="mt-4">
+            <img 
+              src={question.mediaUrl} 
+              alt="Question illustration" 
+              className="max-w-full h-auto rounded-md shadow-sm"
+            />
+          </div>
+        )}
       </div>
       
       {renderQuestionContent()}

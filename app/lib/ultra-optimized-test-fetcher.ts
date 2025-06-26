@@ -496,6 +496,7 @@ export async function fetchTestDataUltra(testId: string): Promise<{
     const questionsWithAnswers = questions.map(question => {
       return {
         ...question,
+        mediaUrl: question.media_url, // Map database field to frontend field
         answers: answersByQuestionId[question.id] || []
       };
     });

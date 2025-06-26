@@ -98,6 +98,7 @@ export async function GET(
         id: question.id,
         text: question.text,
         type: question.type,
+        mediaUrl: question.media_url,
         difficulty: question.difficulty || 'medium',
         points: question.points || 1,
         categoryId: question.category_id,

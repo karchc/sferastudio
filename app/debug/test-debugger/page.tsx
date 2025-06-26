@@ -969,6 +969,15 @@ export default function TestDebuggerPage() {
                         </span>
                       </div>
                       <p className="mt-2">{question.text}</p>
+                      {question.mediaUrl && (
+                        <div className="mt-4">
+                          <img 
+                            src={question.mediaUrl} 
+                            alt="Question illustration" 
+                            className="max-w-full h-auto rounded-md shadow-sm"
+                          />
+                        </div>
+                      )}
                       
                       <div className="mt-3">
                         <h4 className="text-sm font-medium text-gray-700">Question Type Debug</h4>

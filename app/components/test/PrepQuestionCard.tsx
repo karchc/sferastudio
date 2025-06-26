@@ -222,6 +222,15 @@ export default function PrepQuestionCard({
           </span>
         </div>
         <h2 className="text-xl font-medium">{question.text}</h2>
+        {question.mediaUrl && (
+          <div className="mt-4">
+            <img 
+              src={question.mediaUrl} 
+              alt="Question illustration" 
+              className="max-w-full h-auto rounded-md shadow-sm"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {renderQuestionContent()}

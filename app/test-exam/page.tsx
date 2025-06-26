@@ -518,6 +518,15 @@ export default function TestExamPage() {
               </div>
               <div className="mt-1 mb-4">
                 <p>{currentQuestion.text}</p>
+                {currentQuestion.mediaUrl && (
+                  <div className="mt-4">
+                    <img 
+                      src={currentQuestion.mediaUrl} 
+                      alt="Question illustration" 
+                      className="max-w-full h-auto rounded-md shadow-sm"
+                    />
+                  </div>
+                )}
                 {currentQuestion.type === 'multiple-choice' && (
                   <p className="text-sm mt-1">Note: There are {currentQuestion.answers?.filter((a: any) => a.is_correct).length || 0} correct answers to this question.</p>
                 )}

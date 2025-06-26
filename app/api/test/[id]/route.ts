@@ -24,6 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         id,
         text,
         type,
+        media_url,
         category_id,
         categories!inner (
           id,
@@ -71,6 +72,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       id: tq.questions.id,
       text: tq.questions.text,
       type: tq.questions.type,
+      mediaUrl: tq.questions.media_url,
       categoryId: tq.questions.category_id,
       category: tq.questions.categories,
       position: tq.position,
