@@ -79,7 +79,7 @@ export default function MaterialDashboard() {
   const [purchasingTestId, setPurchasingTestId] = useState<string | null>(null);
   const [testStatistics, setTestStatistics] = useState<Record<string, any>>({});
   const [hasFetchedTests, setHasFetchedTests] = useState(false);
-  const { user } = useAuth();
+  const { user, profile: authProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   
   // Helper function to format time in seconds to MM:SS
@@ -223,26 +223,14 @@ export default function MaterialDashboard() {
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Fetch user profile
-        const profileResponse = await fetch('/api/auth/profile');
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          setProfile(profileData);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (user) {
-      fetchUserData();
+    if (user && authProfile) {
+      setProfile(authProfile);
+      setLoading(false);
       fetchAvailableTests();
+    } else if (!authLoading && !user) {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, authProfile, authLoading]);
   
   // Redirect admin users to /admin and fetch purchased tests for regular users
   useEffect(() => {

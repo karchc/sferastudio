@@ -1,14 +1,14 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { SupabaseClient, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { createClientSupabase } from './supabase';
 
 // Types for our auth context
 type AuthContextType = {
   user: User | null;
   isAdmin: boolean;
-  supabase: SupabaseClient;
+  profile: any;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -23,21 +23,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [supabase] = useState(() => createClientSupabase());
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check admin status
-  const checkAdminStatus = async (userId: string) => {
+  // Check admin status and fetch profile
+  const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('*')
         .eq('id', userId)
         .single();
         
       if (error) throw error;
+      setProfile(data);
       setIsAdmin(!!data?.is_admin);
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('Error fetching user profile:', error);
+      setProfile(null);
       setIsAdmin(false);
     }
   };
@@ -54,9 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isMounted) {
           if (session?.user) {
             setUser(session.user);
-            await checkAdminStatus(session.user.id);
+            await fetchUserProfile(session.user.id);
           } else {
             setUser(null);
+            setProfile(null);
             setIsAdmin(false);
           }
           setLoading(false);
@@ -65,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Error getting session:', error);
         if (isMounted) {
           setUser(null);
+          setProfile(null);
           setIsAdmin(false);
           setLoading(false);
         }
@@ -77,9 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (session?.user) {
         setUser(session.user);
-        await checkAdminStatus(session.user.id);
+        await fetchUserProfile(session.user.id);
       } else {
         setUser(null);
+        setProfile(null);
         setIsAdmin(false);
       }
       
@@ -133,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Provide the auth context to children components
   return (
-    <AuthContext.Provider value={{ user, isAdmin, supabase, signIn, signUp, signOut, loading }}>
+    <AuthContext.Provider value={{ user, isAdmin, profile, signIn, signUp, signOut, loading }}>
       {children}
     </AuthContext.Provider>
   );
