@@ -25,6 +25,7 @@ import NoSsr from '@mui/material/NoSsr';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '../../lib/auth-context';
 
 // Icons
 import {
@@ -120,6 +121,7 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
   const [initialized, setInitialized] = React.useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { user, loading: authLoading, signOut } = useAuth();
 
   // Initialize state after mounting
   React.useEffect(() => {
@@ -136,32 +138,11 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
     return pathname === path || pathname.startsWith(`${path}/`);
   };
 
-  // Sign out function
+  // Sign out function using auth context
   const handleSignOut = async () => {
     try {
-      // Call the signout API route to properly sign out from Supabase
-      const response = await fetch('/auth/signout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to sign out');
-      }
-      
-      // Parse the JSON response
-      const data = await response.json();
-      
-      // Clear any local storage
-      localStorage.removeItem('authToken');
-      sessionStorage.clear();
-      
-      // Use window.location instead of router.push to force a full page reload
-      // This ensures all cached data (including profile) is cleared
-      window.location.href = data.redirect || '/';
+      await signOut();
+      router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
       // Still redirect even if there's an error
@@ -172,6 +153,11 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
   // Only render the full UI when initialized
   if (!initialized) {
     return <div style={{ padding: 20 }}>Initializing admin dashboard...</div>;
+  }
+
+  // Show loading state while auth is being determined
+  if (authLoading) {
+    return <div style={{ padding: 20 }}>Checking authentication...</div>;
   }
 
   return (
@@ -241,13 +227,25 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
 
             <Divider sx={{ my: 1 }} />
             
-            {/* Sign Out */}
-            <ListItemButton onClick={handleSignOut}>
-              <ListItemIcon>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary="Sign Out" />
-            </ListItemButton>
+            {/* Sign Out - only show when authenticated */}
+            {user && (
+              <ListItemButton onClick={handleSignOut}>
+                <ListItemIcon>
+                  <LogoutIcon />
+                </ListItemIcon>
+                <ListItemText primary="Sign Out" />
+              </ListItemButton>
+            )}
+            
+            {/* Show auth status for debugging */}
+            {!user && (
+              <ListItemButton disabled>
+                <ListItemIcon>
+                  <LogoutIcon color="disabled" />
+                </ListItemIcon>
+                <ListItemText primary="Not Authenticated" />
+              </ListItemButton>
+            )}
             
             {/* Navigation */}
             <Link href="/" passHref style={{ textDecoration: 'none', color: 'inherit' }}>

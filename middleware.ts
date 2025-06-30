@@ -59,10 +59,8 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Refresh session if exists
-  await supabase.auth.refreshSession()
-  
   // Check auth status - use getUser() for security
+  // Note: getUser() will automatically use the session from cookies
   const { data: { user }, error } = await supabase.auth.getUser()
   
   // Define protected routes

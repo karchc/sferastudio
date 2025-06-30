@@ -174,7 +174,9 @@ export default function Home() {
     router.push(`/preview-test/${testId}`);
   };
 
-  if (authLoading || loading) {
+  // Show loading state only for test data, not auth
+  // Auth loading is handled by the navigation component
+  if (loading && !authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -183,7 +185,7 @@ export default function Home() {
               Loading...
             </span>
           </div>
-          <p className="mt-4 text-lg">Loading...</p>
+          <p className="mt-4 text-lg">Loading tests...</p>
         </div>
       </div>
     );

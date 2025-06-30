@@ -49,51 +49,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (isMounted) {
-          if (session?.user) {
-            setUser(session.user);
-            await fetchUserProfile(session.user.id);
-          } else {
-            setUser(null);
-            setProfile(null);
-            setIsAdmin(false);
-          }
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error getting session:', error);
-        if (isMounted) {
-          setUser(null);
-          setProfile(null);
-          setIsAdmin(false);
-          setLoading(false);
-        }
-      }
-    };
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Set up auth state listener - this handles all auth events including INITIAL_SESSION
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
       
+      // Synchronous state updates as recommended by Supabase docs
       if (session?.user) {
         setUser(session.user);
-        await fetchUserProfile(session.user.id);
+        // Fetch profile asynchronously but don't block the auth state update
+        fetchUserProfile(session.user.id).catch(console.error);
       } else {
         setUser(null);
         setProfile(null);
         setIsAdmin(false);
       }
       
+      // Always set loading to false after any auth event
       setLoading(false);
     });
 
-    // Get initial session
-    getInitialSession();
+    // Get initial user state using getUser() as recommended by docs
+    // This is more reliable than getSession()
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      if (!isMounted) return;
+      
+      if (user && !error) {
+        setUser(user);
+        fetchUserProfile(user.id).catch(console.error);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+      }
+      setLoading(false);
+    }).catch((error) => {
+      console.error('Error getting user:', error);
+      if (isMounted) {
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setLoading(false);
+      }
+    });
 
     // Cleanup
     return () => {
