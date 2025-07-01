@@ -115,13 +115,20 @@ export default function MaterialDashboard() {
     }
   };
 
-  // Fetch available tests for purchase
+  // Fetch available tests for purchase (excluding already purchased)
   const fetchAvailableTests = async () => {
     try {
       const response = await fetch('/api/test');
       if (response.ok) {
         const data = await response.json();
-        setAvailableTests(data || []);
+        
+        // Filter out tests that the user has already purchased
+        const purchasedTestIds = purchasedTests.map(p => p.test?.id).filter(Boolean);
+        const unpurchasedTests = (data || []).filter((test: any) => 
+          !purchasedTestIds.includes(test.id)
+        );
+        
+        setAvailableTests(unpurchasedTests);
       }
     } catch (error) {
       console.error('Error fetching available tests:', error);
@@ -188,7 +195,7 @@ export default function MaterialDashboard() {
         const result = await response.json();
         setShowPurchaseModal(false);
         
-        // Refresh purchased tests
+        // Refresh purchased tests (this will also trigger fetchAvailableTests)
         fetchPurchasedTests();
         
         // Show success message
@@ -226,7 +233,6 @@ export default function MaterialDashboard() {
     if (user && authProfile) {
       setProfile(authProfile);
       setLoading(false);
-      fetchAvailableTests();
     } else if (!authLoading && !user) {
       setLoading(false);
     }
@@ -241,6 +247,13 @@ export default function MaterialDashboard() {
       fetchPurchasedTests();
     }
   }, [profile, router, hasFetchedTests]);
+  
+  // Fetch available tests after purchased tests are loaded
+  useEffect(() => {
+    if (!testsLoading && purchasedTests.length >= 0) {
+      fetchAvailableTests();
+    }
+  }, [purchasedTests, testsLoading]);
   
   const formatDate = (dateString: string) => {
     const options = { year: 'numeric' as const, month: 'short' as const, day: 'numeric' as const };
@@ -543,11 +556,6 @@ export default function MaterialDashboard() {
                         <Typography variant="h6" component="h3" fontWeight="medium" gutterBottom>
                           {test.title}
                         </Typography>
-                        <Chip 
-                          label={test.is_free ? 'FREE' : `$${test.price || 0}`}
-                          color={test.is_free ? 'success' : 'primary'}
-                          size="small"
-                        />
                       </Box>
                       
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -563,75 +571,39 @@ export default function MaterialDashboard() {
                     </CardContent>
                     
                     <Box sx={{ p: 2, pt: 0 }}>
-                      {test.is_free ? (
-                        <Stack spacing={1}>
-                          <Button 
-                            variant="outlined" 
-                            fullWidth
-                            onClick={() => handlePreviewTest(test.id)}
-                            disabled={previewingTestId === test.id}
-                          >
-                            {previewingTestId === test.id ? (
-                              <>
-                                <CircularProgress size={16} sx={{ mr: 1 }} />
-                                Loading...
-                              </>
-                            ) : (
-                              'Preview Test'
-                            )}
-                          </Button>
-                          <Button 
-                            variant="contained" 
-                            fullWidth
-                            startIcon={<ShoppingCartIcon />}
-                            onClick={() => handlePurchase(test)}
-                            disabled={purchasingTestId === test.id}
-                          >
-                            {purchasingTestId === test.id ? (
-                              <>
-                                <CircularProgress size={16} sx={{ mr: 1 }} />
-                                Loading...
-                              </>
-                            ) : (
-                              'Purchase Now'
-                            )}
-                          </Button>
-                        </Stack>
-                      ) : (
-                        <Stack spacing={1}>
-                          <Button 
-                            variant="outlined" 
-                            fullWidth
-                            onClick={() => handlePreviewTest(test.id)}
-                            disabled={previewingTestId === test.id}
-                          >
-                            {previewingTestId === test.id ? (
-                              <>
-                                <CircularProgress size={16} sx={{ mr: 1 }} />
-                                Loading...
-                              </>
-                            ) : (
-                              'Preview Test'
-                            )}
-                          </Button>
-                          <Button 
-                            variant="contained" 
-                            fullWidth
-                            startIcon={<ShoppingCartIcon />}
-                            onClick={() => handlePurchase(test)}
-                            disabled={purchasingTestId === test.id}
-                          >
-                            {purchasingTestId === test.id ? (
-                              <>
-                                <CircularProgress size={16} sx={{ mr: 1 }} />
-                                Adding...
-                              </>
-                            ) : (
-                              `Add to Library - Free`
-                            )}
-                          </Button>
-                        </Stack>
-                      )}
+                      <Stack spacing={1}>
+                        <Button 
+                          variant="outlined" 
+                          fullWidth
+                          onClick={() => handlePreviewTest(test.id)}
+                          disabled={previewingTestId === test.id}
+                        >
+                          {previewingTestId === test.id ? (
+                            <>
+                              <CircularProgress size={16} sx={{ mr: 1 }} />
+                              Loading...
+                            </>
+                          ) : (
+                            'Preview Test'
+                          )}
+                        </Button>
+                        <Button 
+                          variant="contained" 
+                          fullWidth
+                          startIcon={<ShoppingCartIcon />}
+                          onClick={() => handlePurchase(test)}
+                          disabled={purchasingTestId === test.id}
+                        >
+                          {purchasingTestId === test.id ? (
+                            <>
+                              <CircularProgress size={16} sx={{ mr: 1 }} />
+                              Adding...
+                            </>
+                          ) : (
+                            'Add to Library'
+                          )}
+                        </Button>
+                      </Stack>
                     </Box>
                   </Card>
               ))}

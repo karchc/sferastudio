@@ -10,7 +10,33 @@ Practice SAP allows users to:
 - Review test performance and analytics
 - Better prepare for certification exams
 
-## Recent Updates (June 2025)
+## Recent Updates (July 2025)
+
+### 250701-02 Dashboard "Buy More Tests" Section Improvements
+
+1. **Smart Test Filtering**
+   - **Before**: All tests showed in "Buy More Tests" including already purchased ones
+   - **After**: Only unpurchased tests appear in "Buy More Tests" section
+   - **Implementation**: Added filtering logic to exclude tests present in user's purchased list
+   - **User Experience**: Cleaner interface showing only relevant purchase options
+
+2. **Removed FREE Tag Display**
+   - **Simplified UI**: Removed price/FREE chips from test cards
+   - **Consistent Design**: All tests now have uniform appearance regardless of pricing
+   - **Button Update**: Changed "Add to Library - Free" to simply "Add to Library"
+   - **Cleaner Layout**: Better visual hierarchy without distracting tags
+
+3. **Automatic List Updates**
+   - **Dynamic Filtering**: Available tests refresh after purchased tests are loaded
+   - **Post-Purchase Update**: "Buy More Tests" automatically updates when a test is purchased
+   - **Seamless Transition**: Tests move from "Buy More Tests" to "Your Tests" immediately
+   - **Real-time Sync**: No page refresh needed after purchasing a test
+
+4. **Technical Implementation**
+   - **MaterialDashboard Component**: Updated `fetchAvailableTests` to filter by purchased test IDs
+   - **UseEffect Optimization**: Ensures available tests load after purchased tests data
+   - **State Management**: Proper dependency tracking for automatic updates
+   - **Code Cleanup**: Removed conditional rendering for free vs paid test logic
 
 ### 250701-01 Test Results Display & Answer Validation Fixes
 
