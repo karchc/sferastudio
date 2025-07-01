@@ -277,8 +277,11 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
     // Record if the answer is correct (for demo purposes and simple questions)
     let isCorrect = false;
     
-    if (['multiple-choice', 'single-choice', 'true-false'].includes(currentQuestion.type)) {
-      if (currentQuestion.type === 'multiple-choice') {
+    // Normalize question type (handle both underscore and hyphen)
+    const normalizedType = currentQuestion.type.replace(/_/g, '-');
+    
+    if (['multiple-choice', 'single-choice', 'true-false'].includes(normalizedType)) {
+      if (normalizedType === 'multiple-choice') {
         // For multiple choice, all correct answers must be selected
         const correctAnswerIds = (currentQuestion.answers || [])
           .filter((a: any) => a.isCorrect)
@@ -286,15 +289,29 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
           
         const userSelectedCorrectOnes = correctAnswerIds.every(id => answerId.includes(id));
         const userDidntSelectWrongOnes = answerId.every(id => 
-          correctAnswerIds.includes(id) || !((currentQuestion.answers || []).find((a: any) => a.id === id) as any)?.isCorrect
+          correctAnswerIds.includes(id)
         );
         
-        isCorrect = userSelectedCorrectOnes && userDidntSelectWrongOnes;
+        isCorrect = userSelectedCorrectOnes && userDidntSelectWrongOnes && answerId.length === correctAnswerIds.length;
+        
+        console.log('Multiple choice answer check:', {
+          correctAnswerIds,
+          userAnswerIds: answerId,
+          userSelectedCorrectOnes,
+          userDidntSelectWrongOnes,
+          isCorrect
+        });
       } else {
         // For single choice and true/false, check if the selected answer is correct
         if (answerId.length === 1) {
           const selectedAnswer = (currentQuestion.answers || []).find((a: any) => a.id === answerId[0]);
           isCorrect = (selectedAnswer as any)?.isCorrect || false;
+          
+          console.log('Single choice answer check:', {
+            selectedAnswerId: answerId[0],
+            selectedAnswer,
+            isCorrect
+          });
         }
       }
     } else {

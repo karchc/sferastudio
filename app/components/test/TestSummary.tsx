@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
-import Link from "next/link";
 
 interface TestSummaryProps {
   test: TestData;
@@ -119,6 +118,16 @@ export function TestSummary({
                   ? userAnswer.isCorrect 
                   : isAnswerCorrect(question, userAnswer);
                 
+                // Debug logging
+                console.log(`Question ${index + 1}:`, {
+                  questionId: question.id,
+                  questionType: question.type,
+                  userAnswer: userAnswer,
+                  storedIsCorrect: userAnswer?.isCorrect,
+                  calculatedIsCorrect: isAnswerCorrect(question, userAnswer),
+                  finalIsCorrect: isCorrect
+                });
+                
                 return (
                   <div 
                     key={question.id}
@@ -200,10 +209,50 @@ function isAnswerCorrect(question: Question, userAnswer?: UserAnswer): boolean {
     .filter((answer: any) => answer.isCorrect)
     .map((answer: any) => answer.id);
   
-  // If counts don't match, quick false
-  if (correctAnswerIds.length !== userAnswer.answers.length) return false;
+  // Debug logging
+  console.log('isAnswerCorrect debug:', {
+    questionType: question.type,
+    correctAnswerIds,
+    userAnswerIds: userAnswer.answers,
+    correctAnswerTypes: correctAnswerIds.map(id => typeof id),
+    userAnswerTypes: userAnswer.answers.map((id: any) => typeof id),
+    questionAnswers: question.answers
+  });
   
-  // Check if all user selected answers are correct
-  return correctAnswerIds.every((id: any) => userAnswer.answers.includes(id))
-    && userAnswer.answers.every((id: any) => correctAnswerIds.includes(id));
+  // Convert all IDs to strings for comparison (handle potential type mismatches)
+  const correctAnswerIdsStr = correctAnswerIds.map((id: any) => String(id));
+  const userAnswerIdsStr = userAnswer.answers.map((id: any) => String(id));
+  
+  // Normalize question type (handle both underscore and hyphen)
+  const normalizedType = question.type.replace(/_/g, '-');
+  
+  // Special handling for single-choice and true-false questions
+  if (normalizedType === 'single-choice' || normalizedType === 'true-false') {
+    // For single choice, just check if the selected answer is correct
+    if (userAnswerIdsStr.length === 1 && correctAnswerIdsStr.length === 1) {
+      const result = userAnswerIdsStr[0] === correctAnswerIdsStr[0];
+      console.log('Single choice comparison:', {
+        userAnswerId: userAnswerIdsStr[0],
+        correctAnswerId: correctAnswerIdsStr[0],
+        areEqual: result
+      });
+      return result;
+    }
+  }
+  
+  // For multiple-choice questions
+  if (normalizedType === 'multiple-choice') {
+    // If counts don't match, quick false
+    if (correctAnswerIdsStr.length !== userAnswerIdsStr.length) return false;
+    
+    // Sort both arrays for comparison
+    const sortedCorrect = [...correctAnswerIdsStr].sort();
+    const sortedUser = [...userAnswerIdsStr].sort();
+    
+    // Check if arrays are equal
+    return sortedCorrect.every((id, index) => id === sortedUser[index]);
+  }
+  
+  // For other question types, return false as we can't auto-determine correctness
+  return false;
 }
