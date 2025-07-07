@@ -1,4 +1,4 @@
-# Test Engine - Exam Preparation Platform
+# Practice SAP - Exam Preparation Platform
 
 This is a comprehensive exam preparation platform built with [Next.js](https://nextjs.org) and [Supabase](https://supabase.com), focusing on Business Tech and SAP exams.
 
@@ -9,6 +9,13 @@ Practice SAP allows users to:
 - Take practice tests with various question types
 - Review test performance and analytics
 - Better prepare for certification exams
+
+## Recent Updates (July 2025)
+
+### 250707 Branding Update
+- **Changed branding** from "Test Engine" to "Practice SAP" across all user-facing pages
+- Updated main landing page, admin dashboards, and navigation components
+- Brand name now consistent throughout the application
 
 ## Recent Updates (July 2025)
 

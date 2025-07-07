@@ -353,7 +353,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#0B1F3A] mb-4">
-              Why Choose Test Engine?
+              Why Choose Practice SAP?
             </h2>
             <p className="text-xl text-[#5C677D] max-w-3xl mx-auto">
               Everything you need to ace your certification exams
@@ -527,7 +527,7 @@ export default function Home() {
             Ready to Ace Your Certification?
           </h2>
           <p className="text-xl text-white opacity-90 mb-8">
-            Join thousands of professionals who have successfully passed their exams with Test Engine
+            Join thousands of professionals who have successfully passed their exams with Practice SAP
           </p>
           {!user && (
             <Link
@@ -546,7 +546,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">Test Engine</h3>
+              <h3 className="text-xl font-bold mb-4">Practice SAP</h3>
               <p className="text-gray-400">
                 Your trusted partner for certification exam preparation
               </p>
@@ -617,7 +617,7 @@ export default function Home() {
           </div>
           
           <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-            <p>&copy; 2024 Test Engine. All rights reserved.</p>
+            <p>&copy; 2024 Practice SAP. All rights reserved.</p>
           </div>
         </div>
       </footer>

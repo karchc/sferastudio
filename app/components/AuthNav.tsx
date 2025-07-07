@@ -53,7 +53,7 @@ export default function AuthNav() {
               <Link href="/" className="flex items-center">
                 <Image
                   src="/logo/logo.svg"
-                  alt="Test Engine Logo"
+                  alt="Practice SAP Logo"
                   width={150}
                   height={50}
                   className="mr-3 h-8 w-auto"
@@ -78,7 +78,7 @@ export default function AuthNav() {
             <Link href="/" className="flex items-center group">
               <Image
                 src="/logo/logo.svg"
-                alt="Test Engine Logo"
+                alt="Practice SAP Logo"
                 width={120}
                 height={30}
                 className="mr-3 h-8 w-auto transition-transform group-hover:scale-105"
