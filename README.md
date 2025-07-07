@@ -12,6 +12,13 @@ Practice SAP allows users to:
 
 ## Recent Updates (July 2025)
 
+### 250707-03 Test Completion & Results Enhancement
+- **Enhanced test completion summary**: Test name now prominently displayed in "Test Completed" overview
+- **Category-based performance breakdown**: Replaced useless "Question Types" with meaningful performance by category
+- **Comprehensive question review**: Each question now shows correct answers, explanations, and user's incorrect selections
+- **Fixed dropdown question validation**: Dropdown questions now properly validate and display correct/incorrect status
+- **Improved results accuracy**: Category performance percentages and overall scores now correctly reflect dropdown question results
+
 ### 250707-02 Navigation Improvements
 - **Simplified navigation**: Removed /test page and "My Tests" link from navbar dropdown
 - **Streamlined navbar dropdown**: Now only shows "Dashboard" and "Sign Out" for regular users
