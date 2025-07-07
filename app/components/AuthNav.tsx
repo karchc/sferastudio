@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../lib/auth-context'
-import { ChevronDown, BarChart3, BookOpen, LogOut } from 'lucide-react'
+import { ChevronDown, BarChart3, LogOut } from 'lucide-react'
 
 interface Profile {
   full_name: string
@@ -125,14 +125,6 @@ export default function AuthNav() {
                       >
                         <BarChart3 className="h-4 w-4 mr-3" />
                         Dashboard
-                      </Link>
-                      <Link
-                        href="/test"
-                        className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        <BookOpen className="h-4 w-4 mr-3" />
-                        My Tests
                       </Link>
                     </>
                   )}

@@ -12,7 +12,13 @@ Practice SAP allows users to:
 
 ## Recent Updates (July 2025)
 
-### 250707 Branding Update
+### 250707-02 Navigation Improvements
+- **Simplified navigation**: Removed /test page and "My Tests" link from navbar dropdown
+- **Streamlined navbar dropdown**: Now only shows "Dashboard" and "Sign Out" for regular users
+- **Enhanced preview test purchase flow**: Preview test completion page now uses proper modal-based purchase system instead of alerts
+- **Unified purchase experience**: All purchase buttons throughout the app now use consistent modal confirmation system
+
+### 250707-01 Branding Update
 - **Changed branding** from "Test Engine" to "Practice SAP" across all user-facing pages
 - Updated main landing page, admin dashboards, and navigation components
 - Brand name now consistent throughout the application

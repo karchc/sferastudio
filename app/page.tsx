@@ -263,7 +263,7 @@ export default function Home() {
                 {user ? (
                   <>
                     <Link
-                      href="/test"
+                      href="/dashboard"
                       className="group inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-bold rounded-lg text-white bg-[#3EB3E7] hover:bg-[#2da0d4] transition-all duration-300 transform hover:scale-105 hover:shadow-2xl relative overflow-hidden"
                     >
                       <span className="absolute inset-0 bg-gradient-to-r from-[#2da0d4] to-[#3EB3E7] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -506,17 +506,6 @@ export default function Home() {
             </div>
           )}
           
-          {tests.length > 0 && (
-            <div className="text-center mt-8">
-              <Link
-                href="/test"
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-              >
-                View All Tests
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </div>
-          )}
         </div>
       </section>
 
@@ -555,11 +544,6 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li>
-                  <Link href="/test" className="text-gray-400 hover:text-white transition-colors">
-                    All Tests
-                  </Link>
-                </li>
                 <li>
                   <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">
                     Dashboard
