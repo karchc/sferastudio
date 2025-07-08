@@ -67,8 +67,6 @@ export async function POST(request: NextRequest) {
         text: questionData.text,
         media_url: questionData.mediaUrl || null,
         category_id: questionData.categoryId,
-        difficulty: questionData.difficulty || 'medium',
-        points: questionData.points || 1,
         explanation: questionData.explanation || null
       })
     });

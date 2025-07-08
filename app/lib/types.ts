@@ -24,6 +24,7 @@ export interface Test {
   timeLimit: number; // in seconds
   categoryIds?: string[];
   categories?: Category[];
+  tag?: string;
   createdBy?: string;
   isActive: boolean;
   createdAt?: Date;
@@ -270,8 +271,6 @@ export interface QuestionFormData {
   type: QuestionType;
   mediaUrl?: string;
   categoryId: string;
-  difficulty?: 'easy' | 'medium' | 'hard';
-  points?: number;
   explanation?: string;
   answers?: Answer[];
   dropdownItems?: DropdownItem[];

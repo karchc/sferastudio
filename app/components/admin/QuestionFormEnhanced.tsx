@@ -24,8 +24,6 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
         text: initialData.text,
         mediaUrl: initialData.mediaUrl || '',
         categoryId: initialData.category_id || selectedCategoryId || categories[0]?.id || "",
-        difficulty: initialData.difficulty || 'medium',
-        points: initialData.points || 1,
         explanation: initialData.explanation || '',
         answers: initialData.answers,
         dropdownItems: initialData.dropdownItems
@@ -37,8 +35,6 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
       type: "single_choice",
       mediaUrl: '',
       categoryId: selectedCategoryId || categories[0]?.id || "",
-      difficulty: 'medium',
-      points: 1,
       explanation: '',
       answers: [
         { id: generateMockId(), text: "", isCorrect: false, position: 0 },
@@ -389,7 +385,7 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="type" className="block text-sm font-medium mb-1">
                 Question Type
@@ -431,39 +427,6 @@ export function QuestionForm({ initialData, categories, selectedCategoryId, onSu
                   </option>
                 )}
               </select>
-            </div>
-
-            <div>
-              <label htmlFor="difficulty" className="block text-sm font-medium mb-1">
-                Difficulty
-              </label>
-              <select
-                id="difficulty"
-                name="difficulty"
-                value={formData.difficulty}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="points" className="block text-sm font-medium mb-1">
-                Points
-              </label>
-              <input
-                id="points"
-                name="points"
-                type="number"
-                min="1"
-                max="10"
-                value={formData.points}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
             </div>
           </div>
 

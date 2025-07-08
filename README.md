@@ -10,6 +10,10 @@ Practice SAP allows users to:
 - Review test performance and analytics
 - Better prepare for certification exams
 
+## 📚 Documentation
+
+- **[Developer Guide](DEVELOPER_GUIDE.md)** - Comprehensive technical documentation for developers working on this project
+
 ## Recent Updates (July 2025)
 
 ### 250707-03 Test Completion & Results Enhancement

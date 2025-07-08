@@ -72,10 +72,13 @@ export function TestSummary({
                 <Clock className="h-5 w-5 text-blue-800" />
               </div>
               <p className="text-2xl font-bold text-blue-800">
-                {Math.floor(timeSpent / 60)}:{(timeSpent % 60).toString().padStart(2, '0')}
+                {(() => {
+                  const displayTime = Math.min(timeSpent, test.timeLimit);
+                  return `${Math.floor(displayTime / 60)}:${(displayTime % 60).toString().padStart(2, '0')}`;
+                })()}
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                {Math.round((timeSpent / test.timeLimit) * 100)}% of allowed time
+                {Math.min(Math.round((timeSpent / test.timeLimit) * 100), 100)}% of allowed time
               </p>
             </div>
             

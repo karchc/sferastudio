@@ -92,19 +92,6 @@ export function PurchaseModal({
                   {test.question_count || 25} questions
                 </span>
               </div>
-              
-              {test.categories && test.categories.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {test.categories.map((category) => (
-                    <span
-                      key={category.id}
-                      className="px-2 py-1 bg-[#3EB3E7] bg-opacity-10 text-[#3EB3E7] text-xs rounded-full"
-                    >
-                      {category.name}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
             
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 mb-6">

@@ -17,6 +17,7 @@ interface Test {
   time_limit: number;
   question_count?: number;
   is_active: boolean;
+  tag?: string;
   categories?: Array<{ id: string; name: string }>;
 }
 
@@ -450,9 +451,9 @@ export default function Home() {
                           {test.title}
                         </h3>
                       </div>
-                      {test.categories && test.categories.length > 0 && (
+                      {test.tag && (
                         <span className="inline-block px-3 py-1 text-xs font-medium text-[#0B1F3A] bg-[#B1E5D3] rounded-full">
-                          {test.categories[0].name}
+                          {test.tag}
                         </span>
                       )}
                     </div>

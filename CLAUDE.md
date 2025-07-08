@@ -1,8 +1,8 @@
-# Test Engine - Exam Preparation Platform
+# Practice SAP - Exam Preparation Platform
 
 ## Project Overview
 
-Test Engine is a comprehensive exam preparation platform focused on Business Tech and SAP exams. The platform allows users to create accounts, take practice tests, review their performance, and improve their test preparation based on past results, ultimately better preparing them for real-life certification exams.
+Practice SAP is a comprehensive exam preparation platform focused on Business Tech and SAP exams. The platform allows users to create accounts, take practice tests, review their performance, and improve their test preparation based on past results, ultimately better preparing them for real-life certification exams.
 
 ### Key Features
 
@@ -29,7 +29,7 @@ The database is structured around these core entities:
 
 - **Users/Profiles**: User account information
 - **Categories**: Subject areas for tests (e.g., "Programming", "Mathematics")
-- **Tests**: Test definitions with metadata
+- **Tests**: Test definitions with metadata and optional tags for organization
 - **Questions**: Various question types with their answers
 - **Test Sessions**: Records of user attempts at tests
 - **User Answers**: User responses to questions
@@ -59,10 +59,19 @@ The database is structured around these core entities:
 
 1. Admin logs in with elevated privileges
 2. Creates/edits categories
-3. Creates/edits tests
-4. Creates/edits questions of various types
+3. Creates/edits tests with optional tags for organization
+4. Creates/edits questions of various types using modal-based forms
 5. Assigns questions to tests
 6. Views analytics on test performance
+
+### Admin Interface Features
+
+The admin interface has been streamlined for better usability:
+
+- **Modal-Based Question Management**: Both creating new questions and editing existing questions use popup modals instead of inline forms
+- **Simplified Question Forms**: Removed complexity by eliminating difficulty and points fields, focusing on essential question properties
+- **Improved Navigation**: Cleaner test management interface with better visual organization of categories and questions
+- **Tag-Based Organization**: Tests can be organized using user-friendly tags for better classification and filtering
 
 ## Current Development Status
 
@@ -119,6 +128,37 @@ The system tracks:
 - Category-specific performance
 - Overall test scores
 - Historical performance trends
+
+## Test Organization System
+
+The platform uses a dual organization system:
+
+- **Categories**: Technical subject areas for internal organization (e.g., "Programming", "Mathematics")
+- **Tags**: User-friendly labels for test classification (e.g., "Beginner", "Advanced", "Mock Exam", "Certification Prep")
+
+### Tag System Features
+
+- **Homepage Display**: Test cards show tags instead of categories for better user experience
+- **Admin Management**: Administrators can assign tags to tests for improved organization
+- **Optional Field**: Tests can exist without tags, providing flexibility
+- **Visual Indicators**: Tags appear as colored pills in both test cards and admin interface
+
+### Recent Updates
+
+- **Purchase Modal Enhancement**: Preview test completion pages now use modal-based purchase system
+- **Test Summary Improvements**: 
+  - Shows test name in completion overview
+  - Displays category-based performance metrics instead of question types
+  - Includes correct answers and explanations in question breakdown
+  - Fixed dropdown question validation bug
+  - Fixed time display to cap at allocated time limit and percentage at 100%
+- **UI Simplification**: Removed /test page and simplified navigation to Dashboard/Sign Out only
+- **Tag System**: Added tag field to tests table with admin interface support
+- **Admin Interface Enhancements**:
+  - Converted question creation and editing forms to modal-based interface
+  - Removed difficulty and points fields from question management
+  - Streamlined question form layout and simplified admin workflows
+  - Improved user experience for managing questions in tests with many categories
 
 This context will be updated as the project evolves.
 

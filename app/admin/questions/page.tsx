@@ -220,15 +220,6 @@ export default function QuestionsPage() {
                         ) : (
                           <span className="px-2 py-0.5 bg-gray-100 text-gray-800 text-xs rounded-full">No Category</span>
                         )}
-                        {(question as any).difficulty && (
-                          <span className={`px-2 py-0.5 text-xs rounded-full ${
-                            (question as any).difficulty === 'hard' ? 'bg-red-100 text-red-800' :
-                            (question as any).difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {(question as any).difficulty}
-                          </span>
-                        )}
                         {question.test_questions && question.test_questions.length > 0 && (
                           <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs rounded-full">
                             Used in {question.test_questions.length} {question.test_questions.length === 1 ? 'test' : 'tests'}

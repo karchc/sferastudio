@@ -17,6 +17,7 @@ interface Test {
   instructions?: string;
   time_limit?: number;
   category_ids?: string[];
+  tag?: string;
   is_active?: boolean;
   allow_backward_navigation?: boolean;
 }
@@ -450,6 +451,11 @@ export default function TestManagePage() {
                 }`}>
                   {test.allow_backward_navigation !== false ? 'Backward Navigation: On' : 'Backward Navigation: Off'}
                 </span>
+                {test.tag && (
+                  <span className="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                    Tag: {test.tag}
+                  </span>
+                )}
               </div>
             </div>
             <Button variant="outline" onClick={() => setIsEditingTest(true)}>
@@ -517,55 +523,7 @@ export default function TestManagePage() {
           </Card>
         )}
 
-        {/* Create Question Form */}
-        {isCreatingQuestion && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Create New Question</h3>
-                <Button variant="outline" onClick={() => {
-                  setIsCreatingQuestion(false);
-                  setSelectedCategoryForQuestion(null);
-                  setEditingQuestion(null);
-                }}>
-                  Cancel
-                </Button>
-              </div>
-              <QuestionForm
-                categories={categories}
-                selectedCategoryId={selectedCategoryForQuestion}
-                isSubmitting={loadingStates.createQuestion}
-                onSubmit={createQuestion}
-                onCancel={() => {
-                  setIsCreatingQuestion(false);
-                  setSelectedCategoryForQuestion(null);
-                  setEditingQuestion(null);
-                }}
-              />
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Edit Question Form */}
-        {editingQuestion && (
-          <Card id="edit-question-form">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Edit Question</h3>
-                <Button variant="outline" onClick={() => setEditingQuestion(null)}>
-                  Cancel
-                </Button>
-              </div>
-              <QuestionForm
-                initialData={editingQuestion}
-                categories={categories}
-                isSubmitting={loadingStates.updateQuestion}
-                onSubmit={updateQuestion}
-                onCancel={() => setEditingQuestion(null)}
-              />
-            </CardContent>
-          </Card>
-        )}
 
         {/* Categories List */}
         {categories.length === 0 ? (
@@ -657,16 +615,6 @@ export default function TestManagePage() {
                               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                 {question.type.replace(/_/g, ' ')}
                               </span>
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                question.difficulty === 'hard' ? 'bg-red-100 text-red-800' :
-                                question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-green-100 text-green-800'
-                              }`}>
-                                {question.difficulty}
-                              </span>
-                              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                                {question.points} {question.points === 1 ? 'point' : 'points'}
-                              </span>
                               {question.is_preview && (
                                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                   Preview
@@ -713,17 +661,6 @@ export default function TestManagePage() {
                                   
                                   // Set the editing question with full data
                                   setEditingQuestion(fullQuestion);
-                                  
-                                  // Scroll to edit form after a short delay
-                                  setTimeout(() => {
-                                    const editForm = document.getElementById('edit-question-form');
-                                    if (editForm) {
-                                      editForm.scrollIntoView({ 
-                                        behavior: 'smooth', 
-                                        block: 'center' 
-                                      });
-                                    }
-                                  }, 100);
                                 } catch (err) {
                                   console.error('Error loading question details:', err);
                                   setError('Failed to load question details for editing');
@@ -819,6 +756,19 @@ export default function TestManagePage() {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium mb-2">Tag</label>
+            <input
+              type="text"
+              value={testForm.tag || ''}
+              onChange={(e) => setTestForm({ ...testForm, tag: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="e.g., Beginner, Advanced, Mock Exam, Certification Prep"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Optional tag for organizing and filtering tests
+            </p>
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-2">Test Instructions</label>
             <textarea
               value={testForm.instructions || ''}
@@ -858,6 +808,50 @@ export default function TestManagePage() {
               Cancel
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Create Question Modal */}
+      <Modal
+        isOpen={isCreatingQuestion}
+        onClose={() => {
+          setIsCreatingQuestion(false);
+          setSelectedCategoryForQuestion(null);
+          setEditingQuestion(null);
+        }}
+        title="Create New Question"
+        size="xl"
+      >
+        <div className="p-6">
+          <QuestionForm
+            categories={categories}
+            selectedCategoryId={selectedCategoryForQuestion}
+            isSubmitting={loadingStates.createQuestion}
+            onSubmit={createQuestion}
+            onCancel={() => {
+              setIsCreatingQuestion(false);
+              setSelectedCategoryForQuestion(null);
+              setEditingQuestion(null);
+            }}
+          />
+        </div>
+      </Modal>
+
+      {/* Edit Question Modal */}
+      <Modal
+        isOpen={!!editingQuestion}
+        onClose={() => setEditingQuestion(null)}
+        title="Edit Question"
+        size="xl"
+      >
+        <div className="p-6">
+          <QuestionForm
+            initialData={editingQuestion}
+            categories={categories}
+            isSubmitting={loadingStates.updateQuestion}
+            onSubmit={updateQuestion}
+            onCancel={() => setEditingQuestion(null)}
+          />
         </div>
       </Modal>
 
