@@ -66,21 +66,33 @@ export default function EditQuestionPage() {
       });
 
       console.log('EditQuestionPage - Response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('EditQuestionPage - Error response:', errorData);
-        throw new Error(errorData.error || 'Failed to update question');
-      }
       
       const result = await response.json();
-      console.log('EditQuestionPage - Success response:', result);
+      console.log('EditQuestionPage - Response data:', result);
+
+      if (!response.ok) {
+        console.error('EditQuestionPage - Error response:', result);
+        throw new Error(result.error || 'Failed to update question');
+      }
       
-      // Show success message before redirecting
-      alert('Question updated successfully!');
-      
-      // Redirect back to questions list
-      router.push('/admin/questions');
+      // Check if the update was successful (question update succeeded)
+      if (result.success && result.questionUpdateSuccess) {
+        // Show success message with any warnings
+        let message = 'Question updated successfully!';
+        if (result.warnings && result.warnings.length > 0) {
+          message += `\n\nNote: ${result.warnings.join(', ')}`;
+        }
+        if (!result.answerUpdateSuccess) {
+          message += '\n\nQuestion saved but some answers may need manual review.';
+        }
+        
+        alert(message);
+        
+        // Redirect back to questions list
+        router.push('/admin/questions');
+      } else {
+        throw new Error(result.error || 'Failed to update question');
+      }
     } catch (err) {
       console.error('EditQuestionPage - Error during submit:', err);
       setError(err instanceof Error ? err.message : 'Failed to update question');

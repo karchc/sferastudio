@@ -8,6 +8,7 @@ import { BookOpen, Trophy, Target, Clock, Users, CheckCircle, ArrowRight, Zap, A
 import { Button } from "./components/ui/button";
 import { PurchaseModal } from "./components/ui/purchase-modal";
 import { AuthRequiredModal } from "./components/ui/auth-required-modal";
+import { Footer } from "./components/Footer";
 import { useAuth } from "./lib/auth-context";
 
 interface Test {
@@ -349,84 +350,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-[#F6F7FA]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#0B1F3A] mb-4">
-              Why Choose Practice SAP?
-            </h2>
-            <p className="text-xl text-[#5C677D] max-w-3xl mx-auto">
-              Everything you need to ace your certification exams
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#3EB3E7] bg-opacity-20 text-[#3EB3E7] rounded-lg mb-4">
-                <BookOpen className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Real Exam Questions</h3>
-              <p className="text-[#5C677D]">
-                Practice with actual exam questions from SAP and Business Tech certifications
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#B1E5D3] bg-opacity-50 text-[#0B1F3A] rounded-lg mb-4">
-                <Target className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Detailed Analytics</h3>
-              <p className="text-[#5C677D]">
-                Track your performance, identify weak areas, and improve with targeted practice
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#3EB3E7] bg-opacity-20 text-[#3EB3E7] rounded-lg mb-4">
-                <Clock className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Timed Practice</h3>
-              <p className="text-[#5C677D]">
-                Simulate real exam conditions with timed tests and automatic submission
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#B1E5D3] bg-opacity-50 text-[#0B1F3A] rounded-lg mb-4">
-                <Trophy className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Progress Tracking</h3>
-              <p className="text-[#5C677D]">
-                Monitor your improvement over time with comprehensive progress reports
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#3EB3E7] bg-opacity-20 text-[#3EB3E7] rounded-lg mb-4">
-                <Users className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Expert Content</h3>
-              <p className="text-[#5C677D]">
-                Questions curated by certified professionals and industry experts
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#B1E5D3] bg-opacity-50 text-[#0B1F3A] rounded-lg mb-4">
-                <CheckCircle className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Instant Feedback</h3>
-              <p className="text-[#5C677D]">
-                Get immediate results and explanations for every question
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Available Tests Section */}
-      <section className="py-16">
+      <section className="py-16 bg-[#F6F7FA]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#0B1F3A] mb-4">
@@ -510,6 +435,82 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Features Section */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#0B1F3A] mb-4">
+              Why Choose Practice SAP?
+            </h2>
+            <p className="text-xl text-[#5C677D] max-w-3xl mx-auto">
+              Everything you need to ace your certification exams
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#3EB3E7] bg-opacity-20 text-[#3EB3E7] rounded-lg mb-4">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Real Exam Questions</h3>
+              <p className="text-[#5C677D]">
+                Practice with actual exam questions from SAP and Business Tech certifications
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#B1E5D3] bg-opacity-50 text-[#0B1F3A] rounded-lg mb-4">
+                <Target className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Detailed Analytics</h3>
+              <p className="text-[#5C677D]">
+                Track your performance, identify weak areas, and improve with targeted practice
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#3EB3E7] bg-opacity-20 text-[#3EB3E7] rounded-lg mb-4">
+                <Clock className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Timed Practice</h3>
+              <p className="text-[#5C677D]">
+                Simulate real exam conditions with timed tests and automatic submission
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#B1E5D3] bg-opacity-50 text-[#0B1F3A] rounded-lg mb-4">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Progress Tracking</h3>
+              <p className="text-[#5C677D]">
+                Monitor your improvement over time with comprehensive progress reports
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#3EB3E7] bg-opacity-20 text-[#3EB3E7] rounded-lg mb-4">
+                <Users className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Expert Content</h3>
+              <p className="text-[#5C677D]">
+                Questions curated by certified professionals and industry experts
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#B1E5D3] bg-opacity-50 text-[#0B1F3A] rounded-lg mb-4">
+                <CheckCircle className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Instant Feedback</h3>
+              <p className="text-[#5C677D]">
+                Get immediate results and explanations for every question
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 bg-gradient-to-r from-[#0B1F3A] to-[#1a3454]">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
@@ -532,80 +533,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#0B1F3A] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4">Practice SAP</h3>
-              <p className="text-gray-400">
-                Your trusted partner for certification exam preparation
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/profile" className="text-gray-400 hover:text-white transition-colors">
-                    Profile
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Resources</h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/prep-exam" className="text-gray-400 hover:text-white transition-colors">
-                    Prep Exam
-                  </Link>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Study Guide
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    FAQs
-                  </a>
-                </li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Connect</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Support
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Terms & Privacy
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-            <p>&copy; 2024 Practice SAP. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Modals */}
       <PurchaseModal

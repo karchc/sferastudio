@@ -291,13 +291,33 @@ export default function TestManagePage() {
         body: JSON.stringify(questionData)
       });
       
-      if (!response.ok) throw new Error('Failed to update question');
+      const result = await response.json();
       
-      loadTestData();
-      setEditingQuestion(null);
-      setSuccess('Question updated successfully');
-      setTimeout(() => setSuccess(null), 3000);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update question');
+      }
+      
+      // Check if the update was successful (question update succeeded)
+      if (result.success && result.questionUpdateSuccess) {
+        loadTestData();
+        setEditingQuestion(null);
+        
+        // Show success message with any warnings
+        let message = 'Question updated successfully';
+        if (result.warnings && result.warnings.length > 0) {
+          message += ` (Note: ${result.warnings.join(', ')})`;
+        }
+        if (!result.answerUpdateSuccess) {
+          message += ' - Question saved but some answers may need manual review';
+        }
+        
+        setSuccess(message);
+        setTimeout(() => setSuccess(null), 5000); // Show longer for warnings
+      } else {
+        throw new Error(result.error || 'Failed to update question');
+      }
     } catch (err) {
+      console.error('Error updating question:', err);
       setError(err instanceof Error ? err.message : 'Failed to update question');
     } finally {
       setLoadingStates(prev => ({ ...prev, updateQuestion: false }));

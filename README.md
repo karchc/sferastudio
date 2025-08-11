@@ -14,6 +14,29 @@ Practice SAP allows users to:
 
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Comprehensive technical documentation for developers working on this project
 
+## Recent Updates (August 2025)
+
+### 250811-02 Dynamic Footer Link & Landing Page Improvements
+- **Dynamic "Prep Exam" Footer Link**: Footer link now adapts based on user authentication status and role
+  - **Not logged in**: Redirects to `/auth/login`
+  - **Admin users**: Redirects to `/admin/dashboard`
+  - **Regular users**: Redirects to `/dashboard`
+- **Reusable Footer Component**: Created `/app/components/Footer.tsx` for consistent footer across all pages
+- **Updated All Pages**: Replaced inline footer code with centralized Footer component across:
+  - Homepage, Contact, Support, FAQs, Study Guide, Terms & Privacy pages
+- **Landing Page Section Reordering**: "Available Practice Tests" now appears before "Why Choose Practice SAP?"
+  - Improved conversion funnel by showing products immediately after hero section
+  - Maintained visual appeal with alternating background colors
+  - Better user engagement with tests prominently featured
+
+### 250811-01 Question Update Error Handling Enhancement
+- **Fixed "Failed to Update Question" Error**: Resolved issue where question updates showed error but actually succeeded
+- **Improved Error Handling**: Separated critical (question) from non-critical (answer) operations in API
+- **Enhanced JSON Parsing**: Added robust JSON parsing protection to handle empty responses and parsing errors
+- **Better User Feedback**: Questions now show proper success messages with optional warnings for minor issues
+- **Comprehensive Logging**: Added emoji-tagged logging for better debugging and monitoring
+- **Response Format Enhancement**: API now returns detailed status including warnings and partial success states
+
 ## Recent Updates (July 2025)
 
 ### 250707-03 Test Completion & Results Enhancement
@@ -560,6 +583,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ### Components
 - `app/components/` - UI components organized by feature area
   - `AuthNav.tsx` - Navigation bar with brand styling and user dropdown menu
+  - `Footer.tsx` - Dynamic footer component with smart "Prep Exam" link routing
   - `ConditionalNav.tsx` - Controls navbar visibility (removed)
   - `test/QuestionCard.tsx` - Enhanced question display with flag system
   - `test/TestContainer.tsx` - Test state management with navbar control
@@ -1117,6 +1141,109 @@ useEffect(() => {
 - Smooth rotation animation for chevron icon
 - Proper event cleanup to prevent memory leaks
 
+### Enhanced Question Update System
+The question update system has been redesigned to provide accurate feedback and handle errors gracefully:
+
+```typescript
+// Improved API structure with separated concerns
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const questionId = (await params).id;
+  let questionUpdateSuccess = false;
+  let answerUpdateSuccess = false;
+  const warnings: string[] = [];
+  
+  try {
+    // Step 1: Update main question (critical operation)
+    const questionRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${questionId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        type: questionData.type,
+        text: questionData.text,
+        media_url: questionData.mediaUrl || null,
+        category_id: questionData.categoryId,
+        explanation: questionData.explanation || null
+      })
+    });
+
+    if (!questionRes.ok) {
+      throw new Error(`Failed to update question: ${questionRes.status}`);
+    }
+    
+    questionUpdateSuccess = true;
+    
+    // Step 2: Update answers (non-critical - don't fail entire operation)
+    try {
+      // Answer processing with comprehensive error handling
+      // ... answer update logic with JSON parsing protection
+    } catch (answerError) {
+      warnings.push(`Answer processing warning: ${answerError.message}`);
+    }
+    
+    // Return success with detailed status
+    return NextResponse.json({
+      success: true,
+      questionUpdateSuccess,
+      answerUpdateSuccess,
+      ...(warnings.length > 0 && { warnings })
+    });
+    
+  } catch (error) {
+    // If question update succeeded but something else failed
+    if (questionUpdateSuccess) {
+      return NextResponse.json({
+        success: true,
+        questionUpdateSuccess: true,
+        answerUpdateSuccess: false,
+        warnings: [`Critical error during answer processing: ${error.message}`]
+      });
+    }
+    
+    // Question update failed - real failure
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+```
+
+**Key Improvements:**
+- **Separated Critical Operations**: Question updates vs answer processing treated differently
+- **Granular Status Tracking**: Individual success flags for different operations
+- **JSON Parsing Protection**: Safe parsing with fallback handling for empty responses
+- **Warning System**: Non-critical issues reported as warnings instead of failures
+- **Enhanced Frontend Handling**: Success messages with contextual warnings displayed to users
+- **Improved Logging**: Emoji-tagged console output for better debugging experience
+
+### Dynamic Footer System
+The footer component provides intelligent navigation based on user authentication:
+
+```typescript
+// Dynamic footer with smart routing
+export function Footer() {
+  const { user, profile } = useAuth();
+
+  const prepExamHref = !user 
+    ? "/auth/login"           // Not logged in → Login page
+    : profile?.is_admin 
+      ? "/admin/dashboard"     // Admin user → Admin Dashboard  
+      : "/dashboard";          // Regular user → User Dashboard
+
+  return (
+    <footer className="bg-[#0B1F3A] text-white py-12">
+      {/* Footer content with dynamic Prep Exam link */}
+      <Link href={prepExamHref} className="text-gray-400 hover:text-white transition-colors">
+        Prep Exam
+      </Link>
+    </footer>
+  );
+}
+```
+
+**Features:**
+- **Authentication-Aware**: Different routes based on login status
+- **Role-Based Routing**: Admin users get different destination than regular users
+- **Centralized Component**: Single footer used across all pages for consistency
+- **Seamless Integration**: Uses existing auth context for user state management
+
 ### Brand Colors Reference
 ```css
 /* Primary Colors */
@@ -1159,6 +1286,18 @@ The hero section includes custom CSS animations defined in `globals.css`:
 - Test dropdown option creation with multi-line textarea input
 - Check modal functionality (keyboard navigation, backdrop clicks, mobile layout)
 - Ensure proper form validation for each question type
+- **Dynamic Footer Testing**:
+  - Test "Prep Exam" link behavior for non-authenticated users (should go to login)
+  - Verify admin users are directed to admin dashboard
+  - Check regular users go to user dashboard
+  - Test footer displays consistently across all pages (homepage, contact, support, FAQs, study guide, terms & privacy)
+- **Question Update System Testing**:
+  - Test question updates show proper success messages instead of false errors
+  - Verify partial success scenarios display warnings correctly
+  - Check that questions are actually updated even when warnings are present
+  - Test JSON parsing protection with various response scenarios
+  - Verify emoji-tagged logging appears correctly in browser console
+  - Test error handling for both question and answer update failures
 - **Create New Test Page Testing**:
   - Test immediate page load without waiting for API calls
   - Verify categories can be added/removed dynamically
