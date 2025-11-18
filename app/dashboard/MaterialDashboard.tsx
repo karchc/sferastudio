@@ -2,26 +2,27 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../lib/auth-context";
-import { 
-  Box, 
-  Typography, 
-  Card, 
-  CardContent, 
-  Avatar, 
-  Button, 
-  Tabs, 
-  Tab, 
-  Container, 
-  Chip, 
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Avatar,
+  Button,
+  Tabs,
+  Tab,
+  Container,
+  Chip,
   CircularProgress,
   Skeleton,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   Divider,
-  Stack
+  Stack,
+  Alert
 } from '@mui/material';
 
 import {
@@ -35,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { PurchaseModal } from "../components/ui/purchase-modal";
 import { AuthRequiredModal } from "../components/ui/auth-required-modal";
+import { PurchaseButton } from "../components/stripe/PurchaseButton";
 
 // Material UI Dashboard with TabPanel component for better organization
 function TabPanel(props: any) {
@@ -79,8 +81,10 @@ export default function MaterialDashboard() {
   const [purchasingTestId, setPurchasingTestId] = useState<string | null>(null);
   const [testStatistics, setTestStatistics] = useState<Record<string, any>>({});
   const [hasFetchedTests, setHasFetchedTests] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const { user, profile: authProfile, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Helper function to format time in seconds to MM:SS
   const formatTime = (seconds: number) => {
@@ -254,6 +258,31 @@ export default function MaterialDashboard() {
       fetchAvailableTests();
     }
   }, [purchasedTests, testsLoading]);
+
+  // Handle payment success callback
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    const testId = searchParams.get('test_id');
+
+    if (paymentStatus === 'success' && testId) {
+      setPaymentSuccess(true);
+      // Refresh purchased tests to show the newly purchased test
+      fetchPurchasedTests();
+      // Switch to "My Tests" tab
+      setTabValue(0);
+
+      // Clear the URL parameters
+      router.replace('/dashboard');
+
+      // Auto-hide success message after 10 seconds
+      setTimeout(() => setPaymentSuccess(false), 10000);
+    } else if (paymentStatus === 'cancelled') {
+      // Payment was cancelled
+      console.log('Payment was cancelled');
+      // Clear the URL parameters
+      router.replace('/dashboard');
+    }
+  }, [searchParams, router]);
   
   const formatDate = (dateString: string) => {
     const options = { year: 'numeric' as const, month: 'short' as const, day: 'numeric' as const };
@@ -314,10 +343,21 @@ export default function MaterialDashboard() {
         </Box>
       </Box>
       
+      {/* Payment Success Alert */}
+      {paymentSuccess && (
+        <Alert
+          severity="success"
+          onClose={() => setPaymentSuccess(false)}
+          sx={{ mb: 3 }}
+        >
+          Payment successful! Your test has been added to your library.
+        </Alert>
+      )}
+
       {/* Dashboard Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs 
-          value={tabValue} 
+        <Tabs
+          value={tabValue}
           onChange={handleTabChange}
           aria-label="dashboard tabs"
           textColor="primary"
@@ -549,19 +589,30 @@ export default function MaterialDashboard() {
           
           {availableTests.length > 0 ? (
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3 }}>
-              {availableTests.map((test: any) => (
-                <Card key={test.id} elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {availableTests.map((test: any) => {
+                const isPaidTest = !test.is_free && test.price && test.price > 0;
+
+                return (
+                  <Card key={test.id} elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Typography variant="h6" component="h3" fontWeight="medium" gutterBottom>
                           {test.title}
                         </Typography>
+                        {isPaidTest && (
+                          <Chip
+                            label={`${test.currency || 'USD'} $${parseFloat(test.price).toFixed(2)}`}
+                            color="primary"
+                            size="small"
+                            icon={<CreditCardIcon />}
+                          />
+                        )}
                       </Box>
-                      
+
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         {test.description || 'No description available'}
                       </Typography>
-                      
+
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                         <ClockIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
@@ -569,11 +620,11 @@ export default function MaterialDashboard() {
                         </Typography>
                       </Box>
                     </CardContent>
-                    
+
                     <Box sx={{ p: 2, pt: 0 }}>
                       <Stack spacing={1}>
-                        <Button 
-                          variant="outlined" 
+                        <Button
+                          variant="outlined"
                           fullWidth
                           onClick={() => handlePreviewTest(test.id)}
                           disabled={previewingTestId === test.id}
@@ -587,26 +638,39 @@ export default function MaterialDashboard() {
                             'Preview Test'
                           )}
                         </Button>
-                        <Button 
-                          variant="contained" 
-                          fullWidth
-                          startIcon={<ShoppingCartIcon />}
-                          onClick={() => handlePurchase(test)}
-                          disabled={purchasingTestId === test.id}
-                        >
-                          {purchasingTestId === test.id ? (
-                            <>
-                              <CircularProgress size={16} sx={{ mr: 1 }} />
-                              Adding...
-                            </>
-                          ) : (
-                            'Add to Library'
-                          )}
-                        </Button>
+
+                        {isPaidTest ? (
+                          <PurchaseButton
+                            testId={test.id}
+                            testTitle={test.title}
+                            price={parseFloat(test.price)}
+                            currency={test.currency || 'USD'}
+                            variant="contained"
+                            className="w-full"
+                          />
+                        ) : (
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            startIcon={<ShoppingCartIcon />}
+                            onClick={() => handlePurchase(test)}
+                            disabled={purchasingTestId === test.id}
+                          >
+                            {purchasingTestId === test.id ? (
+                              <>
+                                <CircularProgress size={16} sx={{ mr: 1 }} />
+                                Adding...
+                              </>
+                            ) : (
+                              'Add to Library'
+                            )}
+                          </Button>
+                        )}
                       </Stack>
                     </Box>
                   </Card>
-              ))}
+                );
+              })}
             </Box>
           ) : (
             <Card elevation={2}>
