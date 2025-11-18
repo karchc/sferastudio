@@ -20,6 +20,9 @@ interface Test {
   is_active: boolean;
   tag?: string;
   categories?: Array<{ id: string; name: string }>;
+  price?: number;
+  currency?: string;
+  is_free?: boolean;
 }
 
 export default function Home() {
@@ -364,66 +367,108 @@ export default function Home() {
           
           {tests.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tests.map((test: Test) => (
-                <div 
-                  key={test.id} 
-                  className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 border border-transparent hover:border-[#3EB3E7] flex flex-col h-full"
-                >
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="mb-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-xl font-semibold text-[#0B1F3A]">
-                          {test.title}
-                        </h3>
+              {tests.map((test: Test) => {
+                const isFree = test.is_free !== false && (!test.price || test.price === 0);
+                const displayPrice = test.price && test.price > 0
+                  ? `${test.currency || 'USD'} ${test.price.toFixed(2)}`
+                  : 'FREE';
+
+                return (
+                  <div
+                    key={test.id}
+                    className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 border border-transparent hover:border-[#3EB3E7] flex flex-col h-full"
+                  >
+                    <div className="p-6 flex-1 flex flex-col">
+                      {/* Header with Title and Price Badge */}
+                      <div className="mb-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="text-xl font-semibold text-[#0B1F3A] flex-1">
+                            {test.title}
+                          </h3>
+                          <span className={`ml-2 px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap ${
+                            isFree
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-[#3EB3E7] text-white'
+                          }`}>
+                            {displayPrice}
+                          </span>
+                        </div>
+
+                        {/* Tags and Categories */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {test.tag && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-[#0B1F3A] bg-[#B1E5D3] rounded-full">
+                              {test.tag}
+                            </span>
+                          )}
+                          {test.categories && test.categories.length > 0 && (
+                            <>
+                              {test.categories.slice(0, 2).map((category) => (
+                                <span
+                                  key={category.id}
+                                  className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-[#3EB3E7] bg-[#3EB3E7]/10 rounded-full border border-[#3EB3E7]/20"
+                                >
+                                  {category.name}
+                                </span>
+                              ))}
+                              {test.categories.length > 2 && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-[#5C677D] bg-gray-100 rounded-full">
+                                  +{test.categories.length - 2} more
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
-                      {test.tag && (
-                        <span className="inline-block px-3 py-1 text-xs font-medium text-[#0B1F3A] bg-[#B1E5D3] rounded-full">
-                          {test.tag}
+
+                      {/* Description */}
+                      <p className="text-[#5C677D] mb-4 flex-1 line-clamp-3">
+                        {test.description || 'Test your knowledge and prepare for certification'}
+                      </p>
+
+                      {/* Test Details */}
+                      <div className="flex items-center justify-between text-sm text-[#5C677D] pb-4 border-b border-gray-100">
+                        <span className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1.5 text-[#3EB3E7]" />
+                          <span className="font-medium">{Math.floor(test.time_limit / 60)} mins</span>
                         </span>
-                      )}
+                        <span className="flex items-center">
+                          <BookOpen className="h-4 w-4 mr-1.5 text-[#3EB3E7]" />
+                          <span className="font-medium">{test.question_count || 25} questions</span>
+                        </span>
+                      </div>
                     </div>
-                    
-                    <p className="text-[#5C677D] mb-4 flex-1 line-clamp-3">
-                      {test.description || 'Test your knowledge and prepare for certification'}
-                    </p>
-                    
-                    <div className="flex items-center justify-between text-sm text-[#5C677D] mb-6">
-                      <span className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {Math.floor(test.time_limit / 60)} mins
-                      </span>
-                      <span>{test.question_count || 25} questions</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-6 pt-0">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="default"
-                        className="flex-1 border-[#3EB3E7] text-[#3EB3E7] hover:bg-[#3EB3E7] hover:text-white"
-                        loading={previewingTestId === test.id}
-                        loadingText="Loading..."
-                        onClick={() => handlePreviewClick(test.id)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Preview Test
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="default"
-                        className="flex-1 bg-[#3EB3E7] hover:bg-[#2da0d4]"
-                        loading={purchasingTestId === test.id}
-                        loadingText="Purchasing..."
-                        onClick={() => handlePurchase(test.id)}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-1" />
-                        Purchase Now
-                      </Button>
+
+                    {/* Action Buttons */}
+                    <div className="p-6 pt-4">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="default"
+                          className="flex-1 border-[#3EB3E7] text-[#3EB3E7] hover:bg-[#3EB3E7] hover:text-white"
+                          loading={previewingTestId === test.id}
+                          loadingText="Loading..."
+                          onClick={() => handlePreviewClick(test.id)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Preview
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="default"
+                          className="flex-1 bg-[#3EB3E7] hover:bg-[#2da0d4]"
+                          loading={purchasingTestId === test.id}
+                          loadingText="Adding..."
+                          onClick={() => handlePurchase(test.id)}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          {isFree ? 'Add to Library' : 'Purchase'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">

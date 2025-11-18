@@ -13,6 +13,51 @@ Practice SAP allows users to:
 ## 📚 Documentation
 
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Comprehensive technical documentation for developers working on this project
+- **[Test Access Gating Implementation](TEST_ACCESS_GATING_IMPLEMENTATION.md)** - Complete guide for test access control and monetization system
+
+## Recent Updates (November 2025)
+
+### 251118-01 Test Access Gating & Monetization System
+- **Complete Access Control System**: Implemented comprehensive test access gating to control free and paid test access
+- **Security Features**:
+  - Server-side enforcement with Row-Level Security (RLS) policies
+  - Access checks before serving test data via API
+  - Database-level helper functions (`has_test_access`, `get_accessible_tests`)
+  - Service role policies for Stripe webhook operations
+- **Enhanced Test API** (`/app/api/test/[id]/route.ts`):
+  - Returns 401 (Unauthorized) for unauthenticated users accessing paid tests
+  - Returns 403 (Forbidden) for authenticated users without purchase
+  - Includes detailed access information in successful responses
+  - Provides test info in error responses for purchase flow
+- **Beautiful Access Screens**:
+  - **Authentication Required Screen**: Lock icon, test details, and sign-in/signup CTAs
+  - **Purchase Required Screen**: Premium badge, pricing, feature highlights, and purchase CTA
+  - Professional UI with gradient designs and clear messaging
+- **Access Control Utilities** (`/app/lib/test-access-control.ts`):
+  - `checkTestAccess()` - Single test access validation
+  - `checkMultipleTestsAccess()` - Batch checking for dashboard performance
+  - Returns detailed status: `granted`, `locked`, or `auth_required`
+- **Database Migration** (`20251118_001_test_access_rls.sql`):
+  - RLS policies for `user_test_purchases` table
+  - Performance indexes for fast access checks
+  - Helper functions for consistent access logic
+- **Dashboard Integration**:
+  - Lock indicators for premium tests
+  - "OWNED" badges for purchased tests
+  - Purchase buttons for paid tests
+  - Seamless integration with existing purchase flow
+- **Access Flow**:
+  ```
+  User → Test Request → Is Free? ✅ Grant Access
+                      → Authenticated? ❌ Show Login (401)
+                      → Purchased? ❌ Show Purchase Prompt (403)
+                      → ✅ Grant Access
+  ```
+- **Monetization Ready**: Easy configuration of test pricing via `price`, `currency`, and `is_free` fields
+- **Performance Optimized**:
+  - Batch access checks reduce database queries
+  - Composite indexes for fast purchase lookups
+  - Efficient RLS policies with minimal overhead
 
 ## Recent Updates (August 2025)
 
@@ -537,6 +582,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   - **Session Persistence**: Reliable session management across page refreshes and browser restarts
   - **Error Boundary Protection**: Comprehensive error handling for authentication failures
   - **Automatic Loading States**: Smart loading indicators that prevent infinite loading issues
+- **Test Access Gating & Monetization**:
+  - **Server-Side Access Control**: Secure test access validation before serving content
+  - **Row-Level Security**: Database-level policies for purchase access control
+  - **Free & Paid Tests**: Support for both free and monetized test content
+  - **Beautiful Lock Screens**: Professional UI for authentication and purchase prompts
+  - **Stripe Integration**: Complete payment flow with webhook handling
+  - **Batch Access Checks**: Optimized dashboard performance with batch validation
 - **Enhanced Middleware**: Advanced session management with proper route protection
 - **Auth Callback Handling**: Secure OAuth and email confirmation processing
 - **Profile Management**: User profiles with admin role support and automatic redirects
@@ -596,6 +648,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   - `ultra-optimized-test-fetcher.ts` - Optimized data fetching with caching
   - `auth-server.ts` - Server-side authentication utilities
   - `supabase-purchases.ts` - Purchase tracking and management functions
+  - `test-access-control.ts` - Test access validation and gating logic
 
 ### Pages
 - `app/admin/` - Admin interface pages for content management with simplified navigation
@@ -606,6 +659,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### Database
 - `supabase/migrations/` - Database schema and migrations
+  - `20251118_001_test_access_rls.sql` - Test access gating and RLS policies
 
 ### Assets & Styling
 - `public/logo/` - Brand logo assets
@@ -618,21 +672,24 @@ The system uses Supabase with the following key tables:
 
 - `profiles` - User profile information with admin role support
 - `categories` - Subject areas linked to specific tests (one-to-one relationship)
-- `tests` - Test definitions with metadata, pricing, availability, and instructions
+- `tests` - Test definitions with metadata, pricing (`price`, `currency`, `is_free`), availability, and instructions
 - `questions` - Question bank with enhanced fields (difficulty, points, explanation, is_preview)
 - `answers` - Answers for single-choice and multiple-choice questions (with position ordering)
 - `dropdown_answers` - Statement-option pairs for dropdown questions (JSONB options storage)
 - `test_sessions` - Records of user attempts
 - `user_answers` - User responses to questions
-- `user_test_purchases` - Tracks which tests users have purchased
+- `user_test_purchases` - Tracks test purchases with RLS policies for access control
 
 ### Enhanced Table Features
 - **questions table**: Added `difficulty`, `points`, `explanation`, and `is_preview` columns
 - **answers table**: Added `position` column for proper ordering
 - **dropdown_answers table**: New table with JSONB options storage and position ordering
 - **categories table**: Added `test_id` column for one-to-one relationship with tests
-- **Row Level Security**: Comprehensive RLS policies for all admin operations
-- **Database Indexes**: Optimized indexes for performance on position-based queries
+- **tests table**: Added `price`, `currency`, and `is_free` columns for monetization
+- **user_test_purchases table**: Tracks purchases with RLS policies and access control
+- **Row Level Security**: Comprehensive RLS policies for admin operations and purchase access
+- **Database Functions**: Helper functions `has_test_access()` and `get_accessible_tests()` for access validation
+- **Database Indexes**: Optimized indexes for performance on position-based queries and access checks
 
 > **Important Note:** The question and answer tables are named `questions` and `answers`. All code should reference these table names.
 

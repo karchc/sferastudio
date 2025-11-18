@@ -18,6 +18,11 @@ export default function TestPage() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [testPhase, setTestPhase] = useState<TestPhase>("idle");
   const [actualStartTime, setActualStartTime] = useState<number | null>(null);
+  const [accessError, setAccessError] = useState<{
+    type: 'auth' | 'purchase' | 'error' | null;
+    message: string;
+    testInfo?: any;
+  }>({ type: null, message: '' });
 
   // Load test data and progress
   useEffect(() => {
@@ -36,32 +41,56 @@ export default function TestPage() {
     async function loadTestData() {
       try {
         const res = await fetch(`/api/test/${testId}`);
+
+        // Handle access errors (401 - auth required, 403 - purchase required)
+        if (res.status === 401) {
+          const errorData = await res.json();
+          setAccessError({
+            type: 'auth',
+            message: errorData.message || 'You must be logged in to access this test',
+            testInfo: errorData.testInfo,
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (res.status === 403) {
+          const errorData = await res.json();
+          setAccessError({
+            type: 'purchase',
+            message: errorData.message || 'This test requires purchase',
+            testInfo: errorData.testInfo,
+          });
+          setLoading(false);
+          return;
+        }
+
         if (!res.ok) {
           setTestData(null);
         } else {
           const data = await res.json();
-          console.log("Test data loaded:", { 
-            title: data.title, 
+          console.log("Test data loaded:", {
+            title: data.title,
             timeLimit: data.timeLimit,
-            timeLimitInMinutes: data.timeLimit / 60 
+            timeLimitInMinutes: data.timeLimit / 60
           });
           setTestData({
             ...data,
             sessionId: `session-${Date.now()}`,
             timeRemaining: data.timeLimit,
           });
-          
-          const initialProgress = savedProgress || { 
-            answers: [], 
+
+          const initialProgress = savedProgress || {
+            answers: [],
             phase: "idle",
             currentQuestionIndex: 0,
             flaggedQuestions: [],
             timeSpent: 0,
             startTime: null
           };
-          
+
           setProgress(initialProgress);
-          
+
           // Restore session state if there was saved progress
           if (savedProgress) {
             console.log('Restoring test session:', savedProgress);
@@ -72,7 +101,7 @@ export default function TestPage() {
               setActualStartTime(new Date(savedProgress.startTime).getTime());
             }
           }
-          
+
           // If no saved progress, save initial state
           if (!savedProgress) {
             localStorage.setItem(
@@ -82,7 +111,11 @@ export default function TestPage() {
           }
         }
       } catch (error) {
-        setTestData(null);
+        console.error('Error loading test:', error);
+        setAccessError({
+          type: 'error',
+          message: 'An error occurred while loading the test',
+        });
       }
       setLoading(false);
     }
@@ -210,6 +243,121 @@ export default function TestPage() {
               </div>
               <p className="mt-4 text-lg">Loading test...</p>
             </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Handle access errors (auth required, purchase required)
+  if (accessError.type) {
+    return (
+      <main className="py-12">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            {accessError.type === 'auth' && (
+              <>
+                <div className="mb-6">
+                  <svg className="mx-auto h-16 w-16 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold mb-4 text-gray-900">Authentication Required</h2>
+                <p className="text-gray-600 mb-2">{accessError.message}</p>
+                {accessError.testInfo && (
+                  <div className="my-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-2">{accessError.testInfo.title}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{accessError.testInfo.description}</p>
+                    <p className="text-lg font-bold text-blue-600">
+                      {accessError.testInfo.currency || 'USD'} ${(accessError.testInfo.price || 0).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-4 justify-center mt-6">
+                  <button
+                    onClick={() => router.push('/auth/login')}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => router.push('/auth/signup')}
+                    className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                  >
+                    Create Account
+                  </button>
+                </div>
+              </>
+            )}
+
+            {accessError.type === 'purchase' && (
+              <>
+                <div className="mb-6">
+                  <svg className="mx-auto h-16 w-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold mb-4 text-gray-900">Premium Test</h2>
+                <p className="text-gray-600 mb-2">{accessError.message}</p>
+                {accessError.testInfo && (
+                  <div className="my-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
+                    <h3 className="font-semibold text-xl mb-3">{accessError.testInfo.title}</h3>
+                    <p className="text-sm text-gray-700 mb-4">{accessError.testInfo.description}</p>
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <span className="text-3xl font-bold text-blue-600">
+                        {accessError.testInfo.currency || 'USD'} ${(accessError.testInfo.price || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 text-sm text-gray-600 justify-center">
+                      <span className="inline-flex items-center">
+                        <svg className="h-4 w-4 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Unlimited Access
+                      </span>
+                      <span className="inline-flex items-center">
+                        <svg className="h-4 w-4 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Detailed Analytics
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-4 justify-center mt-6">
+                  <button
+                    onClick={() => router.push(`/?purchase=${testId}`)}
+                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg hover:shadow-xl"
+                  >
+                    Purchase Test
+                  </button>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                  >
+                    Browse Tests
+                  </button>
+                </div>
+              </>
+            )}
+
+            {accessError.type === 'error' && (
+              <>
+                <div className="mb-6">
+                  <svg className="mx-auto h-16 w-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold mb-4 text-gray-900">Error</h2>
+                <p className="text-gray-600 mb-6">{accessError.message}</p>
+                <button
+                  onClick={() => router.push('/')}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Return to Home
+                </button>
+              </>
+            )}
           </div>
         </div>
       </main>
