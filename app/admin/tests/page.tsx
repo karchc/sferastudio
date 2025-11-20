@@ -18,6 +18,10 @@ interface Test {
   is_archived?: boolean;
   created_at?: string;
   question_count?: number;
+  price?: number;
+  currency?: string;
+  is_free?: boolean;
+  tag?: string;
 }
 
 export default function TestsPage() {
@@ -147,11 +151,11 @@ export default function TestsPage() {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {Math.round(test.time_limit / 60)} minutes
                       </span>
-                      
+
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                         {test.question_count || 0} questions
                       </span>
-                      
+
                       {test.categories && test.categories.length > 0 ? (
                         test.categories.map((category) => (
                           <span key={category.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -163,13 +167,27 @@ export default function TestsPage() {
                           No categories
                         </span>
                       )}
-                      
+
+                      {test.tag && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                          {test.tag}
+                        </span>
+                      )}
+
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        test.is_active 
-                          ? 'bg-green-100 text-green-800' 
+                        test.is_active
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
                         {test.is_active ? 'Active' : 'Inactive'}
+                      </span>
+
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                        test.is_free
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {test.is_free ? 'FREE' : `${test.currency || 'USD'} ${(test.price ?? 0).toFixed(2)}`}
                       </span>
                     </div>
                     

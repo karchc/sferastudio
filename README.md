@@ -17,6 +17,51 @@ Practice SAP allows users to:
 
 ## Recent Updates (November 2025)
 
+### 251120-01 Preview Test Timer & Mode Separation Enhancement
+
+1. **Fixed Preview Test Timer**
+   - **Consistent Timer Updates**: Timer now ticks correctly every second without requiring page refresh
+   - **Real-time Countdown**: Implemented state-driven timer that updates every 1000ms
+   - **Fixed Double-Click Bug**: Resolved issue where "Start Test" button needed to be clicked twice
+   - **Proper Timer Initialization**: Timer only starts when user clicks "Start Test" button, not on page load
+
+2. **Dynamic Test Duration**
+   - **Database-Driven Time Limits**: Preview tests now use actual test's `time_limit` from database
+   - **Removed Hard-coded Values**: Eliminated hard-coded 30-minute default across all components
+   - **API Enhancement** (`/app/api/test/[id]/preview/route.ts`):
+     - Returns actual `testData.time_limit` instead of hard-coded 1800 seconds
+     - Consistent time limit handling across preview and completion flows
+
+3. **Complete Mode Separation**
+   - **Preview Mode** (`/app/preview-test/[id]/page.tsx`):
+     - **No Session Storage**: Completely removed localStorage usage for preview tests
+     - **Always Fresh Start**: Timer and progress reset on every page refresh or navigation
+     - **No Resumption**: Users cannot continue a preview test - always starts from zero
+     - **Independent Timer Logic**: Fully separated from real test mode timer implementation
+     - **Phase-Based Start**: Timer starts only when test phase changes to "in-progress"
+   - **Real Test Mode** (unchanged):
+     - Maintains full localStorage session management
+     - Supports test resumption from database sessions
+     - Progress tracking and restoration on page refresh
+     - Complete session persistence
+
+4. **Timer Architecture**
+   - **State Management**: Uses `currentTime` state that updates every second
+   - **Phase-Aware Timing**: Implements `handlePhaseChange` callback to set start time
+   - **Accurate Calculations**: Elapsed time calculated from actual start timestamp
+   - **Clean Component Lifecycle**: Proper interval cleanup on unmount
+
+5. **TestContainer Optimization** (`/app/components/test/TestContainer.tsx`)
+   - **Preview Mode Guards**: Added `isPreview` checks to all localStorage operations
+   - **Conditional Session Management**: localStorage only touched for real test mode
+   - **Unified Timer Interface**: Consistent timer handling across both modes via `timeLeft` prop
+
+6. **User Experience Improvements**
+   - **Clear Messaging**: Updated preview banner to inform users progress won't be saved
+   - **Immediate Start**: "Start Test" button immediately begins the test on first click
+   - **No State Confusion**: Preview and real tests maintain completely separate behaviors
+   - **Predictable Timer**: Timer displays full duration before test starts, counts down during test
+
 ### 251118-01 Test Access Gating & Monetization System
 - **Complete Access Control System**: Implemented comprehensive test access gating to control free and paid test access
 - **Security Features**:

@@ -10,6 +10,7 @@ import { PurchaseModal } from "./components/ui/purchase-modal";
 import { AuthRequiredModal } from "./components/ui/auth-required-modal";
 import { Footer } from "./components/Footer";
 import { useAuth } from "./lib/auth-context";
+import { SessionGuard } from "./components/session/SessionGuard";
 
 interface Test {
   id: string;
@@ -197,7 +198,8 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <SessionGuard>
+      <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-[#0B1F3A] via-[#1a3454] to-[#0f2847] text-white overflow-hidden min-h-screen flex items-center">
         {/* Animated Background Elements */}
@@ -594,6 +596,7 @@ export default function Home() {
         onClose={handleCloseAuthModal}
         test={selectedTest || undefined}
       />
-    </div>
+      </div>
+    </SessionGuard>
   );
 }

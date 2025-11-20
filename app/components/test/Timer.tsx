@@ -14,10 +14,6 @@ export function Timer({ initialTime, timeLeft, onTimeUp }: TimerProps) {
   const [hasShownOneMinuteWarning, setHasShownOneMinuteWarning] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   
-  console.log("Timer initialized with:", initialTime, "seconds");
-  console.log("Current time remaining:", timeRemaining);
-  console.log("Time left prop:", timeLeft);
-  
   // Use external timeLeft if provided, otherwise use internal countdown
   const currentTime = timeLeft !== undefined ? timeLeft : timeRemaining;
   

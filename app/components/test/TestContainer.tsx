@@ -162,9 +162,9 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
     await new Promise(resolve => setTimeout(resolve, 500));
     setPhase("completed");
     setIsCompleting(false);
-    
-    // Clear the test session from localStorage when test is completed
-    if (typeof window !== 'undefined' && test.id) {
+
+    // Clear the test session from localStorage when test is completed (not for preview mode)
+    if (!isPreview && typeof window !== 'undefined' && test.id) {
       const sessionKey = `test-progress-${test.id}`;
       localStorage.removeItem(sessionKey);
       console.log('Test session cleared from localStorage');
@@ -350,13 +350,13 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
 
   // Handle retry
   const handleRetry = () => {
-    // Clear session data when retrying
-    if (typeof window !== 'undefined' && test.id) {
+    // Clear session data when retrying (not for preview mode)
+    if (!isPreview && typeof window !== 'undefined' && test.id) {
       const sessionKey = `test-progress-${test.id}`;
       localStorage.removeItem(sessionKey);
       console.log('Test session cleared for retry');
     }
-    
+
     // Reset state
     setPhase("idle");
     setCurrentQuestionIndex(0);
@@ -372,14 +372,14 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
     console.log('handleGoToDashboard called');
     console.log('onNavigate type:', typeof onNavigate);
     console.log('onNavigate:', onNavigate);
-    
-    // Clear session before navigating away
-    if (typeof window !== 'undefined' && test.id) {
+
+    // Clear session before navigating away (not for preview mode)
+    if (!isPreview && typeof window !== 'undefined' && test.id) {
       const sessionKey = `test-progress-${test.id}`;
       localStorage.removeItem(sessionKey);
       console.log('Test session cleared before navigation');
     }
-    
+
     try {
       if (onNavigate && typeof onNavigate === 'function') {
         console.log('Calling onNavigate with /dashboard');
@@ -435,10 +435,10 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
         
         {phase === "in-progress" && (
           <>
-            <Timer 
-              initialTime={isPreview ? 1800 : test.timeLimit}
+            <Timer
+              initialTime={test.timeLimit}
               timeLeft={timeLeft}
-              onTimeUp={handleComplete} 
+              onTimeUp={handleComplete}
             />
             <div className="pt-16">
               <QuestionCard

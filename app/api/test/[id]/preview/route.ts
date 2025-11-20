@@ -40,13 +40,13 @@ export async function GET(
         title: testData.title,
         description: testData.description,
         instructions: testData.instructions,
-        timeLimit: 1800, // 30 minutes for preview
+        timeLimit: testData.time_limit, // Use actual test time limit
         isActive: testData.is_active,
         allow_backward_navigation: testData.allow_backward_navigation ?? true,
         questions: [],
         sessionId: `preview-session-${Date.now()}`,
         startTime: new Date(),
-        timeRemaining: 1800,
+        timeRemaining: testData.time_limit,
         isPreview: true
       });
     }
@@ -124,19 +124,19 @@ export async function GET(
       };
     }).sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
     
-    // Return the preview test data with 30-minute time limit
+    // Return the preview test data with actual test time limit
     const previewTestData = {
       id: testData.id,
       title: `${testData.title} (Preview)`,
       description: testData.description,
       instructions: testData.instructions,
-      timeLimit: 1800, // 30 minutes in seconds
+      timeLimit: testData.time_limit, // Use actual test time limit
       isActive: testData.is_active,
       allow_backward_navigation: testData.allow_backward_navigation ?? true,
       questions,
       sessionId: `preview-session-${Date.now()}`,
       startTime: new Date(),
-      timeRemaining: 1800,
+      timeRemaining: testData.time_limit,
       isPreview: true
     };
     

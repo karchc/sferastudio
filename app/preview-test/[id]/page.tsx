@@ -5,29 +5,19 @@ import { useRouter, useParams } from "next/navigation";
 import { TestData } from "@/app/lib/types";
 import { TestContainer } from "@/app/components/test/TestContainer";
 
-const LOCAL_STORAGE_KEY = (testId: string) => `preview-test-progress-${testId}`;
-
 export default function PreviewTestPage() {
   const router = useRouter();
   const params = useParams();
   const testId = params?.id as string;
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState<TestData | null>(null);
-  const [progress, setProgress] = useState<any>(null);
+  const [startTime, setStartTime] = useState<Date | null>(null); // Will be set when test starts
+  const [currentTime, setCurrentTime] = useState(Date.now());
 
-  // Load preview test data
+  // Load preview test data - no session restoration
   useEffect(() => {
     if (!testId) return;
     setLoading(true);
-
-    // Try to restore progress from localStorage
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY(testId));
-    let savedProgress = null;
-    if (saved) {
-      try {
-        savedProgress = JSON.parse(saved);
-      } catch {}
-    }
 
     async function loadPreviewTestData() {
       try {
@@ -36,7 +26,7 @@ export default function PreviewTestPage() {
           setTestData(null);
         } else {
           const data = await res.json();
-          
+
           // Check if there are preview questions available
           if (!data.questions || data.questions.length === 0) {
             setTestData({
@@ -46,29 +36,14 @@ export default function PreviewTestPage() {
             setLoading(false);
             return;
           }
-          
-          // Use saved startTime if available, else set new
-          const startTime = savedProgress?.startTime
-            ? new Date(savedProgress.startTime)
-            : new Date();
-          
+
+          // Always start fresh - never restore progress
           setTestData({
             ...data,
             sessionId: `preview-session-${Date.now()}`,
-            startTime,
-            timeRemaining: 1800, // 30 minutes
+            timeRemaining: data.timeLimit,
             isPreview: true
           });
-          
-          setProgress(savedProgress || { answers: {}, startTime });
-          
-          // If no saved progress, save initial state
-          if (!savedProgress) {
-            localStorage.setItem(
-              LOCAL_STORAGE_KEY(testId),
-              JSON.stringify({ answers: {}, startTime })
-            );
-          }
         }
       } catch (error) {
         console.error('Error loading preview test:', error);
@@ -76,32 +51,40 @@ export default function PreviewTestPage() {
       }
       setLoading(false);
     }
-    
-    loadPreviewTestData();
-  }, [testId]);
 
-  // Handler to update progress
-  const handleProgress = (newProgress: any) => {
-    setProgress((prev: any) => {
-      const updated = { ...prev, ...newProgress, startTime: prev.startTime };
-      localStorage.setItem(LOCAL_STORAGE_KEY(testId), JSON.stringify(updated));
-      return updated;
-    });
+    loadPreviewTestData();
+  }, [testId]); // Removed startTime from dependencies to prevent reload when timer starts
+
+  // Update current time every second to trigger timer updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle phase changes - set start time when test begins
+  const handlePhaseChange = (phase: string, phaseStartTime?: number) => {
+    if (phase === "in-progress" && !startTime && phaseStartTime) {
+      setStartTime(new Date(phaseStartTime));
+      console.log('[Preview Timer] Timer started at:', new Date(phaseStartTime));
+    }
   };
 
-  // Calculate time left based on startTime (30 minutes max)
+  // Calculate time left based on startTime and test's time limit
+  // For preview mode, always calculate from the initial startTime
   const getTimeLeft = () => {
-    if (!testData || !progress?.startTime) return 1800; // 30 minutes
-    const elapsed = Math.floor((Date.now() - new Date(progress.startTime).getTime()) / 1000);
-    return Math.max(1800 - elapsed, 0);
+    if (!testData) return 1800; // Default fallback
+    if (!startTime) return testData.timeLimit; // Timer hasn't started yet
+    const elapsed = Math.floor((currentTime - startTime.getTime()) / 1000);
+    return Math.max(testData.timeLimit - elapsed, 0);
   };
 
   // Custom navigation handler for preview mode
   const handleNavigate = (path: string) => {
-    // Clear preview progress when test is completed
+    // Redirect to preview completion page when test is done
     if (path.includes('complete') || path.includes('summary')) {
-      localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
-      // Redirect to a custom preview completion page
       router.push(`/preview-test/${testId}/complete`);
     } else {
       router.push(path);
@@ -152,17 +135,16 @@ export default function PreviewTestPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-blue-800 mb-2">Preview Mode</h3>
           <p className="text-blue-700 text-sm">
-            This is a preview test with limited questions and a 30-minute time limit. 
-            Your answers will not be saved or reviewed at the end.
+            This is a preview test with limited questions.
+            Your answers and progress will not be saved. Refreshing the page will restart the test.
           </p>
         </div>
       </div>
-      
+
       <TestContainer
         test={testData}
-        progress={progress}
-        onProgress={handleProgress}
         onNavigate={handleNavigate}
+        onPhaseChange={handlePhaseChange}
         timeLeft={getTimeLeft()}
         isPreview={true}
       />

@@ -112,20 +112,58 @@ export async function PATCH(
   try {
     const testId = (await params).id;
     const body = await request.json();
-    
+
+    // Validate pricing fields if they exist in the request
+    if (body.hasOwnProperty('is_free') || body.hasOwnProperty('price') || body.hasOwnProperty('currency')) {
+      const isFree = body.is_free ?? true;
+      const price = parseFloat(body.price) || 0;
+      const currency = body.currency || 'USD';
+
+      // Validate price for paid tests
+      if (!isFree) {
+        if (price <= 0) {
+          return NextResponse.json(
+            { error: 'Price must be greater than 0 for paid tests' },
+            { status: 400 }
+          );
+        }
+        if (price > 999999.99) {
+          return NextResponse.json(
+            { error: 'Price cannot exceed 999,999.99' },
+            { status: 400 }
+          );
+        }
+        if (!currency || typeof currency !== 'string') {
+          return NextResponse.json(
+            { error: 'Valid currency is required for paid tests' },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Normalize pricing fields
+      body.is_free = isFree;
+      body.price = isFree ? 0 : price;
+      body.currency = currency;
+    }
+
     const response = await fetch(`${SUPABASE_URL}/rest/v1/tests?id=eq.${testId}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify(body)
     });
-    
-    if (!response.ok) throw new Error('Failed to update test');
-    
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Supabase update error:', errorText);
+      throw new Error('Failed to update test in database');
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in PATCH /api/admin/tests/[id]:', error);
     return NextResponse.json(
-      { error: 'Failed to update test' },
+      { error: error instanceof Error ? error.message : 'Failed to update test' },
       { status: 500 }
     );
   }
