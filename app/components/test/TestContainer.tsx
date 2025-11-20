@@ -10,7 +10,6 @@ import { Timer } from "./Timer";
 import { TestSummary } from "./TestSummary";
 import { QuestionNavigation } from "./QuestionNavigation";
 import { useNavbarVisibility } from "@/app/lib/useNavbarVisibility";
-import { ConfirmationModal } from "../ui/confirmation-modal";
 
 // Test phases
 export type TestPhase = "idle" | "in-progress" | "completed";
@@ -35,8 +34,6 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
   const [timeSpent, setTimeSpent] = useState(progress?.timeSpent || 0);
   const [startTime, setStartTime] = useState<number | null>(progress?.startTime ? new Date(progress.startTime).getTime() : null);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
-  const [skippedQuestionsCount, setSkippedQuestionsCount] = useState(0);
   const [dbSessionId, setDbSessionId] = useState<string | null>(null);
   
   // Control navbar visibility - hide only during "in-progress" phase
@@ -73,7 +70,14 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
 
   // Function to save test results to database
   const saveTestResults = useCallback(async () => {
+    console.log('[TEST COMPLETION] Starting saveTestResults...', {
+      isPreview,
+      dbSessionId,
+      testId: test.id
+    });
+
     if (!isPreview && dbSessionId) {
+      console.log('[TEST COMPLETION] Saving to database - sessionId:', dbSessionId);
       try {
         // Create answers array for ALL questions (including unanswered ones)
         const allQuestionAnswers = test.questions.map(question => {
@@ -125,7 +129,7 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
         console.log('Sample answer data:', allQuestionAnswers.slice(0, 3));
 
         // Save user answers to database
-        await fetch('/api/test/session/answers', {
+        const answersResponse = await fetch('/api/test/session/answers', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -137,8 +141,12 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
           }),
         });
 
+        if (!answersResponse.ok) {
+          console.error('Failed to save answers:', await answersResponse.text());
+        }
+
         // Update session status to completed with correct score
-        await fetch('/api/test/session', {
+        const sessionUpdateResponse = await fetch('/api/test/session', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -152,22 +160,52 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
           }),
         });
 
-        console.log('Test results saved to database');
+        if (!sessionUpdateResponse.ok) {
+          const errorText = await sessionUpdateResponse.text();
+          console.error('[TEST COMPLETION] ❌ Failed to update session status:', {
+            status: sessionUpdateResponse.status,
+            statusText: sessionUpdateResponse.statusText,
+            error: errorText
+          });
+        } else {
+          const sessionUpdateData = await sessionUpdateResponse.json();
+          console.log('[TEST COMPLETION] ✅ Session marked as completed:', {
+            sessionId: dbSessionId,
+            status: 'completed',
+            updatedSession: sessionUpdateData
+          });
+        }
       } catch (error) {
-        console.error('Error saving test results:', error);
+        console.error('[TEST COMPLETION] ❌ Error saving test results:', error);
       }
+    } else {
+      console.log('[TEST COMPLETION] Skipping database save:', {
+        isPreview,
+        dbSessionId: dbSessionId || 'none'
+      });
     }
 
     // Add small delay to show loading state
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    console.log('[TEST COMPLETION] Setting phase to completed');
     setPhase("completed");
     setIsCompleting(false);
 
     // Clear the test session from localStorage when test is completed (not for preview mode)
     if (!isPreview && typeof window !== 'undefined' && test.id) {
       const sessionKey = `test-progress-${test.id}`;
+      console.log('[TEST COMPLETION] Clearing localStorage with key:', sessionKey);
+      console.log('[TEST COMPLETION] LocalStorage before clear:', localStorage.getItem(sessionKey));
       localStorage.removeItem(sessionKey);
-      console.log('Test session cleared from localStorage');
+      console.log('[TEST COMPLETION] LocalStorage after clear:', localStorage.getItem(sessionKey));
+      console.log('[TEST COMPLETION] ✅ Test session cleared from localStorage');
+    } else {
+      console.log('[TEST COMPLETION] Skipping localStorage clear:', {
+        isPreview,
+        hasWindow: typeof window !== 'undefined',
+        testId: test.id
+      });
     }
   }, [isPreview, dbSessionId, userAnswers, timeSpent, test.questions, test.id]);
 
@@ -211,48 +249,50 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
 
   // Handle test completion
   const handleComplete = useCallback(async () => {
+    console.log('[TEST COMPLETION] handleComplete called');
     setIsCompleting(true);
-    
+
     if (isPreview) {
       // For preview mode, navigate directly to completion page without showing summary
+      console.log('[TEST COMPLETION] Preview mode - navigating to completion page');
       if (onNavigate) {
         onNavigate(`/preview-test/${test.id}/complete`);
       }
       setIsCompleting(false);
       return;
     }
-    
+
     // Regular test completion logic
     const answeredQuestionIds = userAnswers
       .filter(a => a.answers && a.answers.length > 0)
       .map(a => a.questionId);
-    
+
     const skippedQuestions = test.questions.filter(
       q => !answeredQuestionIds.includes(q.id)
     );
-    
-    // If there are skipped questions, show confirmation modal
+
+    console.log('[TEST COMPLETION] Questions status:', {
+      total: test.questions.length,
+      answered: answeredQuestionIds.length,
+      skipped: skippedQuestions.length
+    });
+
+    // ALWAYS save test results first, even if there are skipped questions
+    // This ensures the session is marked as completed in the database
+    console.log('[TEST COMPLETION] Calling saveTestResults to mark session as completed');
+    await saveTestResults();
+
+    // If there are skipped questions, show informational modal after completion
     if (skippedQuestions.length > 0) {
-      console.log('Showing skip confirmation modal for', skippedQuestions.length, 'questions');
-      setSkippedQuestionsCount(skippedQuestions.length);
-      setShowSkipConfirmation(true);
-      setIsCompleting(false);
-    } else {
-      // No skipped questions, proceed directly
-      await saveTestResults();
+      console.log('[TEST COMPLETION] Test completed with', skippedQuestions.length, 'unanswered questions');
+      // The test is already completed and saved, summary is already showing
+      // Modal is no longer needed since session is already completed
     }
+
+    setIsCompleting(false);
   }, [isPreview, onNavigate, test.id, test.questions, userAnswers, saveTestResults]);
 
-  // Handle confirmation from modal
-  const handleConfirmSkip = useCallback(async () => {
-    setShowSkipConfirmation(false);
-    await saveTestResults();
-  }, [saveTestResults]);
-
-  // Handle cancel from modal
-  const handleCancelSkip = useCallback(() => {
-    setShowSkipConfirmation(false);
-  }, []);
+  // Note: Skip confirmation modal removed - test completes immediately
 
   // Handle question navigation
   const handleNextQuestion = useCallback(() => {
@@ -491,17 +531,6 @@ export function TestContainer({ test, onNavigate, timeLeft, isPreview = false, o
           />
         )}
       </AnimatePresence>
-      
-      <ConfirmationModal
-        isOpen={showSkipConfirmation}
-        onClose={handleCancelSkip}
-        onConfirm={handleConfirmSkip}
-        title="Unanswered Questions"
-        message={`You have ${skippedQuestionsCount} unanswered question(s). Are you sure you want to finish the test? You can go back to answer these questions.`}
-        confirmText="Finish Test"
-        cancelText="Go Back"
-        variant="warning"
-      />
     </div>
   );
 }

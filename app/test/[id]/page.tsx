@@ -14,7 +14,7 @@ export default function TestPage() {
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState<TestData | null>(null);
   const [progress, setProgress] = useState<any>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number | undefined>(undefined);
   const [testPhase, setTestPhase] = useState<TestPhase>("idle");
   const [actualStartTime, setActualStartTime] = useState<number | null>(null);
   const [dbSessionId, setDbSessionId] = useState<string | null>(null);
@@ -48,9 +48,12 @@ export default function TestPage() {
 
             return session;
           } else if (session && (session.status === 'completed' || session.status === 'expired')) {
-            // Redirect to results
-            console.log('[Session Resume] Session already completed/expired, redirecting to results');
-            router.push(`/test/${testId}/results?session=${session.id}`);
+            // Session is completed - clear any stale localStorage and allow fresh start
+            console.log('[Session Resume] Session already completed/expired, clearing localStorage');
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
+              console.log('[Session Resume] Cleared stale localStorage for completed session');
+            }
             return null;
           }
         }
@@ -118,35 +121,70 @@ export default function TestPage() {
             const elapsed = Math.floor((now - startTime) / 1000);
 
             if (elapsed >= data.timeLimit) {
-              console.log('[Session Resume] Session has expired, redirecting to results');
-              router.push(`/test/${testId}/results?session=${activeSession.id}`);
-              return;
-            }
-
-            // Try to get saved progress from localStorage
-            const saved = localStorage.getItem(LOCAL_STORAGE_KEY(testId));
-            let savedProgress = null;
-            if (saved) {
+              console.log('[Session Resume] Session has expired, allowing new attempt');
+              // Session has expired - mark it as expired in database and clear localStorage
               try {
-                savedProgress = JSON.parse(saved);
-              } catch {}
+                await fetch('/api/test/session', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    sessionId: activeSession.id,
+                    status: 'expired',
+                    endTime: new Date().toISOString()
+                  }),
+                });
+                console.log('[Session Resume] Marked session as expired in database');
+              } catch (error) {
+                console.error('[Session Resume] Failed to mark session as expired:', error);
+              }
+
+              // Clear localStorage
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
+                console.log('[Session Resume] Cleared localStorage for expired session');
+              }
+
+              setDbSessionId(null);
+              setActualStartTime(null);
+            } else {
+              // Try to get saved progress from localStorage
+              const saved = localStorage.getItem(LOCAL_STORAGE_KEY(testId));
+              console.log('[Session Resume] LocalStorage data:', saved);
+              let savedProgress = null;
+              if (saved) {
+                try {
+                  savedProgress = JSON.parse(saved);
+                  console.log('[Session Resume] Parsed localStorage:', savedProgress);
+                } catch (e) {
+                  console.error('[Session Resume] Failed to parse localStorage:', e);
+                }
+              } else {
+                console.log('[Session Resume] No localStorage found, using database session data');
+              }
+
+              // Merge database session with localStorage (prefer localStorage if more recent)
+              const resumeProgress = savedProgress || {
+                answers: [],
+                phase: "in-progress",
+                currentQuestionIndex: activeSession.current_question_index || 0,
+                flaggedQuestions: activeSession.session_data?.flaggedQuestions || [],
+                timeSpent: activeSession.time_spent || elapsed,
+                startTime: new Date(activeSession.start_time)
+              };
+
+              console.log('[Session Resume] Setting progress to:', resumeProgress);
+              setProgress(resumeProgress);
+              setTestPhase("in-progress");
+              setActualStartTime(startTime);
+              console.log('[Session Resume] ✅ Test resumed successfully');
+            }
+          } else {
+            // No active session, clear any stale localStorage and start fresh
+            console.log('[Session Resume] No active session found, clearing localStorage');
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem(LOCAL_STORAGE_KEY(testId));
             }
 
-            // Merge database session with localStorage (prefer localStorage if more recent)
-            const resumeProgress = savedProgress || {
-              answers: [],
-              phase: "in-progress",
-              currentQuestionIndex: activeSession.current_question_index || 0,
-              flaggedQuestions: activeSession.session_data?.flaggedQuestions || [],
-              timeSpent: activeSession.time_spent || elapsed,
-              startTime: new Date(activeSession.start_time)
-            };
-
-            setProgress(resumeProgress);
-            setTestPhase("in-progress");
-            setActualStartTime(startTime);
-          } else {
-            // No active session, start fresh
             const initialProgress = {
               answers: [],
               phase: "idle",
@@ -201,11 +239,26 @@ export default function TestPage() {
 
   // Calculate time left based on actual test start time
   const getTimeLeft = () => {
-    if (!testData || !actualStartTime || testPhase !== "in-progress") {
-      return testData?.timeLimit || 0;
+    // If test hasn't started yet or no test data, return full time limit
+    // This prevents the timer from triggering completion on initial load
+    if (!testData) {
+      return 3600; // Default 1 hour to prevent 0
     }
+
+    if (!actualStartTime || testPhase !== "in-progress") {
+      return testData.timeLimit; // Return full time limit, not 0
+    }
+
     const elapsed = Math.floor((Date.now() - actualStartTime) / 1000);
     const remaining = Math.max((testData.timeLimit || 0) - elapsed, 0);
+
+    console.log('[Time Calculation]', {
+      elapsed,
+      timeLimit: testData.timeLimit,
+      remaining,
+      actualStartTime: new Date(actualStartTime).toISOString()
+    });
+
     return remaining;
   };
 
@@ -272,7 +325,7 @@ export default function TestPage() {
     setTestPhase("idle");
     setActualStartTime(null);
     setDbSessionId(null);
-    setTimeLeft(testData?.timeLimit || 0);
+    setTimeLeft(testData?.timeLimit);
   };
 
   // Update timeLeft every second when test is in progress
@@ -297,7 +350,7 @@ export default function TestPage() {
 
       return () => clearInterval(interval);
     } else if (testData && testPhase === "idle") {
-      setTimeLeft(testData.timeLimit || 0);
+      setTimeLeft(testData.timeLimit);
     }
   }, [testData, testPhase, actualStartTime]);
 

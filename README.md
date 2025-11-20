@@ -17,6 +17,36 @@ Practice SAP allows users to:
 
 ## Recent Updates (November 2025)
 
+### 251120-02 Test Session Resume Fix
+
+1. **Fixed Session Resume Bug**
+   - **Root Cause**: `timeLeft` was initialized to `0` in test page, causing Timer to think time expired on page refresh
+   - **Immediate Completion Issue**: Refreshing during an active test session was triggering automatic test completion
+   - **Session Still Active**: Database session remained active while UI showed completion summary
+
+2. **Timer Initialization Fix**
+   - **Changed Initial State**: Updated `timeLeft` from `0` to `undefined` in `/app/test/[id]/page.tsx`
+   - **Prevents False Expiration**: Timer no longer triggers completion when receiving initial undefined value
+   - **Proper State Flow**: Timer now correctly waits for actual time calculation before starting countdown
+
+3. **Enhanced Timer Component** (`/app/components/test/Timer.tsx`)
+   - **Added `hasStarted` Flag**: Tracks whether timer has actually begun counting down
+   - **Prevents Premature Completion**: `onTimeUp()` only fires if timer has started AND time reaches zero
+   - **Smart Start Detection**: Timer marks as started once it begins counting down from full duration
+   - **Initial Render Protection**: Safeguard prevents completion trigger during component mount
+
+4. **Session Resume Flow**
+   - **Correct Behavior**: Page refresh → Load session → Calculate remaining time → Resume test
+   - **Time Calculation**: Properly computes elapsed time from database session start time
+   - **State Preservation**: All test progress (answers, flagged questions, current index) correctly restored
+   - **No False Triggers**: Timer waits for state to settle before enabling completion logic
+
+5. **User Experience**
+   - **Reliable Resumption**: Users can now refresh page or switch tabs without losing active sessions
+   - **Accurate Time Display**: Timer shows correct remaining time based on session start
+   - **Session Integrity**: Database session status properly maintained throughout test
+   - **Expected Behavior**: Test only completes when actually finished or time truly expires
+
 ### 251120-01 Preview Test Timer & Mode Separation Enhancement
 
 1. **Fixed Preview Test Timer**
