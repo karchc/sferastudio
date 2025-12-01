@@ -8,7 +8,7 @@ import { ConfirmationModal } from '@/app/components/ui/confirmation-modal';
 import { Modal } from '@/app/components/ui/modal';
 import { QuestionForm } from '@/app/components/admin/QuestionFormEnhanced';
 import Link from 'next/link';
-import { Category, QuestionFormData } from '@/app/lib/types';
+import { Category, QuestionFormData, QuestionType, Question as TypedQuestion } from '@/app/lib/types';
 
 interface Test {
   id: string;
@@ -27,7 +27,7 @@ interface Test {
 
 interface Question {
   id: string;
-  type: string;
+  type: QuestionType | string; // Support both typed and string formats
   text: string;
   mediaUrl?: string;
   category_id: string;
@@ -1047,8 +1047,10 @@ export default function TestManagePage() {
         size="xl"
       >
         <div className="p-6">
+          {/* Key prop forces QuestionForm to remount and reinitialize when question changes */}
           <QuestionForm
-            initialData={editingQuestion || undefined}
+            key={editingQuestion?.id}
+            initialData={editingQuestion as TypedQuestion || undefined}
             categories={categories}
             isSubmitting={loadingStates.updateQuestion}
             onSubmit={updateQuestion}

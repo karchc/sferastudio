@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
+import { ConfirmationModal } from "@/app/components/ui/confirmation-modal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import BulkUploadModal from "@/app/components/admin/BulkUploadModal";
 
 interface Test {
   id: string;
@@ -30,6 +32,10 @@ export default function TestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [managingTestId, setManagingTestId] = useState<string | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [testToDelete, setTestToDelete] = useState<Test | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -84,6 +90,29 @@ export default function TestsPage() {
     router.push(`/admin/tests/${testId}/manage`);
   };
 
+  const downloadBlankTemplate = () => {
+    // Open the export template endpoint in a new window to trigger download
+    window.open('/api/admin/tests/export-template', '_blank');
+  };
+
+  const exportTest = async (testId: string) => {
+    try {
+      setExportingId(testId);
+
+      // Open the export endpoint with testId parameter
+      window.open(`/api/admin/tests/export-template?testId=${testId}`, '_blank');
+
+      // Reset exporting state after a short delay
+      setTimeout(() => {
+        setExportingId(null);
+      }, 1500);
+    } catch (err) {
+      console.error('Error exporting test:', err);
+      setError(err instanceof Error ? err.message : 'Failed to export test');
+      setExportingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -106,11 +135,27 @@ export default function TestsPage() {
             Manage your tests - {tests.length} {tests.length === 1 ? 'test' : 'tests'} available
           </p>
         </div>
-        <Link href="/admin/tests/create">
-          <Button>
-            Create New Test
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={downloadBlankTemplate}
+            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+          >
+            Download Template
           </Button>
-        </Link>
+          <Button
+            variant="outline"
+            onClick={() => setShowUploadModal(true)}
+            className="border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+          >
+            Bulk Upload
+          </Button>
+          <Link href="/admin/tests/create">
+            <Button>
+              Create New Test
+            </Button>
+          </Link>
+        </div>
       </div>
       
       {error && (
@@ -197,7 +242,7 @@ export default function TestsPage() {
                   </div>
                   
                   <div className="flex gap-3 ml-6">
-                    <Button 
+                    <Button
                       variant="outline"
                       disabled={deletingId === test.id || managingTestId === test.id}
                       loading={managingTestId === test.id}
@@ -206,15 +251,21 @@ export default function TestsPage() {
                     >
                       Manage
                     </Button>
-                    
-                    <Button 
+
+                    <Button
+                      variant="outline"
+                      onClick={() => exportTest(test.id)}
+                      disabled={exportingId === test.id}
+                      className="text-blue-600 hover:text-blue-700 border-blue-200 hover:border-blue-300"
+                    >
+                      {exportingId === test.id ? 'Exporting...' : 'Export'}
+                    </Button>
+
+                    <Button
                       variant="outline"
                       onClick={() => {
-                        if (window.confirm(
-                          `Are you sure you want to delete "${test.title}"? This will remove all associated questions and cannot be undone.`
-                        )) {
-                          deleteTest(test.id);
-                        }
+                        setTestToDelete(test);
+                        setDeleteModalOpen(true);
                       }}
                       disabled={deletingId === test.id}
                       className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
@@ -228,6 +279,35 @@ export default function TestsPage() {
           ))}
         </div>
       )}
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onSuccess={() => {
+          setShowUploadModal(false);
+          loadTests();
+        }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setTestToDelete(null);
+        }}
+        onConfirm={() => {
+          if (testToDelete) {
+            deleteTest(testToDelete.id);
+          }
+        }}
+        title="Delete Test"
+        message={`Are you sure you want to delete "${testToDelete?.title}"? This will remove all associated questions and cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

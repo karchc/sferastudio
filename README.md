@@ -15,6 +15,62 @@ Practice SAP allows users to:
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Comprehensive technical documentation for developers working on this project
 - **[Test Access Gating Implementation](TEST_ACCESS_GATING_IMPLEMENTATION.md)** - Complete guide for test access control and monetization system
 
+## Recent Updates (December 2025)
+
+### 251201-01 Bulk Upload Excel Template Enhancement
+
+1. **Reorganized Column Structure**
+   - **Image URL Moved**: Image URL column now appears immediately after Question Text for better workflow
+   - **Preview Column Added**: New Preview column (TRUE/FALSE) to mark questions available for preview mode
+   - **Improved Layout**: Related fields are now grouped together logically
+
+2. **Questions Sheet - New Column Order**
+   | Column | Field | Description |
+   |--------|-------|-------------|
+   | A | Test Name * | Required - must match Tests sheet |
+   | B | Category Name * | Required - must match Categories sheet |
+   | C | Position * | Question order number |
+   | D | Question Type * | single-choice or multiple-choice |
+   | E | Question Text * | The question content |
+   | F | Image URL | Optional - URL to question image |
+   | G | Preview | TRUE/FALSE - show in preview mode |
+   | H-M | Options 1-6 | Answer options (min 2 required) |
+   | N | Correct Answer * | Option numbers (e.g., "1" or "1,3,4") |
+   | O | Explanation | Optional explanation text |
+
+3. **Dropdown Questions Sheet - New Column Order**
+   | Column | Field | Description |
+   |--------|-------|-------------|
+   | A | Test Name * | Required - must match Tests sheet |
+   | B | Category Name * | Required - must match Categories sheet |
+   | C | Position * | Question order number |
+   | D | Question Text * | Main question (same for all statements) |
+   | E | Image URL | Optional - only on first statement row |
+   | F | Preview | TRUE/FALSE - only on first statement row |
+   | G | Statement # | Statement number (1, 2, 3...) |
+   | H | Statement Text * | Fill-in-blank statement |
+   | I-N | Options 1-6 | Dropdown options (min 2 required) |
+   | O | Correct Answer * | Must match one option exactly |
+   | P | Explanation | Optional - only on first statement row |
+
+4. **Preview Feature**
+   - **Purpose**: Mark questions that should be available in test preview mode
+   - **Values**: TRUE or FALSE (dropdown validation)
+   - **Default**: FALSE if not specified
+   - **Import Behavior**: Sets `is_preview` field on questions in database
+
+5. **Image URL Feature**
+   - **Supported Formats**: JPG, PNG, GIF, WebP
+   - **Max Size**: 5MB per image
+   - **Sources**: Any public URL (direct links, Google Drive, Dropbox, etc.)
+   - **Processing**: Images are downloaded and stored in Supabase Storage
+   - **Graceful Handling**: Failed image uploads generate warnings but don't fail import
+
+6. **Technical Implementation**
+   - **Export** ([excel-export.ts](app/lib/excel-export.ts)): Updated column definitions and example data
+   - **Import** ([excel-import.ts](app/lib/excel-import.ts)): Updated column parsing indices
+   - **API** ([import/route.ts](app/api/admin/tests/import/route.ts)): Added `is_preview` to question creation
+
 ## Recent Updates (November 2025)
 
 ### 251120-02 Test Session Resume Fix
