@@ -87,7 +87,7 @@ export function ConfirmationModal({
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto transform transition-all">
+        <div className="relative bg-white rounded-lg shadow-2xl ring-1 ring-black/5 max-w-md w-full mx-auto transform transition-all">
           {/* Content */}
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-4">

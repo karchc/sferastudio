@@ -117,15 +117,16 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className="fixed inset-0 backdrop-blur-md transition-all duration-200"
         onClick={handleClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-white rounded-lg shadow-2xl ring-1 ring-black/5 w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900">Bulk Upload Tests</h2>
@@ -354,6 +355,7 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
             </Button>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
