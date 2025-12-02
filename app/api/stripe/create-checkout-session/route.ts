@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
             currency: test.currency?.toLowerCase() || STRIPE_CONFIG.currency,
             product_data: {
               name: test.title,
-              description: test.description || 'Practice SAP Exam Test',
+              description: test.description || 'Practice ERP Exam Test',
             },
             unit_amount: Math.round(test.price * 100), // Convert to cents
           },

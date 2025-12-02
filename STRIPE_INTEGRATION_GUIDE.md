@@ -1,6 +1,6 @@
 # Stripe Integration Guide
 
-This guide explains how to integrate Stripe payments into your Practice SAP exam platform.
+This guide explains how to integrate Stripe payments into your Practice ERP exam platform.
 
 ## 🎯 What's Been Set Up
 

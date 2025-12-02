@@ -234,7 +234,7 @@ export default function Home() {
               <div className="inline-flex items-center px-4 py-2 bg-[#3EB3E7]/20 backdrop-blur-sm rounded-full border border-[#3EB3E7]/30 mb-6">
                 <Zap className="h-4 w-4 text-[#3EB3E7] mr-2" />
                 <span className="text-sm font-medium text-[#3EB3E7]">
-                  #1 SAP Certification Prep Platform
+                  #1 ERP Certification Prep Platform
                 </span>
               </div>
 
@@ -246,7 +246,7 @@ export default function Home() {
               </h1>
               
               <p className="text-xl sm:text-2xl mb-8 max-w-2xl mx-auto lg:mx-0 opacity-90 animate-fade-in-up delay-400">
-                Practice Smarter. Score Higher. Join <span className="text-[#3EB3E7] font-semibold">10,000+</span> professionals who aced their SAP certifications.
+                Practice Smarter. Score Higher. Join <span className="text-[#3EB3E7] font-semibold">10,000+</span> professionals who aced their ERP certifications.
               </p>
 
               {/* Stats */}
@@ -487,7 +487,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#0B1F3A] mb-4">
-              Why Choose Practice SAP?
+              Why Choose Practice ERP?
             </h2>
             <p className="text-xl text-[#5C677D] max-w-3xl mx-auto">
               Everything you need to ace your certification exams
@@ -501,7 +501,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2 text-[#0B1F3A]">Real Exam Questions</h3>
               <p className="text-[#5C677D]">
-                Practice with actual exam questions from SAP and Business Tech certifications
+                Practice with actual exam questions from ERP and Business Tech certifications
               </p>
             </div>
             
@@ -565,7 +565,7 @@ export default function Home() {
             Ready to Ace Your Certification?
           </h2>
           <p className="text-xl text-white opacity-90 mb-8">
-            Join thousands of professionals who have successfully passed their exams with Practice SAP
+            Join thousands of professionals who have successfully passed their exams with Practice ERP
           </p>
           {!user && (
             <Link

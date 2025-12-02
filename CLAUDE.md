@@ -1,8 +1,8 @@
-# Practice SAP - Exam Preparation Platform
+# Practice ERP - Exam Preparation Platform
 
 ## Project Overview
 
-Practice SAP is a comprehensive exam preparation platform focused on Business Tech and SAP exams. The platform allows users to create accounts, take practice tests, review their performance, and improve their test preparation based on past results, ultimately better preparing them for real-life certification exams.
+Practice ERP is a comprehensive exam preparation platform focused on Business Tech and ERP exams. The platform allows users to create accounts, take practice tests, review their performance, and improve their test preparation based on past results, ultimately better preparing them for real-life certification exams.
 
 ### Key Features
 
@@ -145,6 +145,12 @@ The platform uses a dual organization system:
 
 ### Recent Updates
 
+- **Webflow CMS Sync**: Sync featured tests to Webflow for marketing website
+  - "Sync to Webflow" button in admin tests page
+  - Syncs only tests marked as featured
+  - Creates, updates, and deletes items in Webflow collection automatically
+  - Requires environment variables: `WEBFLOW_API_TOKEN`, `WEBFLOW_SITE_ID`, `WEBFLOW_COLLECTION_ID`
+  - See [Webflow Sync Setup](#webflow-cms-sync-setup) section for configuration
 - **Featured Tests System**: Added `feature` boolean field to tests for homepage display
   - Featured tests are prominently displayed on the homepage
   - Toggle in admin interface (Edit Test modal) to mark tests as featured
@@ -237,3 +243,61 @@ The application has been optimized for better performance:
 - Access the optimized test page at `/optimized-test/[id]` instead of `/test/[id]`
 - The optimized version shows a progressive loading UI that displays content as it loads
 - The first load populates the cache, making subsequent visits much faster
+
+## Webflow CMS Sync Setup
+
+The application can sync featured tests to a Webflow CMS collection for marketing purposes. This allows the Webflow marketing site to display featured tests while the Next.js app handles the actual test-taking functionality.
+
+### Architecture
+- **Webflow**: Marketing website frontend (homepage, about, pricing pages)
+- **Next.js App**: Backend system for authentication, signup, login, and test-taking
+
+### Environment Variables
+
+Add these to your `.env.local` file:
+
+```
+WEBFLOW_API_TOKEN=your_webflow_api_token
+WEBFLOW_SITE_ID=your_webflow_site_id
+WEBFLOW_COLLECTION_ID=your_webflow_collection_id
+```
+
+### Getting Webflow Credentials
+
+1. **API Token**: Go to Webflow > Site Settings > Apps & Integrations > Generate API Token
+2. **Site ID**: Found in Site Settings > General > Site ID (or from the URL in Webflow dashboard)
+3. **Collection ID**: Create a collection in Webflow CMS, then find the ID in the collection settings or URL
+
+### Webflow Collection Schema
+
+Create a collection in Webflow with these fields (field slugs in parentheses):
+
+| Field Name | Slug | Type | Notes |
+|------------|------|------|-------|
+| Name | `name` | Plain Text | Required by Webflow |
+| Slug | `slug` | Slug | Required, auto-generated |
+| Supabase ID | `supabase-id` | Plain Text | Used for tracking |
+| Description | `description` | Plain Text | Test description |
+| Duration | `duration` | Number | Time in minutes |
+| Question Count | `question-count` | Number | Number of questions |
+| Price | `price` | Number | Test price |
+| Currency | `currency` | Plain Text | e.g., USD |
+| Is Free | `is-free` | Switch | Whether test is free |
+| Tag | `tag` | Plain Text | Test tag |
+| Categories | `categories` | Plain Text | Comma-separated |
+
+### How Sync Works
+
+1. Click "Sync to Webflow" button in Admin > Tests page
+2. System fetches all tests with `feature = true`
+3. For each featured test:
+   - Creates new Webflow item if it doesn't exist
+   - Updates existing item if test data changed
+   - Deletes items for tests no longer featured
+4. Publishes all changes to make them live
+
+### Files
+
+- `/app/lib/webflow-sync.ts` - Core sync service
+- `/app/api/admin/sync-webflow/route.ts` - API endpoint
+- `/app/admin/tests/page.tsx` - Admin UI with sync button

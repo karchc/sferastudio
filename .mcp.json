@@ -8,6 +8,16 @@
         "--access-token",
         "sbp_6d308c282a052be59d425ac302a469f40add0c85"
       ]
+    },
+    "webflow": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "webflow-mcp-server@latest"
+      ],
+      "env": {
+        "WEBFLOW_TOKEN": "2c40a5f7be45fc7fe0b3bb460389cb386087265e4740c4d5a9f794ed963df73d"
+      }
     }
   }
 }

@@ -33,10 +33,11 @@ export default function TestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [managingTestId, setManagingTestId] = useState<string | null>(null);
-  const [exportingId, setExportingId] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [testToDelete, setTestToDelete] = useState<Test | null>(null);
+  const [syncingWebflow, setSyncingWebflow] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ success: boolean; message: string } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -96,21 +97,34 @@ export default function TestsPage() {
     window.open('/api/admin/tests/export-template', '_blank');
   };
 
-  const exportTest = async (testId: string) => {
+  const syncToWebflow = async () => {
     try {
-      setExportingId(testId);
+      setSyncingWebflow(true);
+      setSyncResult(null);
+      setError(null);
 
-      // Open the export endpoint with testId parameter
-      window.open(`/api/admin/tests/export-template?testId=${testId}`, '_blank');
+      const response = await fetch('/api/admin/sync-webflow', {
+        method: 'POST',
+      });
 
-      // Reset exporting state after a short delay
-      setTimeout(() => {
-        setExportingId(null);
-      }, 1500);
+      const result = await response.json();
+
+      setSyncResult({
+        success: result.success,
+        message: result.message || (result.success ? 'Sync completed successfully' : 'Sync failed'),
+      });
+
+      if (!result.success && result.error) {
+        setError(result.error);
+      }
     } catch (err) {
-      console.error('Error exporting test:', err);
-      setError(err instanceof Error ? err.message : 'Failed to export test');
-      setExportingId(null);
+      console.error('Error syncing to Webflow:', err);
+      setSyncResult({
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to sync to Webflow',
+      });
+    } finally {
+      setSyncingWebflow(false);
     }
   };
 
@@ -139,6 +153,14 @@ export default function TestsPage() {
         <div className="flex gap-3">
           <Button
             variant="outline"
+            onClick={syncToWebflow}
+            disabled={syncingWebflow}
+            className="border-orange-200 text-orange-700 hover:bg-orange-50 hover:border-orange-300"
+          >
+            {syncingWebflow ? 'Syncing...' : 'Sync to Webflow'}
+          </Button>
+          <Button
+            variant="outline"
             onClick={downloadBlankTemplate}
             className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
           >
@@ -159,6 +181,16 @@ export default function TestsPage() {
         </div>
       </div>
       
+      {syncResult && (
+        <div className={`mb-4 p-4 rounded-md border ${
+          syncResult.success
+            ? 'bg-green-100 text-green-700 border-green-200'
+            : 'bg-red-100 text-red-700 border-red-200'
+        }`}>
+          <strong>{syncResult.success ? 'Success:' : 'Error:'}</strong> {syncResult.message}
+        </div>
+      )}
+
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-200">
           <strong>Error:</strong> {error}
@@ -257,15 +289,6 @@ export default function TestsPage() {
                       onClick={() => handleManageTest(test.id)}
                     >
                       Manage
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      onClick={() => exportTest(test.id)}
-                      disabled={exportingId === test.id}
-                      className="text-blue-600 hover:text-blue-700 border-blue-200 hover:border-blue-300"
-                    >
-                      {exportingId === test.id ? 'Exporting...' : 'Export'}
                     </Button>
 
                     <Button

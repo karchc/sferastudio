@@ -4,7 +4,7 @@
 ---
 
 ## 1. Brand Overview
-**Name**: Practice SAP
+**Name**: Practice ERP
 **Tagline**: Practice Smarter. Score Higher.  
 **Mission**: To empower students and professionals with high-quality, up-to-date test prep materials to boost confidence and improve scores.  
 **Tone of Voice**:  

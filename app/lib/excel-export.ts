@@ -46,7 +46,7 @@ export async function generateTestExportTemplate(testsData?: TestData[]): Promis
   const workbook = new ExcelJS.Workbook();
 
   // Set workbook properties
-  workbook.creator = 'Practice SAP Admin';
+  workbook.creator = 'Practice ERP Admin';
   workbook.created = new Date();
 
   // Create Instructions Sheet

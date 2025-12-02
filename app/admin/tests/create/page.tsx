@@ -340,7 +340,7 @@ export default function CreateTestPage() {
                             value={category.name}
                             onChange={(e) => updateCategory(category.id, 'name', e.target.value)}
                             className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="e.g., SAP Basics, Advanced Programming, etc."
+                            placeholder="e.g., ERP Basics, Advanced Programming, etc."
                             required
                           />
                         </div>

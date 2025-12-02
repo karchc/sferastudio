@@ -1,10 +1,10 @@
-# Practice SAP - Exam Preparation Platform
+# Practice ERP - Exam Preparation Platform
 
-This is a comprehensive exam preparation platform built with [Next.js](https://nextjs.org) and [Supabase](https://supabase.com), focusing on Business Tech and SAP exams.
+This is a comprehensive exam preparation platform built with [Next.js](https://nextjs.org) and [Supabase](https://supabase.com), focusing on Business Tech and ERP exams.
 
 ## About the Project
 
-Practice SAP allows users to:
+Practice ERP allows users to:
 - Create accounts and manage profiles
 - Take practice tests with various question types
 - Review test performance and analytics
@@ -261,7 +261,7 @@ Practice SAP allows users to:
 - **Reusable Footer Component**: Created `/app/components/Footer.tsx` for consistent footer across all pages
 - **Updated All Pages**: Replaced inline footer code with centralized Footer component across:
   - Homepage, Contact, Support, FAQs, Study Guide, Terms & Privacy pages
-- **Landing Page Section Reordering**: "Available Practice Tests" now appears before "Why Choose Practice SAP?"
+- **Landing Page Section Reordering**: "Available Practice Tests" now appears before "Why Choose Practice ERP?"
   - Improved conversion funnel by showing products immediately after hero section
   - Maintained visual appeal with alternating background colors
   - Better user engagement with tests prominently featured
@@ -290,7 +290,7 @@ Practice SAP allows users to:
 - **Unified purchase experience**: All purchase buttons throughout the app now use consistent modal confirmation system
 
 ### 250707-01 Branding Update
-- **Changed branding** from "Test Engine" to "Practice SAP" across all user-facing pages
+- **Changed branding** from "Test Engine" to "Practice ERP" across all user-facing pages
 - Updated main landing page, admin dashboards, and navigation components
 - Brand name now consistent throughout the application
 
@@ -715,7 +715,7 @@ Practice SAP allows users to:
 ### 250603-01 Homepage & Branding Updates
 
 1. **Brand Implementation**
-   - Applied "Practice SAP" brand guidelines throughout
+   - Applied "Practice ERP" brand guidelines throughout
    - Color palette:
      - Primary: Oxford Blue (#0B1F3A), Sky Blue (#3EB3E7)
      - Secondary: Slate Gray (#5C677D), Mint Green (#B1E5D3), Light Gray (#F6F7FA)

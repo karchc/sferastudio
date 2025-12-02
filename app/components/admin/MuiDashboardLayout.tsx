@@ -188,7 +188,7 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <img 
                     src="/Test-engine-logo.webp" 
-                    alt="Practice SAP Logo" 
+                    alt="Practice ERP Logo" 
                     style={{ 
                       height: '32px', 
                       width: 'auto',
@@ -203,7 +203,7 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
                       fontSize: '1.1rem'
                     }}
                   >
-                    Practice SAP
+                    Practice ERP
                   </Typography>
                 </Box>
                 <IconButton onClick={toggleDrawer}>

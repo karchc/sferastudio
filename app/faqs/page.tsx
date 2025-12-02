@@ -10,8 +10,8 @@ const faqs = [
     category: "General",
     questions: [
       {
-        question: "What is Practice SAP?",
-        answer: "Practice SAP is a comprehensive exam preparation platform designed to help professionals prepare for SAP and Business Tech certification exams. We offer practice tests, study guides, and performance analytics to help you succeed."
+        question: "What is Practice ERP?",
+        answer: "Practice ERP is a comprehensive exam preparation platform designed to help professionals prepare for ERP and Business Tech certification exams. We offer practice tests, study guides, and performance analytics to help you succeed."
       },
       {
         question: "How do I get started?",
@@ -32,7 +32,7 @@ const faqs = [
     questions: [
       {
         question: "How many practice tests are available?",
-        answer: "We offer a growing library of practice tests covering various SAP modules and certification levels. New tests are added regularly based on user feedback and exam updates."
+        answer: "We offer a growing library of practice tests covering various ERP modules and certification levels. New tests are added regularly based on user feedback and exam updates."
       },
       {
         question: "How long are the practice tests?",
@@ -166,7 +166,7 @@ export default function FAQs() {
             </h1>
             
             <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
-              Find answers to common questions about Practice SAP and our certification preparation platform
+              Find answers to common questions about Practice ERP and our certification preparation platform
             </p>
 
             <div className="flex flex-wrap justify-center gap-6 mb-8">

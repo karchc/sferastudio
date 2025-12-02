@@ -13,18 +13,18 @@ import { v4 as uuidv4 } from 'uuid';
 export const mockCategories: Category[] = [
   {
     id: "cat-1",
-    name: "SAP Fundamentals",
-    description: "Basic SAP concepts and overview"
+    name: "ERP Fundamentals",
+    description: "Basic ERP concepts and overview"
   },
   {
     id: "cat-2",
-    name: "SAP Technology",
-    description: "Technical aspects of SAP systems"
+    name: "ERP Technology",
+    description: "Technical aspects of ERP systems"
   },
   {
     id: "cat-3",
     name: "Supply Chain",
-    description: "Supply chain management in SAP"
+    description: "Supply chain management in ERP"
   }
 ];
 
@@ -72,8 +72,8 @@ export const mockQuestions: Question[] = [
 export const mockTests: TestData[] = [
   {
     id: "test-1",
-    title: "SAP Fundamentals Test",
-    description: "Test your knowledge of basic SAP concepts",
+    title: "ERP Fundamentals Test",
+    description: "Test your knowledge of basic ERP concepts",
     timeLimit: 300, // 5 minutes
     categoryIds: ["cat-1"], // Use categoryIds array to match TestData interface
     isActive: true, // Add required field

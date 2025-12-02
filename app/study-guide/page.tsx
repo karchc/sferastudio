@@ -33,7 +33,7 @@ export default function StudyGuide() {
             </h1>
             
             <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
-              Comprehensive resources and proven strategies to help you ace your SAP certification exams
+              Comprehensive resources and proven strategies to help you ace your ERP certification exams
             </p>
 
             <div className="flex flex-wrap justify-center gap-6 mb-8">
@@ -169,12 +169,12 @@ export default function StudyGuide() {
                 <h3 className="text-2xl font-semibold text-[#0B1F3A]">Official Documentation</h3>
               </div>
               <p className="text-[#5C677D] mb-4">
-                Start with the official SAP documentation and certification guides
+                Start with the official ERP documentation and certification guides
               </p>
               <ul className="text-sm text-[#5C677D] space-y-2">
                 <li className="flex items-start">
                   <Star className="h-4 w-4 text-[#3EB3E7] mr-2 mt-0.5 flex-shrink-0" />
-                  SAP Learning Hub
+                  ERP Learning Hub
                 </li>
                 <li className="flex items-start">
                   <Star className="h-4 w-4 text-[#3EB3E7] mr-2 mt-0.5 flex-shrink-0" />

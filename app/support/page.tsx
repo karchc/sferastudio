@@ -7,7 +7,7 @@ import { Footer } from "../components/Footer";
 const supportCategories = [
   {
     title: "Getting Started",
-    description: "Learn the basics of using Practice SAP",
+    description: "Learn the basics of using Practice ERP",
     icon: BookOpen,
     color: "bg-[#3EB3E7]",
     articles: [
@@ -132,7 +132,7 @@ export default function Support() {
             </h1>
             
             <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
-              Find answers, get help, and learn how to make the most of Practice SAP
+              Find answers, get help, and learn how to make the most of Practice ERP
             </p>
 
             <div className="flex flex-wrap justify-center gap-6 mb-8">
@@ -263,7 +263,7 @@ export default function Support() {
                       How to Create Your First Practice Test
                     </a>
                     <p className="text-sm text-[#5C677D] mt-1">
-                      Step-by-step guide to getting started with Practice SAP
+                      Step-by-step guide to getting started with Practice ERP
                     </p>
                   </div>
                 </li>

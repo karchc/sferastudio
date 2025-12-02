@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the complete test access gating system that has been implemented to control access to paid and free tests in the Practice SAP platform.
+This document describes the complete test access gating system that has been implemented to control access to paid and free tests in the Practice ERP platform.
 
 ## 🎯 Implementation Summary
 

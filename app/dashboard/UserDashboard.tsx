@@ -15,27 +15,27 @@ const mockUserData = {
   memberSince: "2024-01-15",
   testsCompleted: 12,
   averageScore: 78,
-  bestCategory: "SAP Technology",
+  bestCategory: "ERP Technology",
   inProgressTests: [
-    { id: "test1", title: "SAP HANA Fundamentals", progress: 60, questions: 10, lastAccessed: "2024-05-12" },
-    { id: "test2", title: "SAP S/4HANA Implementation", progress: 30, questions: 15, lastAccessed: "2024-05-14" }
+    { id: "test1", title: "ERP HANA Fundamentals", progress: 60, questions: 10, lastAccessed: "2024-05-12" },
+    { id: "test2", title: "ERP S/4HANA Implementation", progress: 30, questions: 15, lastAccessed: "2024-05-14" }
   ],
   testHistory: [
-    { id: "hist1", title: "SAP ABAP Basics", score: 85, totalQuestions: 20, date: "2024-05-10", category: "SAP Development" },
-    { id: "hist2", title: "SAP FIORI Design", score: 72, totalQuestions: 15, date: "2024-05-08", category: "SAP UI/UX" },
-    { id: "hist3", title: "SAP Business Technology Platform", score: 90, totalQuestions: 25, date: "2024-05-01", category: "SAP Technology" },
-    { id: "hist4", title: "SAP S/4HANA Cloud", score: 65, totalQuestions: 30, date: "2024-04-25", category: "SAP Cloud Solutions" }
+    { id: "hist1", title: "ERP ABAP Basics", score: 85, totalQuestions: 20, date: "2024-05-10", category: "ERP Development" },
+    { id: "hist2", title: "ERP FIORI Design", score: 72, totalQuestions: 15, date: "2024-05-08", category: "ERP UI/UX" },
+    { id: "hist3", title: "ERP Business Technology Platform", score: 90, totalQuestions: 25, date: "2024-05-01", category: "ERP Technology" },
+    { id: "hist4", title: "ERP S/4HANA Cloud", score: 65, totalQuestions: 30, date: "2024-04-25", category: "ERP Cloud Solutions" }
   ],
   categoryPerformance: [
-    { category: "SAP Fundamentals", score: 72, testsCompleted: 3 },
-    { category: "SAP Technology", score: 90, testsCompleted: 2 },
-    { category: "SAP Development", score: 85, testsCompleted: 4 },
-    { category: "SAP UI/UX", score: 68, testsCompleted: 2 },
-    { category: "SAP Cloud Solutions", score: 65, testsCompleted: 1 }
+    { category: "ERP Fundamentals", score: 72, testsCompleted: 3 },
+    { category: "ERP Technology", score: 90, testsCompleted: 2 },
+    { category: "ERP Development", score: 85, testsCompleted: 4 },
+    { category: "ERP UI/UX", score: 68, testsCompleted: 2 },
+    { category: "ERP Cloud Solutions", score: 65, testsCompleted: 1 }
   ],
   improvementSuggestions: [
-    { category: "SAP Cloud Solutions", message: "Focus on Cloud deployment models and integration scenarios" },
-    { category: "SAP UI/UX", message: "Practice more FIORI design principles and SAPUI5 questions" }
+    { category: "ERP Cloud Solutions", message: "Focus on Cloud deployment models and integration scenarios" },
+    { category: "ERP UI/UX", message: "Practice more FIORI design principles and UI5 questions" }
   ]
 };
 
@@ -326,11 +326,11 @@ export default function UserDashboard() {
               <div className="flex items-center gap-2">
                 <select className="border border-slate-300 rounded-md p-2 text-sm">
                   <option value="all">All Categories</option>
-                  <option value="sap-fundamentals">SAP Fundamentals</option>
-                  <option value="sap-technology">SAP Technology</option>
-                  <option value="sap-development">SAP Development</option>
-                  <option value="sap-ui-ux">SAP UI/UX</option>
-                  <option value="sap-cloud">SAP Cloud Solutions</option>
+                  <option value="erp-fundamentals">ERP Fundamentals</option>
+                  <option value="erp-technology">ERP Technology</option>
+                  <option value="erp-development">ERP Development</option>
+                  <option value="erp-ui-ux">ERP UI/UX</option>
+                  <option value="erp-cloud">ERP Cloud Solutions</option>
                 </select>
                 <select className="border border-slate-300 rounded-md p-2 text-sm">
                   <option value="recent">Most Recent</option>

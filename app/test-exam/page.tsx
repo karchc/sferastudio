@@ -458,7 +458,7 @@ export default function TestExamPage() {
             <div className="h-8 relative">
               <Image 
                 src="/practice_sap_logo_cropped.png"
-                alt="Practice SAP Logo"
+                alt="Practice ERP Logo"
                 width={100}
                 height={32}
                 priority

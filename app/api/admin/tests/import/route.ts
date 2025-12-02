@@ -31,7 +31,7 @@ async function downloadAndUploadImage(imageUrl: string): Promise<{ url: string |
     // Fetch the image
     const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; PracticeSAP/1.0)'
+        'User-Agent': 'Mozilla/5.0 (compatible; PracticeERP/1.0)'
       }
     });
 

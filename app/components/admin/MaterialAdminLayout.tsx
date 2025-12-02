@@ -148,7 +148,7 @@ export function MaterialAdminLayout({ children }: AdminLayoutProps) {
         bgcolor: 'primary.dark'
       }}>
         <Typography variant="h6" component="div" sx={{ color: 'white', fontWeight: 'bold' }}>
-          Practice SAP Admin
+          Practice ERP Admin
         </Typography>
       </Toolbar>
       <Divider />
@@ -248,7 +248,7 @@ export function MaterialAdminLayout({ children }: AdminLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Practice SAP Admin Dashboard
+            Practice ERP Admin Dashboard
           </Typography>
           <Button 
             variant="outlined" 
