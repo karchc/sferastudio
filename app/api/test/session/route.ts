@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/app/lib/auth-server';
 
+/**
+ * Checks if a user is an admin
+ */
+async function checkIsAdmin(supabase: any, userId: string): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.app_metadata?.is_admin === true) {
+      return true;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
+
+    return profile?.is_admin === true;
+  } catch {
+    return false;
+  }
+}
+
 // Get active test session for current user
 export async function GET(request: NextRequest) {
   try {
@@ -10,6 +32,13 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user is an admin - admins never have stored sessions
+    const isAdmin = await checkIsAdmin(supabase, user.id);
+    if (isAdmin) {
+      // Always return no session for admins so they start fresh each time
+      return NextResponse.json({ session: null, isAdminPreview: true });
     }
 
     // Get testId from query params if provided
@@ -66,6 +95,29 @@ export async function POST(request: NextRequest) {
     if (!testId) {
       console.error('No test ID provided');
       return NextResponse.json({ error: 'Test ID is required' }, { status: 400 });
+    }
+
+    // Check if user is an admin - admins don't store sessions
+    const isAdmin = await checkIsAdmin(supabase, user.id);
+    if (isAdmin) {
+      console.log('Admin user - returning virtual session (not stored)');
+      // Return a virtual session for admins that won't be stored
+      return NextResponse.json({
+        session: {
+          id: `admin-preview-${testId}-${Date.now()}`,
+          test_id: testId,
+          user_id: user.id,
+          start_time: new Date().toISOString(),
+          status: 'in_progress',
+          score: 0,
+          time_spent: 0,
+          current_question_index: 0,
+          session_data: {},
+          is_admin_preview: true
+        },
+        resumed: false,
+        isAdminPreview: true
+      });
     }
 
     // Check if there's already an active session for this test
@@ -138,6 +190,25 @@ export async function PUT(request: NextRequest) {
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
+    }
+
+    // Check if this is an admin preview session (not stored in DB)
+    if (sessionId.startsWith('admin-preview-')) {
+      console.log('Admin preview session - skipping database update');
+      // Return a mock updated session for admin previews
+      return NextResponse.json({
+        session: {
+          id: sessionId,
+          user_id: user.id,
+          status: status || 'in_progress',
+          score: score || 0,
+          time_spent: timeSpent || 0,
+          current_question_index: currentQuestionIndex || 0,
+          session_data: sessionData || {},
+          is_admin_preview: true
+        },
+        isAdminPreview: true
+      });
     }
 
     // Update test session

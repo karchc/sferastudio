@@ -8,6 +8,7 @@ import { ConfirmationModal } from '@/app/components/ui/confirmation-modal';
 import { Modal } from '@/app/components/ui/modal';
 import { QuestionForm } from '@/app/components/admin/QuestionFormEnhanced';
 import Link from 'next/link';
+import { Eye, ExternalLink } from 'lucide-react';
 import { Category, QuestionFormData, QuestionType, Question as TypedQuestion } from '@/app/lib/types';
 
 interface Test {
@@ -105,6 +106,13 @@ export default function TestManagePage() {
     message: '',
     onConfirm: () => {}
   });
+
+  // Get all preview questions across categories
+  const previewQuestions = categories.flatMap(category =>
+    category.questions
+      .filter(q => q.is_preview)
+      .map(q => ({ ...q, categoryName: category.name }))
+  );
 
   useEffect(() => {
     if (testId) {
@@ -465,9 +473,31 @@ export default function TestManagePage() {
           <h1 className="text-2xl font-bold text-gray-900">Manage Test</h1>
           <p className="text-gray-600 mt-1">Configure categories and questions for this test</p>
         </div>
-        <Link href="/admin/tests">
-          <Button variant="outline">Back to Tests</Button>
-        </Link>
+        <div className="flex gap-2">
+          {/* Preview Test Button - Opens preview test with only preview questions */}
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/preview-test/${testId}`, '_blank')}
+            disabled={previewQuestions.length === 0}
+            title={previewQuestions.length === 0 ? 'No preview questions set' : `Take test with ${previewQuestions.length} preview questions`}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Preview Test ({previewQuestions.length})
+          </Button>
+
+          {/* Take Full Test Button - Opens full test in new tab */}
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/test/${testId}`, '_blank')}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Take Full Test
+          </Button>
+
+          <Link href="/admin/tests">
+            <Button variant="outline">Back to Tests</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Messages */}
@@ -497,7 +527,7 @@ export default function TestManagePage() {
               )}
               <div className="mt-3 flex flex-wrap gap-3">
                 <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {Math.round(test.time_limit / 60)} minutes
+                  {Math.round((test.time_limit || 3600) / 60)} minutes
                 </span>
                 <span className={`text-sm px-2 py-1 rounded ${
                   test.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'

@@ -17,6 +17,44 @@ Practice SAP allows users to:
 
 ## Recent Updates (December 2025)
 
+### 251202-01 Admin Test Preview & Access Control
+
+1. **Admin Test Preview Buttons**
+   - **Preview Test Button**: Opens `/preview-test/{id}` with only preview questions in new tab
+   - **Take Full Test Button**: Opens `/test/{id}` with all questions in new tab
+   - **Visual Indicators**: Shows count of preview questions, disabled when no preview questions exist
+   - **Location**: Added to Manage Test page header for easy access
+
+2. **Admin Access Control for Tests**
+   - **Full Test Access**: Admins can access all tests (free and paid) without purchase
+   - **Bypass Payment Gating**: `checkTestAccess()` now grants automatic access for admin users
+   - **Implementation**: Added `checkIsAdmin()` helper in `test-access-control.ts`
+
+3. **Admin Session Management**
+   - **No Database Storage**: Admin test sessions are not stored in database
+   - **Virtual Sessions**: Returns `admin-preview-{testId}-{timestamp}` session IDs
+   - **Fresh Start Every Time**: GET `/api/test/session` returns `null` for admins
+   - **No Session Resume**: Admins always start tests fresh without resumption
+   - **Score Calculation**: Admins see results but nothing is persisted
+
+4. **Technical Implementation**
+   - **Session Route** (`/api/test/session/route.ts`):
+     - GET: Returns `null` session for admins
+     - POST: Returns virtual session ID without database insert
+     - PUT: Handles `admin-preview-` prefix, skips database update
+   - **Answers Route** (`/api/test/session/answers/route.ts`):
+     - Detects `admin-preview-` session IDs
+     - Calculates score without storing in `user_answers` table
+   - **Access Control** (`/app/lib/test-access-control.ts`):
+     - Added admin bypass before purchase check
+     - Returns `hasPurchased: true` for UI consistency
+
+5. **Benefits**
+   - Admins can test the full exam experience
+   - No pollution of analytics data
+   - No unnecessary database records created
+   - Seamless preview of both preview questions and full tests
+
 ### 251201-01 Bulk Upload Excel Template Enhancement
 
 1. **Reorganized Column Structure**

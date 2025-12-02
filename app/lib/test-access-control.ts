@@ -23,6 +23,37 @@ export interface TestAccessInfo {
 }
 
 /**
+ * Checks if a user is an admin
+ * @param supabase - Supabase client instance
+ * @param userId - User ID
+ * @returns true if user is an admin
+ */
+async function checkIsAdmin(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<boolean> {
+  try {
+    // First check app_metadata from the auth user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.app_metadata?.is_admin === true) {
+      return true;
+    }
+
+    // If not in app metadata, check profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
+
+    return profile?.is_admin === true;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+}
+
+/**
  * Checks if a user has access to a specific test
  * @param supabase - Supabase client instance
  * @param userId - User ID (null if not authenticated)
@@ -58,6 +89,20 @@ export async function checkTestAccess(
       isFree: false,
       testPrice,
       testCurrency: testInfo.currency || 'USD',
+    };
+  }
+
+  // Check if user is an admin - admins have access to all tests
+  const isAdmin = await checkIsAdmin(supabase, userId);
+  if (isAdmin) {
+    return {
+      status: 'granted',
+      canAccess: true,
+      reason: 'Admin access - full access to all tests',
+      isFree: false,
+      testPrice,
+      testCurrency: testInfo.currency || 'USD',
+      hasPurchased: true, // Treat admin as having purchased for UI purposes
     };
   }
 

@@ -146,7 +146,7 @@ The platform uses a dual organization system:
 ### Recent Updates
 
 - **Purchase Modal Enhancement**: Preview test completion pages now use modal-based purchase system
-- **Test Summary Improvements**: 
+- **Test Summary Improvements**:
   - Shows test name in completion overview
   - Displays category-based performance metrics instead of question types
   - Includes correct answers and explanations in question breakdown
@@ -159,6 +159,26 @@ The platform uses a dual organization system:
   - Removed difficulty and points fields from question management
   - Streamlined question form layout and simplified admin workflows
   - Improved user experience for managing questions in tests with many categories
+- **Admin Test Preview Features**:
+  - Added "Preview Test" button to manage test page - opens `/preview-test/{id}` with only preview questions
+  - Added "Take Full Test" button to manage test page - opens `/test/{id}` with all questions
+  - Admins can access all tests (including premium/paid tests) without purchase restrictions
+  - Admin test sessions are not stored in the database - no records created for admin test attempts
+  - Admins always start fresh when viewing tests (no session resumption)
+
+## Admin Access Control
+
+Admins have special privileges for test access:
+
+- **Full Test Access**: Admins can take any test (free or paid) without purchase
+- **No Session Storage**: When admins take tests, no database records are created:
+  - No entries in `test_sessions` table
+  - No entries in `user_answers` table
+  - No entries in `selected_answers` table
+- **Fresh Start Every Time**: Admins always start tests fresh without session resumption
+- **Score Calculation**: Admins still see their results after completing a test, but results are not persisted
+
+This ensures admins can preview and test the exam experience without polluting analytics data or creating unnecessary database records.
 
 This context will be updated as the project evolves.
 

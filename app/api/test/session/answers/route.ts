@@ -6,13 +6,13 @@ export async function POST(request: NextRequest) {
   try {
     console.log('Received request to save test answers');
     const supabase = await createServerSupabase();
-    
+
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     console.log('Authenticated user:', user.id);
 
 
@@ -21,6 +21,27 @@ export async function POST(request: NextRequest) {
 
     if (!sessionId || !answers) {
       return NextResponse.json({ error: 'Session ID and answers are required' }, { status: 400 });
+    }
+
+    // Check if this is an admin preview session (not stored in DB)
+    if (sessionId.startsWith('admin-preview-')) {
+      console.log('Admin preview session - calculating score without storing');
+      // Calculate score for admin preview without storing
+      const correctCount = answers.filter((a: any) => a.isCorrect === true).length;
+      const answeredCount = answers.filter((a: any) => a.answers && a.answers.length > 0).length;
+      const skippedCount = answers.filter((a: any) => !a.answers || a.answers.length === 0).length;
+      const actualTotalQuestions = totalQuestions || answers.length;
+      const score = actualTotalQuestions > 0 ? Math.round((correctCount / actualTotalQuestions) * 100) : 0;
+
+      return NextResponse.json({
+        success: true,
+        score,
+        correctCount,
+        totalQuestions: actualTotalQuestions,
+        answeredCount,
+        skippedCount,
+        isAdminPreview: true
+      });
     }
 
     // Verify session belongs to user
