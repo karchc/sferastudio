@@ -145,6 +145,11 @@ The platform uses a dual organization system:
 
 ### Recent Updates
 
+- **Featured Tests System**: Added `feature` boolean field to tests for homepage display
+  - Featured tests are prominently displayed on the homepage
+  - Toggle in admin interface (Edit Test modal) to mark tests as featured
+  - Bulk upload Excel template supports "Featured" column (TRUE/FALSE)
+  - Visual indicator with ⭐ badge in admin test listings
 - **Purchase Modal Enhancement**: Preview test completion pages now use modal-based purchase system
 - **Test Summary Improvements**:
   - Shows test name in completion overview

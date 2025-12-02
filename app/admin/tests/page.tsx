@@ -24,6 +24,7 @@ interface Test {
   currency?: string;
   is_free?: boolean;
   tag?: string;
+  feature?: boolean;
 }
 
 export default function TestsPage() {
@@ -216,6 +217,12 @@ export default function TestsPage() {
                       {test.tag && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                           {test.tag}
+                        </span>
+                      )}
+
+                      {test.feature && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          ⭐ Featured
                         </span>
                       )}
 

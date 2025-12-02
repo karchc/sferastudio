@@ -17,6 +17,29 @@ Practice SAP allows users to:
 
 ## Recent Updates (December 2025)
 
+### 251202-02 Featured Tests System
+
+1. **New Feature Field for Tests**
+   - **Purpose**: Boolean field to mark tests as featured for homepage display
+   - **Database**: Added `feature` column (BOOLEAN, default false) to tests table
+   - **Index**: Partial index `idx_tests_feature` for fast featured tests queries
+
+2. **Admin Interface Updates**
+   - **Test Listings**: Featured tests display ⭐ badge in admin tests list
+   - **Manage Test Page**: Shows "⭐ Featured" badge in test details
+   - **Edit Test Modal**: Checkbox to toggle featured status with "Feature" label
+
+3. **Bulk Upload Support**
+   - **Excel Template**: Added "Featured" column (column H) with TRUE/FALSE dropdown
+   - **Import**: Parses featured flag and applies to created tests
+   - **Export**: Exports featured status for existing tests
+
+4. **Technical Implementation**
+   - **Type Definitions**: Added `feature?: boolean` to Test interface in `types.ts`
+   - **Excel Import** (`excel-import.ts`): Parses column H as boolean
+   - **Excel Export** (`excel-export.ts`): Includes Featured column with validation
+   - **Import API** (`import/route.ts`): Saves feature flag to database
+
 ### 251202-01 Admin Test Preview & Access Control
 
 1. **Admin Test Preview Buttons**

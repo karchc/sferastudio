@@ -16,6 +16,30 @@ export interface ActiveSession {
   };
 }
 
+/**
+ * Check if user is an admin
+ */
+async function checkIsAdmin(supabase: any, userId: string): Promise<boolean> {
+  try {
+    // Check app_metadata first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.app_metadata?.is_admin === true) {
+      return true;
+    }
+
+    // Check profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
+
+    return profile?.is_admin === true;
+  } catch {
+    return false;
+  }
+}
+
 export function useActiveSession(skipCheck = false) {
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +63,14 @@ export function useActiveSession(skipCheck = false) {
 
         if (authError || !user) {
           // No user, no active session
+          setActiveSession(null);
+          setLoading(false);
+          return;
+        }
+
+        // Skip session check for admins - they don't have stored sessions
+        const isAdmin = await checkIsAdmin(supabase, user.id);
+        if (isAdmin) {
           setActiveSession(null);
           setLoading(false);
           return;

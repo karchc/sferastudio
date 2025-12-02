@@ -35,6 +35,7 @@ interface TestData {
   categories?: Category[];
   is_active: boolean;
   tag?: string;
+  feature?: boolean;
   price?: number;
   currency?: string;
   is_free: boolean;
@@ -222,7 +223,8 @@ function addTestMetadataSheet(sheet: ExcelJS.Worksheet, testsData?: TestData[]):
     { width: 12 }, // is_active
     { width: 12 }, // is_free
     { width: 12 }, // price
-    { width: 10 }  // currency
+    { width: 10 }, // currency
+    { width: 25 }  // feature
   ];
 
   // Header row
@@ -233,7 +235,8 @@ function addTestMetadataSheet(sheet: ExcelJS.Worksheet, testsData?: TestData[]):
     'Active *',
     'Free *',
     'Price',
-    'Currency'
+    'Currency',
+    'Featured'
   ]);
 
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -254,15 +257,16 @@ function addTestMetadataSheet(sheet: ExcelJS.Worksheet, testsData?: TestData[]):
         test.is_active ? 'TRUE' : 'FALSE',
         test.is_free ? 'TRUE' : 'FALSE',
         test.price || '',
-        test.currency || 'USD'
+        test.currency || 'USD',
+        test.feature ? 'TRUE' : 'FALSE'
       ]);
     });
   } else {
     // Example rows
     const examples = [
-      ['SAP FI Certification Test', 'Practice test for Financial Accounting certification', 180, 'TRUE', 'FALSE', 29.99, 'USD'],
-      ['SAP Basics Quiz', 'Introduction to SAP fundamentals', 60, 'TRUE', 'TRUE', '', 'USD'],
-      ['CO Module Practice', 'Controlling module practice questions', 120, 'TRUE', 'FALSE', 19.99, 'USD']
+      ['SAP FI Certification Test', 'Practice test for Financial Accounting certification', 180, 'TRUE', 'FALSE', 29.99, 'USD', 'TRUE'],
+      ['SAP Basics Quiz', 'Introduction to SAP fundamentals', 60, 'TRUE', 'TRUE', '', 'USD', 'FALSE'],
+      ['CO Module Practice', 'Controlling module practice questions', 120, 'TRUE', 'FALSE', 19.99, 'USD', 'FALSE']
     ];
 
     examples.forEach(ex => {
@@ -272,7 +276,7 @@ function addTestMetadataSheet(sheet: ExcelJS.Worksheet, testsData?: TestData[]):
     });
   }
 
-  // Add data validation for Active and Free columns (TRUE/FALSE dropdown)
+  // Add data validation for Active, Free, and Featured columns (TRUE/FALSE dropdown)
   for (let i = 2; i <= 100; i++) {
     sheet.getCell(`D${i}`).dataValidation = {
       type: 'list',
@@ -283,6 +287,14 @@ function addTestMetadataSheet(sheet: ExcelJS.Worksheet, testsData?: TestData[]):
       error: 'Please select TRUE or FALSE'
     };
     sheet.getCell(`E${i}`).dataValidation = {
+      type: 'list',
+      allowBlank: false,
+      formulae: ['"TRUE,FALSE"'],
+      showErrorMessage: true,
+      errorTitle: 'Invalid value',
+      error: 'Please select TRUE or FALSE'
+    };
+    sheet.getCell(`H${i}`).dataValidation = {
       type: 'list',
       allowBlank: false,
       formulae: ['"TRUE,FALSE"'],

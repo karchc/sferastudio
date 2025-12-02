@@ -291,6 +291,7 @@ async function createTestWithData(
       is_free: test.isFree,
       price: test.price || null,
       currency: test.currency || 'USD',
+      feature: test.feature,
       is_archived: false,
       created_at: new Date().toISOString()
     })

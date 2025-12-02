@@ -12,6 +12,7 @@ export interface ImportedTest {
   isFree: boolean;
   price?: number;
   currency?: string;
+  feature: boolean;
 }
 
 export interface ImportedCategory {
@@ -192,6 +193,9 @@ function parseTestsSheet(
     const priceRaw = getCellValue(row, 6);
     const price = priceRaw ? parseFloat(priceRaw) : undefined;
 
+    // Parse feature flag (column H = 8)
+    const feature = parseBoolean(getCellValue(row, 8), false);
+
     tests.push({
       testName,
       description: getCellValue(row, 2) || undefined,
@@ -199,7 +203,8 @@ function parseTestsSheet(
       isActive,
       isFree,
       price: isFree ? undefined : (price || undefined),
-      currency: getCellValue(row, 7) || 'USD'
+      currency: getCellValue(row, 7) || 'USD',
+      feature
     });
   });
 

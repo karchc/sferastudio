@@ -19,6 +19,7 @@ interface Test {
   time_limit?: number;
   category_ids?: string[];
   tag?: string;
+  feature?: boolean;
   is_active?: boolean;
   allow_backward_navigation?: boolean;
   price?: number;
@@ -544,6 +545,11 @@ export default function TestManagePage() {
                     Tag: {test.tag}
                   </span>
                 )}
+                {test.feature && (
+                  <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                    ⭐ Featured
+                  </span>
+                )}
                 <span className={`text-sm px-2 py-1 rounded font-semibold ${
                   test.is_free ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'
                 }`}>
@@ -888,6 +894,18 @@ export default function TestManagePage() {
             <p className="mt-1 text-xs text-gray-500">
               Optional tag for organizing and filtering tests
             </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="feature-checkbox"
+              checked={testForm.feature ?? false}
+              onChange={(e) => setTestForm({ ...testForm, feature: e.target.checked })}
+              className="w-4 h-4 text-yellow-600 bg-gray-100 rounded border-gray-300 focus:ring-yellow-500"
+            />
+            <label htmlFor="feature-checkbox" className="text-sm font-medium text-gray-700">
+              Feature
+            </label>
           </div>
 
           {/* Pricing Section */}
