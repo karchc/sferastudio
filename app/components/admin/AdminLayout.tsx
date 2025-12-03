@@ -20,7 +20,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <header className="border-b border-slate-200 dark:border-slate-700">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/admin/tests">
-            <h1 className="text-2xl font-bold text-blue-600">Practice SAP Admin</h1>
+            <h1 className="text-2xl font-bold text-blue-600">Practice ERP Admin</h1>
           </Link>
           <Link href="/">
             <Button variant="outline">Back to Home</Button>

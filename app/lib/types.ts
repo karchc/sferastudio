@@ -25,6 +25,7 @@ export interface Test {
   categoryIds?: string[];
   categories?: Category[];
   tag?: string;
+  feature?: boolean;
   createdBy?: string;
   isActive: boolean;
   createdAt?: Date;

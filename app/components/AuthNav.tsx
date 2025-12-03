@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../lib/auth-context'
-import { ChevronDown, BarChart3, LogOut } from 'lucide-react'
+import { ChevronDown, BarChart3, LogOut, User } from 'lucide-react'
 
 interface Profile {
   full_name: string
@@ -52,8 +52,8 @@ export default function AuthNav() {
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
                 <Image
-                  src="/logo/logo.svg"
-                  alt="Practice SAP Logo"
+                  src="https://cdn.prod.website-files.com/691437ef8eabdeb915e41bb3/692ebcf85eb327586dfa394a_practice-erp-logo-transparent.svg"
+                  alt="Practice ERP Logo"
                   width={150}
                   height={50}
                   className="mr-3 h-8 w-auto"
@@ -77,8 +77,8 @@ export default function AuthNav() {
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center group">
               <Image
-                src="/logo/logo.svg"
-                alt="Practice SAP Logo"
+                src="https://cdn.prod.website-files.com/691437ef8eabdeb915e41bb3/692ebcf85eb327586dfa394a_practice-erp-logo-transparent.svg"
+                alt="Practice ERP Logo"
                 width={120}
                 height={30}
                 className="mr-3 h-8 w-auto transition-transform group-hover:scale-105"
@@ -125,6 +125,14 @@ export default function AuthNav() {
                       >
                         <BarChart3 className="h-4 w-4 mr-3" />
                         Dashboard
+                      </Link>
+                      <Link
+                        href="/profile"
+                        className="flex items-center px-4 py-2 text-sm text-[#5C677D] hover:bg-[#F6F7FA] hover:text-[#0B1F3A] transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <User className="h-4 w-4 mr-3" />
+                        Profile
                       </Link>
                     </>
                   )}

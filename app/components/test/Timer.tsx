@@ -13,11 +13,8 @@ export function Timer({ initialTime, timeLeft, onTimeUp }: TimerProps) {
   const [timeRemaining, setTimeRemaining] = useState(timeLeft !== undefined ? timeLeft : initialTime);
   const [hasShownOneMinuteWarning, setHasShownOneMinuteWarning] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
-  
-  console.log("Timer initialized with:", initialTime, "seconds");
-  console.log("Current time remaining:", timeRemaining);
-  console.log("Time left prop:", timeLeft);
-  
+  const [hasStarted, setHasStarted] = useState(false);
+
   // Use external timeLeft if provided, otherwise use internal countdown
   const currentTime = timeLeft !== undefined ? timeLeft : timeRemaining;
   
@@ -30,6 +27,13 @@ export function Timer({ initialTime, timeLeft, onTimeUp }: TimerProps) {
     if (currentTime <= 120) return "bg-yellow-500"; // Last 2 minutes
     return "bg-green-500"; 
   };
+
+  // Mark timer as started once we have a valid time
+  useEffect(() => {
+    if (currentTime > 0 && currentTime < initialTime) {
+      setHasStarted(true);
+    }
+  }, [currentTime, initialTime]);
 
   // Update internal timer when external timeLeft changes
   useEffect(() => {
@@ -55,18 +59,20 @@ export function Timer({ initialTime, timeLeft, onTimeUp }: TimerProps) {
     if (currentTime === 60 && !hasShownOneMinuteWarning) {
       setHasShownOneMinuteWarning(true);
       setShowNotification(true);
-      
+
       // Hide notification after 5 seconds
       setTimeout(() => {
         setShowNotification(false);
       }, 5000);
     }
 
-    // Check if time is up
-    if (currentTime === 0) {
+    // Check if time is up (but only if timer has started and there's actually time being tracked)
+    // Prevent triggering when currentTime is 0 on initial load
+    if (currentTime === 0 && initialTime > 0 && hasStarted) {
+      console.log('[Timer] Time is up! Calling onTimeUp');
       onTimeUp();
     }
-  }, [currentTime, onTimeUp, hasShownOneMinuteWarning]);
+  }, [currentTime, onTimeUp, hasShownOneMinuteWarning, initialTime, hasStarted]);
 
   return (
     <>

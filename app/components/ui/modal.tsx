@@ -61,14 +61,14 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-all duration-200"
+      <div
+        className="fixed inset-0 backdrop-blur-md transition-all duration-200"
         onClick={onClose}
       />
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className={`relative bg-white rounded-lg shadow-xl ${getSizeClass()} w-full mx-auto transform transition-all max-h-[90vh] overflow-hidden flex flex-col`}>
+        <div className={`relative bg-white rounded-lg shadow-2xl ring-1 ring-black/5 ${getSizeClass()} w-full mx-auto transform transition-all max-h-[90vh] overflow-hidden flex flex-col`}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">

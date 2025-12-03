@@ -8,7 +8,8 @@ import { ConfirmationModal } from '@/app/components/ui/confirmation-modal';
 import { Modal } from '@/app/components/ui/modal';
 import { QuestionForm } from '@/app/components/admin/QuestionFormEnhanced';
 import Link from 'next/link';
-import { Category, QuestionFormData } from '@/app/lib/types';
+import { Eye, ExternalLink } from 'lucide-react';
+import { Category, QuestionFormData, QuestionType, Question as TypedQuestion } from '@/app/lib/types';
 
 interface Test {
   id: string;
@@ -18,13 +19,17 @@ interface Test {
   time_limit?: number;
   category_ids?: string[];
   tag?: string;
+  feature?: boolean;
   is_active?: boolean;
   allow_backward_navigation?: boolean;
+  price?: number;
+  currency?: string;
+  is_free?: boolean;
 }
 
 interface Question {
   id: string;
-  type: string;
+  type: QuestionType | string; // Support both typed and string formats
   text: string;
   mediaUrl?: string;
   category_id: string;
@@ -64,6 +69,12 @@ export default function TestManagePage() {
   const [selectedCategoryForQuestion, setSelectedCategoryForQuestion] = useState<string | null>(null);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [isEditingCategory, setIsEditingCategory] = useState<string | null>(null);
+
+  // Validation errors for inline display
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  // Store previous price when toggling free/paid
+  const [previousPrice, setPreviousPrice] = useState<number>(0);
   
   // Loading states
   const [loadingStates, setLoadingStates] = useState({
@@ -96,6 +107,13 @@ export default function TestManagePage() {
     message: '',
     onConfirm: () => {}
   });
+
+  // Get all preview questions across categories
+  const previewQuestions = categories.flatMap(category =>
+    category.questions
+      .filter(q => q.is_preview)
+      .map(q => ({ ...q, categoryName: category.name }))
+  );
 
   useEffect(() => {
     if (testId) {
@@ -133,26 +151,51 @@ export default function TestManagePage() {
   async function updateTest() {
     try {
       setLoadingStates(prev => ({ ...prev, updateTest: true }));
-      
+      setError(null);
+      setValidationErrors({});
+
+      const errors: Record<string, string> = {};
+
       // Validate required fields
       if (!testForm.title?.trim()) {
-        setError('Test title is required');
-        return;
+        errors.title = 'Test title is required';
       }
-      
+
       // Ensure time_limit has a valid value
       const timeLimitMinutes = testForm.time_limit || 60;
       if (timeLimitMinutes < 1) {
-        setError('Time limit must be at least 1 minute');
+        errors.time_limit = 'Time limit must be at least 1 minute';
+      }
+
+      // Validate pricing
+      if (!testForm.is_free) {
+        const price = testForm.price ?? 0;
+        if (price <= 0) {
+          errors.price = 'Price must be greater than 0 for paid tests';
+        } else if (price > 999999.99) {
+          errors.price = 'Price cannot exceed 999,999.99';
+        }
+        if (!testForm.currency) {
+          errors.currency = 'Currency is required for paid tests';
+        }
+      }
+
+      // If validation errors exist, display them and don't close popup
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
         return;
       }
-      
+
       // Convert minutes to seconds for database
       const updateData = {
         ...testForm,
-        time_limit: timeLimitMinutes * 60
+        time_limit: timeLimitMinutes * 60,
+        // Ensure pricing fields are properly set
+        is_free: testForm.is_free ?? true,
+        price: testForm.is_free ? 0 : (testForm.price ?? 0),
+        currency: testForm.currency || 'USD'
       };
-      
+
       const response = await fetch(`/api/admin/tests/${testId}`, {
         method: 'PATCH',
         headers: {
@@ -160,11 +203,15 @@ export default function TestManagePage() {
         },
         body: JSON.stringify(updateData)
       });
-      
-      if (!response.ok) throw new Error('Failed to update test');
-      
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update test');
+      }
+
       setTest({ ...test!, ...updateData });
       setIsEditingTest(false);
+      setValidationErrors({});
       setSuccess('Test updated successfully');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -427,9 +474,31 @@ export default function TestManagePage() {
           <h1 className="text-2xl font-bold text-gray-900">Manage Test</h1>
           <p className="text-gray-600 mt-1">Configure categories and questions for this test</p>
         </div>
-        <Link href="/admin/tests">
-          <Button variant="outline">Back to Tests</Button>
-        </Link>
+        <div className="flex gap-2">
+          {/* Preview Test Button - Opens preview test with only preview questions */}
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/preview-test/${testId}`, '_blank')}
+            disabled={previewQuestions.length === 0}
+            title={previewQuestions.length === 0 ? 'No preview questions set' : `Take test with ${previewQuestions.length} preview questions`}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Preview Test ({previewQuestions.length})
+          </Button>
+
+          {/* Take Full Test Button - Opens full test in new tab */}
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/test/${testId}`, '_blank')}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Take Full Test
+          </Button>
+
+          <Link href="/admin/tests">
+            <Button variant="outline">Back to Tests</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Messages */}
@@ -457,9 +526,9 @@ export default function TestManagePage() {
                   <p className="text-sm text-blue-700 whitespace-pre-wrap">{test.instructions}</p>
                 </div>
               )}
-              <div className="mt-3 flex gap-3">
+              <div className="mt-3 flex flex-wrap gap-3">
                 <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {Math.round(test.time_limit / 60)} minutes
+                  {Math.round((test.time_limit || 3600) / 60)} minutes
                 </span>
                 <span className={`text-sm px-2 py-1 rounded ${
                   test.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -476,9 +545,25 @@ export default function TestManagePage() {
                     Tag: {test.tag}
                   </span>
                 )}
+                {test.feature && (
+                  <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                    ⭐ Featured
+                  </span>
+                )}
+                <span className={`text-sm px-2 py-1 rounded font-semibold ${
+                  test.is_free ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {test.is_free ? 'FREE' : `${test.currency || 'USD'} ${(test.price ?? 0).toFixed(2)}`}
+                </span>
               </div>
             </div>
-            <Button variant="outline" onClick={() => setIsEditingTest(true)}>
+            <Button variant="outline" onClick={() => {
+              setIsEditingTest(true);
+              // Initialize previousPrice with the current test price if it exists and is > 0
+              if (test.price && test.price > 0) {
+                setPreviousPrice(test.price);
+              }
+            }}>
               Edit Test
             </Button>
           </div>
@@ -727,7 +812,10 @@ export default function TestManagePage() {
       {/* Edit Test Modal */}
       <Modal
         isOpen={isEditingTest}
-        onClose={() => setIsEditingTest(false)}
+        onClose={() => {
+          setIsEditingTest(false);
+          setValidationErrors({});
+        }}
         title="Edit Test Details"
         size="lg"
       >
@@ -738,10 +826,20 @@ export default function TestManagePage() {
               <input
                 type="text"
                 value={testForm.title || ''}
-                onChange={(e) => setTestForm({ ...testForm, title: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                onChange={(e) => {
+                  setTestForm({ ...testForm, title: e.target.value });
+                  if (validationErrors.title) {
+                    setValidationErrors({ ...validationErrors, title: '' });
+                  }
+                }}
+                className={`w-full p-2 border rounded-md ${
+                  validationErrors.title ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="Enter test title"
               />
+              {validationErrors.title && (
+                <p className="mt-1 text-xs text-red-600">{validationErrors.title}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Time Limit (minutes)</label>
@@ -752,17 +850,26 @@ export default function TestManagePage() {
                 value={testForm.time_limit || ''}
                 onChange={(e) => {
                   const value = e.target.value;
-                  setTestForm({ 
-                    ...testForm, 
+                  setTestForm({
+                    ...testForm,
                     time_limit: value === '' ? undefined : parseInt(value) || 1
                   });
+                  if (validationErrors.time_limit) {
+                    setValidationErrors({ ...validationErrors, time_limit: '' });
+                  }
                 }}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className={`w-full p-2 border rounded-md ${
+                  validationErrors.time_limit ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="60"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Default: 60 minutes (if left empty)
-              </p>
+              {validationErrors.time_limit ? (
+                <p className="mt-1 text-xs text-red-600">{validationErrors.time_limit}</p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-500">
+                  Default: 60 minutes (if left empty)
+                </p>
+              )}
             </div>
           </div>
           <div>
@@ -787,6 +894,126 @@ export default function TestManagePage() {
             <p className="mt-1 text-xs text-gray-500">
               Optional tag for organizing and filtering tests
             </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="feature-checkbox"
+              checked={testForm.feature ?? false}
+              onChange={(e) => setTestForm({ ...testForm, feature: e.target.checked })}
+              className="w-4 h-4 text-yellow-600 bg-gray-100 rounded border-gray-300 focus:ring-yellow-500"
+            />
+            <label htmlFor="feature-checkbox" className="text-sm font-medium text-gray-700">
+              Feature
+            </label>
+          </div>
+
+          {/* Pricing Section */}
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <h3 className="text-lg font-medium mb-4">Pricing</h3>
+
+            <div className="flex items-center space-x-2 mb-4">
+              <input
+                type="checkbox"
+                id="is-free-modal"
+                checked={testForm.is_free ?? true}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  if (isChecked) {
+                    // Store current price before setting to free
+                    if (testForm.price && testForm.price > 0) {
+                      setPreviousPrice(testForm.price);
+                    }
+                    setTestForm({
+                      ...testForm,
+                      is_free: true,
+                      price: 0
+                    });
+                  } else {
+                    // Restore previous price or use a default
+                    const restoredPrice = previousPrice > 0 ? previousPrice : 9.99;
+                    setTestForm({
+                      ...testForm,
+                      is_free: false,
+                      price: restoredPrice
+                    });
+                  }
+                  // Clear validation errors when toggling
+                  if (validationErrors.price) {
+                    setValidationErrors({ ...validationErrors, price: '' });
+                  }
+                }}
+                className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <label htmlFor="is-free-modal" className="text-sm font-medium text-gray-700">
+                This test is free
+              </label>
+            </div>
+
+            {!testForm.is_free && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Price</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={testForm.price ?? 0}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      setTestForm({
+                        ...testForm,
+                        price: value
+                      });
+                      // Store as previous price if it's valid
+                      if (value > 0) {
+                        setPreviousPrice(value);
+                      }
+                      // Clear validation error when user types
+                      if (validationErrors.price) {
+                        setValidationErrors({ ...validationErrors, price: '' });
+                      }
+                    }}
+                    className={`w-full p-2 border rounded-md ${
+                      validationErrors.price ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="9.99"
+                  />
+                  {validationErrors.price ? (
+                    <p className="mt-1 text-xs text-red-600">{validationErrors.price}</p>
+                  ) : (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Enter the price in the selected currency
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Currency</label>
+                  <select
+                    value={testForm.currency || 'USD'}
+                    onChange={(e) => {
+                      setTestForm({ ...testForm, currency: e.target.value });
+                      // Clear validation error when user selects
+                      if (validationErrors.currency) {
+                        setValidationErrors({ ...validationErrors, currency: '' });
+                      }
+                    }}
+                    className={`w-full p-2 border rounded-md ${
+                      validationErrors.currency ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="CAD">CAD - Canadian Dollar</option>
+                    <option value="AUD">AUD - Australian Dollar</option>
+                  </select>
+                  {validationErrors.currency && (
+                    <p className="mt-1 text-xs text-red-600">{validationErrors.currency}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Test Instructions</label>
@@ -824,7 +1051,10 @@ export default function TestManagePage() {
             >
               Save Changes
             </Button>
-            <Button variant="outline" onClick={() => setIsEditingTest(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsEditingTest(false);
+              setValidationErrors({});
+            }}>
               Cancel
             </Button>
           </div>
@@ -865,8 +1095,10 @@ export default function TestManagePage() {
         size="xl"
       >
         <div className="p-6">
+          {/* Key prop forces QuestionForm to remount and reinitialize when question changes */}
           <QuestionForm
-            initialData={editingQuestion}
+            key={editingQuestion?.id}
+            initialData={editingQuestion as TypedQuestion || undefined}
             categories={categories}
             isSubmitting={loadingStates.updateQuestion}
             onSubmit={updateQuestion}

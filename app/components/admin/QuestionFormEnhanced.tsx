@@ -16,11 +16,24 @@ interface QuestionFormProps {
   isSubmitting?: boolean;
 }
 
+// Helper function to normalize question type (handle both hyphen and underscore formats)
+function normalizeQuestionType(type: string): QuestionType {
+  // Convert hyphen format to underscore format
+  const normalized = type.replace(/-/g, '_');
+  // Validate it's a known type
+  if (['single_choice', 'multiple_choice', 'dropdown'].includes(normalized)) {
+    return normalized as QuestionType;
+  }
+  return 'single_choice'; // Default fallback
+}
+
 export function QuestionForm({ initialData, categories, selectedCategoryId, onSubmit, onCancel, isSubmitting = false }: QuestionFormProps) {
   const [formData, setFormData] = useState<QuestionFormData>(() => {
     if (initialData) {
+      // Normalize the question type to handle both hyphen and underscore formats
+      const normalizedType = normalizeQuestionType(initialData.type);
       return {
-        type: initialData.type,
+        type: normalizedType,
         text: initialData.text,
         mediaUrl: initialData.mediaUrl || '',
         categoryId: initialData.category_id || selectedCategoryId || categories[0]?.id || "",

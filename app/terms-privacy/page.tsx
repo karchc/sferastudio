@@ -84,7 +84,7 @@ export default function TermsPrivacy() {
               <h2 className="text-3xl font-bold text-[#0B1F3A]">Terms of Service</h2>
             </div>
             <p className="text-[#5C677D] text-lg">
-              Please read these Terms of Service carefully before using Practice SAP.
+              Please read these Terms of Service carefully before using Practice ERP.
             </p>
           </div>
 
@@ -93,14 +93,14 @@ export default function TermsPrivacy() {
               <div>
                 <h3 className="text-xl font-semibold text-[#0B1F3A] mb-3">1. Acceptance of Terms</h3>
                 <p className="text-[#5C677D] leading-relaxed">
-                  By accessing and using Practice SAP ("Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+                  By accessing and using Practice ERP ("Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xl font-semibold text-[#0B1F3A] mb-3">2. Description of Service</h3>
                 <p className="text-[#5C677D] leading-relaxed">
-                  Practice SAP is an online platform that provides certification exam preparation services, including practice tests, study materials, and performance analytics for SAP and Business Technology certifications.
+                  Practice ERP is an online platform that provides certification exam preparation services, including practice tests, study materials, and performance analytics for ERP and Business Technology certifications.
                 </p>
               </div>
 
@@ -127,7 +127,7 @@ export default function TermsPrivacy() {
               <div>
                 <h3 className="text-xl font-semibold text-[#0B1F3A] mb-3">5. Intellectual Property</h3>
                 <p className="text-[#5C677D] leading-relaxed">
-                  The Service and its original content, features, and functionality are and will remain the exclusive property of Practice SAP and its licensors. The Service is protected by copyright, trademark, and other laws.
+                  The Service and its original content, features, and functionality are and will remain the exclusive property of Practice ERP and its licensors. The Service is protected by copyright, trademark, and other laws.
                 </p>
               </div>
 
@@ -277,7 +277,7 @@ export default function TermsPrivacy() {
               </Link>
             </div>
             <div className="mt-6 text-sm opacity-75">
-              <p>Email us directly at: <a href="mailto:privacy@practicesap.com" className="underline">privacy@practicesap.com</a></p>
+              <p>Email us directly at: <a href="mailto:privacy@practiceerp.com" className="underline">privacy@practiceerp.com</a></p>
             </div>
           </div>
         </div>

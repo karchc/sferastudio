@@ -29,8 +29,12 @@ export async function GET(
 
     // Process answers and dropdown items
     let fullQuestion = { ...questionData };
-    
-    if ((questionData.type === 'multiple_choice' || questionData.type === 'single_choice') && answersRes.ok) {
+
+    // Support both underscore and hyphen formats for question types
+    const isMultipleChoice = questionData.type === 'multiple_choice' || questionData.type === 'multiple-choice';
+    const isSingleChoice = questionData.type === 'single_choice' || questionData.type === 'single-choice';
+
+    if ((isMultipleChoice || isSingleChoice) && answersRes.ok) {
       const answers = await answersRes.json();
       // Filter out empty answers and sort by position
       fullQuestion.answers = answers
@@ -125,8 +129,13 @@ export async function PATCH(
     console.log('✅ Question updated successfully');
     
     // Step 2: Update answers based on question type (this is non-critical - don't fail the whole operation)
+    // Support both underscore and hyphen formats for question types
+    const isMultipleChoice = questionData.type === 'multiple_choice' || questionData.type === 'multiple-choice';
+    const isSingleChoice = questionData.type === 'single_choice' || questionData.type === 'single-choice';
+    const isDropdown = questionData.type === 'dropdown';
+
     try {
-      if (questionData.type === 'multiple_choice' || questionData.type === 'single_choice') {
+      if (isMultipleChoice || isSingleChoice) {
         console.log('🔄 Handling answers for question:', questionId);
         
         // Try to delete existing answers, but don't fail if it's constrained
@@ -289,7 +298,7 @@ export async function PATCH(
             }
           }
         }
-      } else if (questionData.type === 'dropdown') {
+      } else if (isDropdown) {
         console.log('🔄 Updating dropdown question with items:', questionData.dropdownItems);
         
         // Delete existing dropdown answers

@@ -69,7 +69,7 @@ export default function Contact() {
             </h1>
             
             <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
-              Have questions about Practice SAP? We're here to help you succeed in your certification journey
+              Have questions about Practice ERP? We're here to help you succeed in your certification journey
             </p>
 
             <div className="flex flex-wrap justify-center gap-6 mb-8">
@@ -222,8 +222,8 @@ export default function Contact() {
                   <div>
                     <h3 className="text-lg font-semibold text-[#0B1F3A] mb-1">Email Support</h3>
                     <p className="text-[#5C677D] mb-2">For general inquiries and support</p>
-                    <a href="mailto:support@practicesap.com" className="text-[#3EB3E7] hover:text-[#2da0d4] font-medium">
-                      support@practicesap.com
+                    <a href="mailto:support@practiceerp.com" className="text-[#3EB3E7] hover:text-[#2da0d4] font-medium">
+                      support@practiceerp.com
                     </a>
                   </div>
                 </div>

@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: 'Practice SAP',
-  description: 'Comprehensive exam preparation platform for Business Tech and SAP exams',
+  title: 'Practice ERP',
+  description: 'Comprehensive exam preparation platform for Business Tech and ERP exams',
   other: {
     'cache-control': 'no-cache, no-store, must-revalidate',
     'pragma': 'no-cache',

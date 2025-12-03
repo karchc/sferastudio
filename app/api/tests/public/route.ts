@@ -15,7 +15,10 @@ export async function GET(request: NextRequest) {
         time_limit,
         is_active,
         category_ids,
-        tag
+        tag,
+        price,
+        currency,
+        is_free
       `)
       .eq('is_active', true)
       .order('id');

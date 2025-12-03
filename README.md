@@ -1,10 +1,10 @@
-# Practice SAP - Exam Preparation Platform
+# Practice ERP - Exam Preparation Platform
 
-This is a comprehensive exam preparation platform built with [Next.js](https://nextjs.org) and [Supabase](https://supabase.com), focusing on Business Tech and SAP exams.
+This is a comprehensive exam preparation platform built with [Next.js](https://nextjs.org) and [Supabase](https://supabase.com), focusing on Business Tech and ERP exams.
 
 ## About the Project
 
-Practice SAP allows users to:
+Practice ERP allows users to:
 - Create accounts and manage profiles
 - Take practice tests with various question types
 - Review test performance and analytics
@@ -13,6 +13,270 @@ Practice SAP allows users to:
 ## 📚 Documentation
 
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Comprehensive technical documentation for developers working on this project
+- **[Test Access Gating Implementation](TEST_ACCESS_GATING_IMPLEMENTATION.md)** - Complete guide for test access control and monetization system
+
+## Recent Updates (December 2025)
+
+### 251203-01 Navigation & UI Improvements
+
+1. **Admin Sidebar Navigation Updates**
+   - **Removed "Back to Website" Button**: Simplified admin navigation by removing unnecessary website link
+   - **Text Label Behavior**: Text labels now properly hide when sidebar is minimized (opacity transition)
+   - **Cleaned Up Imports**: Removed unused Material-UI icons (ArrowBackIcon and others)
+   - **Streamlined Navigation**: Admin sidebar now only shows Tests and Sign Out options
+
+2. **Student Navbar Enhancements**
+   - **Added Profile Link**: New profile option in student dropdown menu between Dashboard and Sign Out
+   - **User Icon Integration**: Profile link includes User icon from Lucide React
+   - **Consistent Styling**: Profile link matches existing dropdown item styles
+   - **Better User Access**: Students can now easily access their profile settings from navbar
+
+3. **Tests Management Page Responsive Design**
+   - **Header Layout Fix**: Tests Management header now responsive with proper wrapping
+   - **Button Container**: Changed to flex-wrap layout preventing overflow on smaller screens
+   - **Mobile Support**: Title and buttons stack vertically on mobile/tablet views
+   - **Desktop Layout**: Maintains horizontal side-by-side layout on larger screens (lg breakpoint)
+   - **Affected Buttons**: Sync to Webflow, Download Template, Bulk Upload, Create New Test
+
+4. **Technical Improvements**
+   - **MuiDashboardLayout.tsx**: Added `sx={{ opacity: open ? 1 : 0 }}` to ListItemText components
+   - **AuthNav.tsx**: Added Profile link with User icon import
+   - **Tests Page**: Updated header from `flex justify-between items-center` to `flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4`
+   - **Button Wrapping**: Added `flex-wrap` class to button container for proper responsive behavior
+
+### 251202-02 Featured Tests System
+
+1. **New Feature Field for Tests**
+   - **Purpose**: Boolean field to mark tests as featured for homepage display
+   - **Database**: Added `feature` column (BOOLEAN, default false) to tests table
+   - **Index**: Partial index `idx_tests_feature` for fast featured tests queries
+
+2. **Admin Interface Updates**
+   - **Test Listings**: Featured tests display ⭐ badge in admin tests list
+   - **Manage Test Page**: Shows "⭐ Featured" badge in test details
+   - **Edit Test Modal**: Checkbox to toggle featured status with "Feature" label
+
+3. **Bulk Upload Support**
+   - **Excel Template**: Added "Featured" column (column H) with TRUE/FALSE dropdown
+   - **Import**: Parses featured flag and applies to created tests
+   - **Export**: Exports featured status for existing tests
+
+4. **Technical Implementation**
+   - **Type Definitions**: Added `feature?: boolean` to Test interface in `types.ts`
+   - **Excel Import** (`excel-import.ts`): Parses column H as boolean
+   - **Excel Export** (`excel-export.ts`): Includes Featured column with validation
+   - **Import API** (`import/route.ts`): Saves feature flag to database
+
+### 251202-01 Admin Test Preview & Access Control
+
+1. **Admin Test Preview Buttons**
+   - **Preview Test Button**: Opens `/preview-test/{id}` with only preview questions in new tab
+   - **Take Full Test Button**: Opens `/test/{id}` with all questions in new tab
+   - **Visual Indicators**: Shows count of preview questions, disabled when no preview questions exist
+   - **Location**: Added to Manage Test page header for easy access
+
+2. **Admin Access Control for Tests**
+   - **Full Test Access**: Admins can access all tests (free and paid) without purchase
+   - **Bypass Payment Gating**: `checkTestAccess()` now grants automatic access for admin users
+   - **Implementation**: Added `checkIsAdmin()` helper in `test-access-control.ts`
+
+3. **Admin Session Management**
+   - **No Database Storage**: Admin test sessions are not stored in database
+   - **Virtual Sessions**: Returns `admin-preview-{testId}-{timestamp}` session IDs
+   - **Fresh Start Every Time**: GET `/api/test/session` returns `null` for admins
+   - **No Session Resume**: Admins always start tests fresh without resumption
+   - **Score Calculation**: Admins see results but nothing is persisted
+
+4. **Technical Implementation**
+   - **Session Route** (`/api/test/session/route.ts`):
+     - GET: Returns `null` session for admins
+     - POST: Returns virtual session ID without database insert
+     - PUT: Handles `admin-preview-` prefix, skips database update
+   - **Answers Route** (`/api/test/session/answers/route.ts`):
+     - Detects `admin-preview-` session IDs
+     - Calculates score without storing in `user_answers` table
+   - **Access Control** (`/app/lib/test-access-control.ts`):
+     - Added admin bypass before purchase check
+     - Returns `hasPurchased: true` for UI consistency
+
+5. **Benefits**
+   - Admins can test the full exam experience
+   - No pollution of analytics data
+   - No unnecessary database records created
+   - Seamless preview of both preview questions and full tests
+
+### 251201-01 Bulk Upload Excel Template Enhancement
+
+1. **Reorganized Column Structure**
+   - **Image URL Moved**: Image URL column now appears immediately after Question Text for better workflow
+   - **Preview Column Added**: New Preview column (TRUE/FALSE) to mark questions available for preview mode
+   - **Improved Layout**: Related fields are now grouped together logically
+
+2. **Questions Sheet - New Column Order**
+   | Column | Field | Description |
+   |--------|-------|-------------|
+   | A | Test Name * | Required - must match Tests sheet |
+   | B | Category Name * | Required - must match Categories sheet |
+   | C | Position * | Question order number |
+   | D | Question Type * | single-choice or multiple-choice |
+   | E | Question Text * | The question content |
+   | F | Image URL | Optional - URL to question image |
+   | G | Preview | TRUE/FALSE - show in preview mode |
+   | H-M | Options 1-6 | Answer options (min 2 required) |
+   | N | Correct Answer * | Option numbers (e.g., "1" or "1,3,4") |
+   | O | Explanation | Optional explanation text |
+
+3. **Dropdown Questions Sheet - New Column Order**
+   | Column | Field | Description |
+   |--------|-------|-------------|
+   | A | Test Name * | Required - must match Tests sheet |
+   | B | Category Name * | Required - must match Categories sheet |
+   | C | Position * | Question order number |
+   | D | Question Text * | Main question (same for all statements) |
+   | E | Image URL | Optional - only on first statement row |
+   | F | Preview | TRUE/FALSE - only on first statement row |
+   | G | Statement # | Statement number (1, 2, 3...) |
+   | H | Statement Text * | Fill-in-blank statement |
+   | I-N | Options 1-6 | Dropdown options (min 2 required) |
+   | O | Correct Answer * | Must match one option exactly |
+   | P | Explanation | Optional - only on first statement row |
+
+4. **Preview Feature**
+   - **Purpose**: Mark questions that should be available in test preview mode
+   - **Values**: TRUE or FALSE (dropdown validation)
+   - **Default**: FALSE if not specified
+   - **Import Behavior**: Sets `is_preview` field on questions in database
+
+5. **Image URL Feature**
+   - **Supported Formats**: JPG, PNG, GIF, WebP
+   - **Max Size**: 5MB per image
+   - **Sources**: Any public URL (direct links, Google Drive, Dropbox, etc.)
+   - **Processing**: Images are downloaded and stored in Supabase Storage
+   - **Graceful Handling**: Failed image uploads generate warnings but don't fail import
+
+6. **Technical Implementation**
+   - **Export** ([excel-export.ts](app/lib/excel-export.ts)): Updated column definitions and example data
+   - **Import** ([excel-import.ts](app/lib/excel-import.ts)): Updated column parsing indices
+   - **API** ([import/route.ts](app/api/admin/tests/import/route.ts)): Added `is_preview` to question creation
+
+## Recent Updates (November 2025)
+
+### 251120-02 Test Session Resume Fix
+
+1. **Fixed Session Resume Bug**
+   - **Root Cause**: `timeLeft` was initialized to `0` in test page, causing Timer to think time expired on page refresh
+   - **Immediate Completion Issue**: Refreshing during an active test session was triggering automatic test completion
+   - **Session Still Active**: Database session remained active while UI showed completion summary
+
+2. **Timer Initialization Fix**
+   - **Changed Initial State**: Updated `timeLeft` from `0` to `undefined` in `/app/test/[id]/page.tsx`
+   - **Prevents False Expiration**: Timer no longer triggers completion when receiving initial undefined value
+   - **Proper State Flow**: Timer now correctly waits for actual time calculation before starting countdown
+
+3. **Enhanced Timer Component** (`/app/components/test/Timer.tsx`)
+   - **Added `hasStarted` Flag**: Tracks whether timer has actually begun counting down
+   - **Prevents Premature Completion**: `onTimeUp()` only fires if timer has started AND time reaches zero
+   - **Smart Start Detection**: Timer marks as started once it begins counting down from full duration
+   - **Initial Render Protection**: Safeguard prevents completion trigger during component mount
+
+4. **Session Resume Flow**
+   - **Correct Behavior**: Page refresh → Load session → Calculate remaining time → Resume test
+   - **Time Calculation**: Properly computes elapsed time from database session start time
+   - **State Preservation**: All test progress (answers, flagged questions, current index) correctly restored
+   - **No False Triggers**: Timer waits for state to settle before enabling completion logic
+
+5. **User Experience**
+   - **Reliable Resumption**: Users can now refresh page or switch tabs without losing active sessions
+   - **Accurate Time Display**: Timer shows correct remaining time based on session start
+   - **Session Integrity**: Database session status properly maintained throughout test
+   - **Expected Behavior**: Test only completes when actually finished or time truly expires
+
+### 251120-01 Preview Test Timer & Mode Separation Enhancement
+
+1. **Fixed Preview Test Timer**
+   - **Consistent Timer Updates**: Timer now ticks correctly every second without requiring page refresh
+   - **Real-time Countdown**: Implemented state-driven timer that updates every 1000ms
+   - **Fixed Double-Click Bug**: Resolved issue where "Start Test" button needed to be clicked twice
+   - **Proper Timer Initialization**: Timer only starts when user clicks "Start Test" button, not on page load
+
+2. **Dynamic Test Duration**
+   - **Database-Driven Time Limits**: Preview tests now use actual test's `time_limit` from database
+   - **Removed Hard-coded Values**: Eliminated hard-coded 30-minute default across all components
+   - **API Enhancement** (`/app/api/test/[id]/preview/route.ts`):
+     - Returns actual `testData.time_limit` instead of hard-coded 1800 seconds
+     - Consistent time limit handling across preview and completion flows
+
+3. **Complete Mode Separation**
+   - **Preview Mode** (`/app/preview-test/[id]/page.tsx`):
+     - **No Session Storage**: Completely removed localStorage usage for preview tests
+     - **Always Fresh Start**: Timer and progress reset on every page refresh or navigation
+     - **No Resumption**: Users cannot continue a preview test - always starts from zero
+     - **Independent Timer Logic**: Fully separated from real test mode timer implementation
+     - **Phase-Based Start**: Timer starts only when test phase changes to "in-progress"
+   - **Real Test Mode** (unchanged):
+     - Maintains full localStorage session management
+     - Supports test resumption from database sessions
+     - Progress tracking and restoration on page refresh
+     - Complete session persistence
+
+4. **Timer Architecture**
+   - **State Management**: Uses `currentTime` state that updates every second
+   - **Phase-Aware Timing**: Implements `handlePhaseChange` callback to set start time
+   - **Accurate Calculations**: Elapsed time calculated from actual start timestamp
+   - **Clean Component Lifecycle**: Proper interval cleanup on unmount
+
+5. **TestContainer Optimization** (`/app/components/test/TestContainer.tsx`)
+   - **Preview Mode Guards**: Added `isPreview` checks to all localStorage operations
+   - **Conditional Session Management**: localStorage only touched for real test mode
+   - **Unified Timer Interface**: Consistent timer handling across both modes via `timeLeft` prop
+
+6. **User Experience Improvements**
+   - **Clear Messaging**: Updated preview banner to inform users progress won't be saved
+   - **Immediate Start**: "Start Test" button immediately begins the test on first click
+   - **No State Confusion**: Preview and real tests maintain completely separate behaviors
+   - **Predictable Timer**: Timer displays full duration before test starts, counts down during test
+
+### 251118-01 Test Access Gating & Monetization System
+- **Complete Access Control System**: Implemented comprehensive test access gating to control free and paid test access
+- **Security Features**:
+  - Server-side enforcement with Row-Level Security (RLS) policies
+  - Access checks before serving test data via API
+  - Database-level helper functions (`has_test_access`, `get_accessible_tests`)
+  - Service role policies for Stripe webhook operations
+- **Enhanced Test API** (`/app/api/test/[id]/route.ts`):
+  - Returns 401 (Unauthorized) for unauthenticated users accessing paid tests
+  - Returns 403 (Forbidden) for authenticated users without purchase
+  - Includes detailed access information in successful responses
+  - Provides test info in error responses for purchase flow
+- **Beautiful Access Screens**:
+  - **Authentication Required Screen**: Lock icon, test details, and sign-in/signup CTAs
+  - **Purchase Required Screen**: Premium badge, pricing, feature highlights, and purchase CTA
+  - Professional UI with gradient designs and clear messaging
+- **Access Control Utilities** (`/app/lib/test-access-control.ts`):
+  - `checkTestAccess()` - Single test access validation
+  - `checkMultipleTestsAccess()` - Batch checking for dashboard performance
+  - Returns detailed status: `granted`, `locked`, or `auth_required`
+- **Database Migration** (`20251118_001_test_access_rls.sql`):
+  - RLS policies for `user_test_purchases` table
+  - Performance indexes for fast access checks
+  - Helper functions for consistent access logic
+- **Dashboard Integration**:
+  - Lock indicators for premium tests
+  - "OWNED" badges for purchased tests
+  - Purchase buttons for paid tests
+  - Seamless integration with existing purchase flow
+- **Access Flow**:
+  ```
+  User → Test Request → Is Free? ✅ Grant Access
+                      → Authenticated? ❌ Show Login (401)
+                      → Purchased? ❌ Show Purchase Prompt (403)
+                      → ✅ Grant Access
+  ```
+- **Monetization Ready**: Easy configuration of test pricing via `price`, `currency`, and `is_free` fields
+- **Performance Optimized**:
+  - Batch access checks reduce database queries
+  - Composite indexes for fast purchase lookups
+  - Efficient RLS policies with minimal overhead
 
 ## Recent Updates (August 2025)
 
@@ -24,7 +288,7 @@ Practice SAP allows users to:
 - **Reusable Footer Component**: Created `/app/components/Footer.tsx` for consistent footer across all pages
 - **Updated All Pages**: Replaced inline footer code with centralized Footer component across:
   - Homepage, Contact, Support, FAQs, Study Guide, Terms & Privacy pages
-- **Landing Page Section Reordering**: "Available Practice Tests" now appears before "Why Choose Practice SAP?"
+- **Landing Page Section Reordering**: "Available Practice Tests" now appears before "Why Choose Practice ERP?"
   - Improved conversion funnel by showing products immediately after hero section
   - Maintained visual appeal with alternating background colors
   - Better user engagement with tests prominently featured
@@ -53,7 +317,7 @@ Practice SAP allows users to:
 - **Unified purchase experience**: All purchase buttons throughout the app now use consistent modal confirmation system
 
 ### 250707-01 Branding Update
-- **Changed branding** from "Test Engine" to "Practice SAP" across all user-facing pages
+- **Changed branding** from "Test Engine" to "Practice ERP" across all user-facing pages
 - Updated main landing page, admin dashboards, and navigation components
 - Brand name now consistent throughout the application
 
@@ -478,7 +742,7 @@ Practice SAP allows users to:
 ### 250603-01 Homepage & Branding Updates
 
 1. **Brand Implementation**
-   - Applied "Practice SAP" brand guidelines throughout
+   - Applied "Practice ERP" brand guidelines throughout
    - Color palette:
      - Primary: Oxford Blue (#0B1F3A), Sky Blue (#3EB3E7)
      - Secondary: Slate Gray (#5C677D), Mint Green (#B1E5D3), Light Gray (#F6F7FA)
@@ -537,6 +801,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   - **Session Persistence**: Reliable session management across page refreshes and browser restarts
   - **Error Boundary Protection**: Comprehensive error handling for authentication failures
   - **Automatic Loading States**: Smart loading indicators that prevent infinite loading issues
+- **Test Access Gating & Monetization**:
+  - **Server-Side Access Control**: Secure test access validation before serving content
+  - **Row-Level Security**: Database-level policies for purchase access control
+  - **Free & Paid Tests**: Support for both free and monetized test content
+  - **Beautiful Lock Screens**: Professional UI for authentication and purchase prompts
+  - **Stripe Integration**: Complete payment flow with webhook handling
+  - **Batch Access Checks**: Optimized dashboard performance with batch validation
 - **Enhanced Middleware**: Advanced session management with proper route protection
 - **Auth Callback Handling**: Secure OAuth and email confirmation processing
 - **Profile Management**: User profiles with admin role support and automatic redirects
@@ -596,6 +867,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   - `ultra-optimized-test-fetcher.ts` - Optimized data fetching with caching
   - `auth-server.ts` - Server-side authentication utilities
   - `supabase-purchases.ts` - Purchase tracking and management functions
+  - `test-access-control.ts` - Test access validation and gating logic
 
 ### Pages
 - `app/admin/` - Admin interface pages for content management with simplified navigation
@@ -606,6 +878,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### Database
 - `supabase/migrations/` - Database schema and migrations
+  - `20251118_001_test_access_rls.sql` - Test access gating and RLS policies
 
 ### Assets & Styling
 - `public/logo/` - Brand logo assets
@@ -618,21 +891,24 @@ The system uses Supabase with the following key tables:
 
 - `profiles` - User profile information with admin role support
 - `categories` - Subject areas linked to specific tests (one-to-one relationship)
-- `tests` - Test definitions with metadata, pricing, availability, and instructions
+- `tests` - Test definitions with metadata, pricing (`price`, `currency`, `is_free`), availability, and instructions
 - `questions` - Question bank with enhanced fields (difficulty, points, explanation, is_preview)
 - `answers` - Answers for single-choice and multiple-choice questions (with position ordering)
 - `dropdown_answers` - Statement-option pairs for dropdown questions (JSONB options storage)
 - `test_sessions` - Records of user attempts
 - `user_answers` - User responses to questions
-- `user_test_purchases` - Tracks which tests users have purchased
+- `user_test_purchases` - Tracks test purchases with RLS policies for access control
 
 ### Enhanced Table Features
 - **questions table**: Added `difficulty`, `points`, `explanation`, and `is_preview` columns
 - **answers table**: Added `position` column for proper ordering
 - **dropdown_answers table**: New table with JSONB options storage and position ordering
 - **categories table**: Added `test_id` column for one-to-one relationship with tests
-- **Row Level Security**: Comprehensive RLS policies for all admin operations
-- **Database Indexes**: Optimized indexes for performance on position-based queries
+- **tests table**: Added `price`, `currency`, and `is_free` columns for monetization
+- **user_test_purchases table**: Tracks purchases with RLS policies and access control
+- **Row Level Security**: Comprehensive RLS policies for admin operations and purchase access
+- **Database Functions**: Helper functions `has_test_access()` and `get_accessible_tests()` for access validation
+- **Database Indexes**: Optimized indexes for performance on position-based queries and access checks
 
 > **Important Note:** The question and answer tables are named `questions` and `answers`. All code should reference these table names.
 

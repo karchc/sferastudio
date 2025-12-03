@@ -4,18 +4,18 @@ import { Test, Question, Category, Answer, MatchItem } from "@/app/lib/types";
 export const mockCategories: Category[] = [
   {
     id: "cat-1",
-    name: "SAP Fundamentals",
-    description: "Basic SAP concepts and overview"
+    name: "ERP Fundamentals",
+    description: "Basic ERP concepts and overview"
   },
   {
     id: "cat-2",
-    name: "SAP Technology",
-    description: "Technical aspects of SAP systems"
+    name: "ERP Technology",
+    description: "Technical aspects of ERP systems"
   },
   {
     id: "cat-3",
     name: "Supply Chain",
-    description: "Supply chain management in SAP"
+    description: "Supply chain management in ERP"
   }
 ];
 
@@ -61,8 +61,8 @@ export const mockQuestions: Question[] = [
 export const mockTests: Test[] = [
   {
     id: "test-1",
-    title: "SAP Fundamentals Test",
-    description: "Test your knowledge of basic SAP concepts",
+    title: "ERP Fundamentals Test",
+    description: "Test your knowledge of basic ERP concepts",
     timeLimit: 300, // 5 minutes
     categoryIds: ["cat-1"],
     isActive: true,

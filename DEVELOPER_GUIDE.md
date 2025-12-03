@@ -1,8 +1,8 @@
-# Practice SAP - Developer Guide
+# Practice ERP - Developer Guide
 
 ## Overview
 
-Practice SAP is a comprehensive exam preparation platform built with Next.js and Supabase, focused on SAP and Business Technology certification exams. This guide provides technical documentation for developers working on the project.
+Practice ERP is a comprehensive exam preparation platform built with Next.js and Supabase, focused on ERP and Business Technology certification exams. This guide provides technical documentation for developers working on the project.
 
 ## 🏗️ Architecture Overview
 
@@ -315,7 +315,7 @@ export function Footer() {
 
 **Location**: `/app/page.tsx`
 
-**Section Reordering**: "Available Practice Tests" now appears before "Why Choose Practice SAP?" for improved conversion flow:
+**Section Reordering**: "Available Practice Tests" now appears before "Why Choose Practice ERP?" for improved conversion flow:
 
 - **Better Conversion Funnel**: Users see available products immediately after hero section
 - **Visual Appeal**: Maintained alternating background colors (gray → white → dark)
