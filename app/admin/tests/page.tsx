@@ -143,14 +143,14 @@ export default function TestsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Tests Management</h2>
           <p className="text-gray-600 mt-2">
             Manage your tests - {tests.length} {tests.length === 1 ? 'test' : 'tests'} available
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button
             variant="outline"
             onClick={syncToWebflow}

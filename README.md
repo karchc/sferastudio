@@ -17,6 +17,33 @@ Practice ERP allows users to:
 
 ## Recent Updates (December 2025)
 
+### 251203-01 Navigation & UI Improvements
+
+1. **Admin Sidebar Navigation Updates**
+   - **Removed "Back to Website" Button**: Simplified admin navigation by removing unnecessary website link
+   - **Text Label Behavior**: Text labels now properly hide when sidebar is minimized (opacity transition)
+   - **Cleaned Up Imports**: Removed unused Material-UI icons (ArrowBackIcon and others)
+   - **Streamlined Navigation**: Admin sidebar now only shows Tests and Sign Out options
+
+2. **Student Navbar Enhancements**
+   - **Added Profile Link**: New profile option in student dropdown menu between Dashboard and Sign Out
+   - **User Icon Integration**: Profile link includes User icon from Lucide React
+   - **Consistent Styling**: Profile link matches existing dropdown item styles
+   - **Better User Access**: Students can now easily access their profile settings from navbar
+
+3. **Tests Management Page Responsive Design**
+   - **Header Layout Fix**: Tests Management header now responsive with proper wrapping
+   - **Button Container**: Changed to flex-wrap layout preventing overflow on smaller screens
+   - **Mobile Support**: Title and buttons stack vertically on mobile/tablet views
+   - **Desktop Layout**: Maintains horizontal side-by-side layout on larger screens (lg breakpoint)
+   - **Affected Buttons**: Sync to Webflow, Download Template, Bulk Upload, Create New Test
+
+4. **Technical Improvements**
+   - **MuiDashboardLayout.tsx**: Added `sx={{ opacity: open ? 1 : 0 }}` to ListItemText components
+   - **AuthNav.tsx**: Added Profile link with User icon import
+   - **Tests Page**: Updated header from `flex justify-between items-center` to `flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4`
+   - **Button Wrapping**: Added `flex-wrap` class to button container for proper responsive behavior
+
 ### 251202-02 Featured Tests System
 
 1. **New Feature Field for Tests**

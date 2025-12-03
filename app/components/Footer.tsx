@@ -52,14 +52,14 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/study-guide" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://test-engine-e49b5d.webflow.io/study-guide" className="text-gray-400 hover:text-white transition-colors">
                   Study Guide
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/faqs" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://test-engine-e49b5d.webflow.io/faqs" className="text-gray-400 hover:text-white transition-colors">
                   FAQs
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -68,19 +68,19 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Connect</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://test-engine-e49b5d.webflow.io/contact" className="text-gray-400 hover:text-white transition-colors">
                   Contact Us
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/support" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://test-engine-e49b5d.webflow.io/support-center" className="text-gray-400 hover:text-white transition-colors">
                   Support
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/terms-privacy" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://test-engine-e49b5d.webflow.io/terms-privacy" className="text-gray-400 hover:text-white transition-colors">
                   Terms & Privacy
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

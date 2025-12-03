@@ -145,6 +145,12 @@ The platform uses a dual organization system:
 
 ### Recent Updates
 
+- **Navigation & UI Improvements (December 3, 2025)**:
+  - **Admin Sidebar**: Removed "Back to Website" button, streamlined to only Tests and Sign Out
+  - **Sidebar Text Labels**: Now properly hide with opacity transition when sidebar is minimized
+  - **Student Profile Access**: Added Profile link to student navbar dropdown with User icon
+  - **Responsive Tests Management**: Fixed header layout to wrap buttons properly on smaller screens
+  - **Mobile-Friendly Admin**: Button container now uses flex-wrap for better mobile experience
 - **Webflow CMS Sync**: Sync featured tests to Webflow for marketing website
   - "Sync to Webflow" button in admin tests page
   - Syncs only tests marked as featured

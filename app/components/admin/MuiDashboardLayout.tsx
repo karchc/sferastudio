@@ -16,8 +16,7 @@ import {
   ListItemText,
   CssBaseline,
   ThemeProvider,
-  createTheme,
-  ListSubheader
+  createTheme
 } from '@mui/material';
 
 // Add NoSsr wrapper component
@@ -31,16 +30,7 @@ import { useAuth } from '../../lib/auth-context';
 import {
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
-  Dashboard as DashboardIcon,
-  People as PeopleIcon,
   Assessment as AssessmentIcon,
-  School as SchoolIcon,
-  QuestionAnswer as QuestionIcon,
-  Category as CategoryIcon,
-  TimerOutlined as TimerIcon,
-  BarChart as BarChartIcon,
-  Settings as SettingsIcon,
-  ArrowBack as ArrowBackIcon,
   Logout as LogoutIcon
 } from '@mui/icons-material';
 
@@ -165,8 +155,8 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
       <ThemeProvider theme={mdTheme}>
         <Box sx={{ display: 'flex' }}>
           <CssBaseline />
-        
-        
+
+
         {/* Sidebar Navigation */}
         <Drawer variant="permanent" open={open}>
           <Toolbar
@@ -186,19 +176,19 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
             {open && (
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <img 
-                    src="/Test-engine-logo.webp" 
-                    alt="Practice ERP Logo" 
-                    style={{ 
-                      height: '32px', 
+                  <img
+                    src="https://cdn.prod.website-files.com/691437ef8eabdeb915e41bb3/692e664c5f8c97ae788bd950_practice-erp-webclip.jpg"
+                    alt="Practice ERP Logo"
+                    style={{
+                      height: '32px',
                       width: 'auto',
                       objectFit: 'contain'
-                    }} 
+                    }}
                   />
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontWeight: 'bold', 
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 'bold',
                       color: 'primary.main',
                       fontSize: '1.1rem'
                     }}
@@ -213,7 +203,7 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
             )}
           </Toolbar>
           <Divider />
-          
+
           {/* Main Navigation */}
           <List component="nav">
             <Link href="/admin/tests" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -221,44 +211,34 @@ export function MuiDashboardLayout({ children }: MuiDashboardLayoutProps) {
                 <ListItemIcon>
                   <AssessmentIcon color={isActive('/admin/tests') ? 'primary' : undefined} />
                 </ListItemIcon>
-                <ListItemText primary="Tests" />
+                <ListItemText primary="Tests" sx={{ opacity: open ? 1 : 0 }} />
               </ListItemButton>
             </Link>
 
             <Divider sx={{ my: 1 }} />
-            
+
             {/* Sign Out - only show when authenticated */}
             {user && (
               <ListItemButton onClick={handleSignOut}>
                 <ListItemIcon>
                   <LogoutIcon />
                 </ListItemIcon>
-                <ListItemText primary="Sign Out" />
+                <ListItemText primary="Sign Out" sx={{ opacity: open ? 1 : 0 }} />
               </ListItemButton>
             )}
-            
+
             {/* Show auth status for debugging */}
             {!user && (
               <ListItemButton disabled>
                 <ListItemIcon>
                   <LogoutIcon color="disabled" />
                 </ListItemIcon>
-                <ListItemText primary="Not Authenticated" />
+                <ListItemText primary="Not Authenticated" sx={{ opacity: open ? 1 : 0 }} />
               </ListItemButton>
             )}
-            
-            {/* Navigation */}
-            <Link href="/" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-              <ListItemButton>
-                <ListItemIcon>
-                  <ArrowBackIcon />
-                </ListItemIcon>
-                <ListItemText primary="Back to Website" />
-              </ListItemButton>
-            </Link>
           </List>
         </Drawer>
-        
+
         {/* Main Content */}
         <Box
           component="main"
