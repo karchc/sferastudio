@@ -52,12 +52,12 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="https://test-engine-e49b5d.webflow.io/study-guide" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://www.practiceerp.eu/study-guide" className="text-gray-400 hover:text-white transition-colors">
                   Study Guide
                 </a>
               </li>
               <li>
-                <a href="https://test-engine-e49b5d.webflow.io/faqs" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://www.practiceerp.eu/faqs" className="text-gray-400 hover:text-white transition-colors">
                   FAQs
                 </a>
               </li>
@@ -68,17 +68,17 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Connect</h4>
             <ul className="space-y-2">
               <li>
-                <a href="https://test-engine-e49b5d.webflow.io/contact" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://www.practiceerp.eu/contact" className="text-gray-400 hover:text-white transition-colors">
                   Contact Us
                 </a>
               </li>
               <li>
-                <a href="https://test-engine-e49b5d.webflow.io/support-center" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://www.practiceerp.eu/support-center" className="text-gray-400 hover:text-white transition-colors">
                   Support
                 </a>
               </li>
               <li>
-                <a href="https://test-engine-e49b5d.webflow.io/terms-privacy" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://www.practiceerp.eu/terms-privacy" className="text-gray-400 hover:text-white transition-colors">
                   Terms & Privacy
                 </a>
               </li>
