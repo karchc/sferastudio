@@ -50,7 +50,7 @@ export default function AuthNav() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20">
             <div className="flex items-center">
-              <Link href="/" className="flex items-center">
+              <a href="https://www.practiceerp.eu/" className="flex items-center">
                 <Image
                   src="https://cdn.prod.website-files.com/691437ef8eabdeb915e41bb3/692ebcf85eb327586dfa394a_practice-erp-logo-transparent.svg"
                   alt="Practice ERP Logo"
@@ -59,7 +59,7 @@ export default function AuthNav() {
                   className="mr-3 h-8 w-auto"
                   priority
                 />
-              </Link>
+              </a>
             </div>
             <div className="flex items-center">
               <div className="animate-pulse bg-gray-200 rounded px-4 py-2 w-32 h-10"></div>
@@ -75,7 +75,7 @@ export default function AuthNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center group">
+            <a href="https://www.practiceerp.eu/" className="flex items-center group">
               <Image
                 src="https://cdn.prod.website-files.com/691437ef8eabdeb915e41bb3/692ebcf85eb327586dfa394a_practice-erp-logo-transparent.svg"
                 alt="Practice ERP Logo"
@@ -84,7 +84,7 @@ export default function AuthNav() {
                 className="mr-3 h-8 w-auto transition-transform group-hover:scale-105"
                 priority
               />
-            </Link>
+            </a>
           </div>
           <div className="flex items-center space-x-4">
             {user ? (
