@@ -49,7 +49,7 @@ export function AuthRequiredModal({
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-all duration-200"
+        className="fixed inset-0 bg-opacity-50 backdrop-blur-sm transition-all duration-200"
         onClick={onClose}
       />
       

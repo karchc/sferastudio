@@ -53,7 +53,7 @@ export function PurchaseModal({
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-all duration-200"
+        className="fixed inset-0 bg-opacity-50 backdrop-blur-sm transition-all duration-200"
         onClick={onClose}
       />
       
@@ -92,13 +92,6 @@ export function PurchaseModal({
                   {test.question_count || 25} questions
                 </span>
               </div>
-            </div>
-            
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 mb-6">
-              <p className="text-sm text-blue-800">
-                <strong>🎉 Free during MVP:</strong> This test will be added to your library at no cost. 
-                You'll have unlimited access to take it anytime!
-              </p>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">

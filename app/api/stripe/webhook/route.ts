@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { stripe } from '@/app/lib/stripe';
-import { createServerSupabase } from '@/app/lib/auth-server';
+import { createServiceRoleClient } from '@/app/lib/supabase-service';
 import Stripe from 'stripe';
 
 export async function POST(request: NextRequest) {
@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Create Supabase client (using service role would be better for webhooks)
-        const supabase = await createServerSupabase();
+        // Create Supabase client with service role to bypass RLS
+        const supabase = createServiceRoleClient();
 
         // Check if purchase already exists
         const { data: existingPurchase } = await supabase
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         const paymentIntent = charge.payment_intent as string;
 
         if (paymentIntent) {
-          const supabase = await createServerSupabase();
+          const supabase = createServiceRoleClient();
 
           // Mark purchase as refunded
           const { error: refundError } = await supabase

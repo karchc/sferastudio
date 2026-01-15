@@ -36,7 +36,10 @@ import {
 } from '@mui/icons-material';
 import { PurchaseModal } from "../components/ui/purchase-modal";
 import { AuthRequiredModal } from "../components/ui/auth-required-modal";
+import { SuccessModal } from "../components/ui/success-modal";
 import { PurchaseButton } from "../components/stripe/PurchaseButton";
+import { Button as ShadcnButton } from "../components/ui/button";
+import { Loader2, ShoppingCart } from 'lucide-react';
 
 // Material UI Dashboard with TabPanel component for better organization
 function TabPanel(props: any) {
@@ -77,6 +80,8 @@ export default function MaterialDashboard() {
   const [previewingTestId, setPreviewingTestId] = useState<string | null>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [selectedTest, setSelectedTest] = useState<any>(null);
   const [purchasingTestId, setPurchasingTestId] = useState<string | null>(null);
   const [testStatistics, setTestStatistics] = useState<Record<string, any>>({});
@@ -198,25 +203,31 @@ export default function MaterialDashboard() {
       if (response.ok) {
         const result = await response.json();
         setShowPurchaseModal(false);
-        
+
         // Refresh purchased tests (this will also trigger fetchAvailableTests)
-        fetchPurchasedTests();
-        
-        // Show success message
-        alert(result.message || 'Test successfully added to your library!');
+        await fetchPurchasedTests();
+
+        // Show success modal
+        setSuccessMessage(result.message || 'Test successfully added to your library!');
+        setShowSuccessModal(true);
       } else {
         const error = await response.json();
         if (error.error === 'You already own this test') {
           setShowPurchaseModal(false);
-          alert('You already own this test! You can see it in your purchased tests.');
-          fetchPurchasedTests();
+          setSuccessMessage('You already own this test! You can find it in "My Tests" tab.');
+          setShowSuccessModal(true);
+          await fetchPurchasedTests();
         } else {
-          alert(`Error: ${error.error || 'Failed to purchase test'}`);
+          setShowPurchaseModal(false);
+          setSuccessMessage(`Error: ${error.error || 'Failed to add test to library'}`);
+          setShowSuccessModal(true);
         }
       }
     } catch (error) {
       console.error('Purchase error:', error);
-      alert('An error occurred while purchasing the test. Please try again.');
+      setShowPurchaseModal(false);
+      setSuccessMessage('An error occurred while adding the test. Please try again.');
+      setShowSuccessModal(true);
     } finally {
       setPurchasingTestId(null);
     }
@@ -645,26 +656,26 @@ export default function MaterialDashboard() {
                             testTitle={test.title}
                             price={parseFloat(test.price)}
                             currency={test.currency || 'USD'}
-                            variant="contained"
                             className="w-full"
                           />
                         ) : (
-                          <Button
-                            variant="contained"
-                            fullWidth
-                            startIcon={<ShoppingCartIcon />}
+                          <ShadcnButton
+                            className="w-full"
                             onClick={() => handlePurchase(test)}
                             disabled={purchasingTestId === test.id}
                           >
                             {purchasingTestId === test.id ? (
                               <>
-                                <CircularProgress size={16} sx={{ mr: 1 }} />
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Adding...
                               </>
                             ) : (
-                              'Add to Library'
+                              <>
+                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                Add to Library
+                              </>
                             )}
-                          </Button>
+                          </ShadcnButton>
                         )}
                       </Stack>
                     </Box>
@@ -700,6 +711,18 @@ export default function MaterialDashboard() {
         isOpen={showAuthModal}
         onClose={handleCloseAuthModal}
         test={selectedTest || undefined}
+      />
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          setTabValue(0); // Switch to "My Tests" tab
+          setSelectedTest(null);
+        }}
+        title="Added to Library"
+        message={successMessage}
+        buttonText="Go to My Tests"
       />
     </Container>
   );
