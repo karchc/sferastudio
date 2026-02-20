@@ -11,10 +11,10 @@ const supportCategories = [
     icon: BookOpen,
     color: "bg-[#3EB3E7]",
     articles: [
-      { title: "Creating Your Account", link: "#" },
-      { title: "Taking Your First Practice Test", link: "#" },
-      { title: "Understanding Your Results", link: "#" },
-      { title: "Navigating the Dashboard", link: "#" }
+      { title: "Creating Your Account", link: "/support/articles/creating-your-account" },
+      { title: "Taking Your First Practice Test", link: "/support/articles/taking-your-first-practice-test" },
+      { title: "Understanding Your Results", link: "/support/articles/understanding-your-results" },
+      { title: "Navigating the Dashboard", link: "/support/articles/navigating-the-dashboard" }
     ]
   },
   {
@@ -23,10 +23,10 @@ const supportCategories = [
     icon: Settings,
     color: "bg-[#B1E5D3]",
     articles: [
-      { title: "Updating Your Profile", link: "#" },
-      { title: "Changing Your Password", link: "#" },
-      { title: "Email Preferences", link: "#" },
-      { title: "Account Deactivation", link: "#" }
+      { title: "Updating Your Profile", link: "/support/articles/updating-your-profile" },
+      { title: "Changing Your Password", link: "/support/articles/changing-your-password" },
+      { title: "Email Preferences", link: "/support/articles/email-preferences" },
+      { title: "Account Deactivation", link: "/support/articles/account-deactivation" }
     ]
   },
   {
@@ -35,10 +35,10 @@ const supportCategories = [
     icon: CreditCard,
     color: "bg-[#3EB3E7]",
     articles: [
-      { title: "Subscription Plans", link: "#" },
-      { title: "Payment Methods", link: "#" },
-      { title: "Refund Policy", link: "#" },
-      { title: "Billing History", link: "#" }
+      { title: "Subscription Plans", link: "/support/articles/subscription-plans" },
+      { title: "Payment Methods", link: "/support/articles/payment-methods" },
+      { title: "Refund Policy", link: "/support/articles/refund-policy" },
+      { title: "Billing History", link: "/support/articles/billing-history" }
     ]
   },
   {
@@ -47,10 +47,10 @@ const supportCategories = [
     icon: MessageCircle,
     color: "bg-[#B1E5D3]",
     articles: [
-      { title: "Test Types Available", link: "#" },
-      { title: "Time Limits and Scoring", link: "#" },
-      { title: "Retaking Tests", link: "#" },
-      { title: "Test Results Analysis", link: "#" }
+      { title: "Test Types Available", link: "/support/articles/test-types-available" },
+      { title: "Time Limits and Scoring", link: "/support/articles/time-limits-and-scoring" },
+      { title: "Retaking Tests", link: "/support/articles/retaking-tests" },
+      { title: "Test Results Analysis", link: "/support/articles/test-results-analysis" }
     ]
   },
   {
@@ -59,10 +59,10 @@ const supportCategories = [
     icon: Shield,
     color: "bg-[#3EB3E7]",
     articles: [
-      { title: "Browser Compatibility", link: "#" },
-      { title: "Connection Issues", link: "#" },
-      { title: "Mobile App Problems", link: "#" },
-      { title: "Performance Issues", link: "#" }
+      { title: "Browser Compatibility", link: "/support/articles/browser-compatibility" },
+      { title: "Connection Issues", link: "/support/articles/connection-issues" },
+      { title: "Mobile App Problems", link: "/support/articles/mobile-app-problems" },
+      { title: "Performance Issues", link: "/support/articles/performance-issues" }
     ]
   },
   {
@@ -71,10 +71,10 @@ const supportCategories = [
     icon: Users,
     color: "bg-[#B1E5D3]",
     articles: [
-      { title: "Study Groups", link: "#" },
-      { title: "Discussion Forums", link: "#" },
-      { title: "Success Stories", link: "#" },
-      { title: "Best Practices", link: "#" }
+      { title: "Study Groups", link: "/support/articles/study-groups" },
+      { title: "Discussion Forums", link: "/support/articles/discussion-forums" },
+      { title: "Success Stories", link: "/support/articles/success-stories" },
+      { title: "Best Practices", link: "/support/articles/best-practices" }
     ]
   }
 ];
@@ -91,14 +91,14 @@ const quickActions = [
     title: "Check System Status",
     description: "View current system status and updates",
     icon: Shield,
-    link: "#",
+    link: "/contact",
     color: "bg-green-500"
   },
   {
     title: "Report a Bug",
     description: "Let us know about any issues you've found",
     icon: ExternalLink,
-    link: "#",
+    link: "/contact",
     color: "bg-orange-500"
   }
 ];
@@ -259,7 +259,7 @@ export default function Support() {
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-[#3EB3E7] mr-3 mt-0.5 flex-shrink-0" />
                   <div>
-                    <a href="#" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
+                    <a href="/support/articles/taking-your-first-practice-test" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
                       How to Create Your First Practice Test
                     </a>
                     <p className="text-sm text-[#5C677D] mt-1">
@@ -270,7 +270,7 @@ export default function Support() {
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-[#3EB3E7] mr-3 mt-0.5 flex-shrink-0" />
                   <div>
-                    <a href="#" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
+                    <a href="/support/articles/understanding-your-results" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
                       Understanding Your Test Results
                     </a>
                     <p className="text-sm text-[#5C677D] mt-1">
@@ -281,7 +281,7 @@ export default function Support() {
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-[#3EB3E7] mr-3 mt-0.5 flex-shrink-0" />
                   <div>
-                    <a href="#" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
+                    <a href="/support/articles/best-practices" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
                       Optimizing Your Study Schedule
                     </a>
                     <p className="text-sm text-[#5C677D] mt-1">
@@ -300,7 +300,7 @@ export default function Support() {
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-[#3EB3E7] mr-3 mt-0.5 flex-shrink-0" />
                   <div>
-                    <a href="#" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
+                    <a href="/support/articles/connection-issues" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
                       Fixing Connection Issues
                     </a>
                     <p className="text-sm text-[#5C677D] mt-1">
@@ -311,7 +311,7 @@ export default function Support() {
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-[#3EB3E7] mr-3 mt-0.5 flex-shrink-0" />
                   <div>
-                    <a href="#" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
+                    <a href="/support/articles/browser-compatibility" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
                       Browser Compatibility Issues
                     </a>
                     <p className="text-sm text-[#5C677D] mt-1">
@@ -322,7 +322,7 @@ export default function Support() {
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-[#3EB3E7] mr-3 mt-0.5 flex-shrink-0" />
                   <div>
-                    <a href="#" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
+                    <a href="/support/articles/payment-methods" className="text-[#0B1F3A] hover:text-[#3EB3E7] font-medium">
                       Payment and Billing Problems
                     </a>
                     <p className="text-sm text-[#5C677D] mt-1">
