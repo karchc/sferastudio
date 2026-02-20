@@ -368,19 +368,16 @@ function addCategoriesSheet(
     });
   }
 
-  // Add data validation for Test Name column - reference Tests sheet
-  if (testNames && testNames.length > 0) {
-    const testListFormula = `"${testNames.join(',')}"`;
-    for (let i = 2; i <= 200; i++) {
-      sheet.getCell(`A${i}`).dataValidation = {
-        type: 'list',
-        allowBlank: true,
-        formulae: [testListFormula],
-        showErrorMessage: true,
-        errorTitle: 'Invalid Test Name',
-        error: 'Please select a test from the Tests sheet'
-      };
-    }
+  // Add data validation for Test Name column - dynamically reference Tests sheet
+  for (let i = 2; i <= 200; i++) {
+    sheet.getCell(`A${i}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['Tests!$A$2:$A$1000'],
+      showErrorMessage: true,
+      errorTitle: 'Invalid Test Name',
+      error: 'Please select a test from the Tests sheet'
+    };
   }
 
   return categoryInfo;
@@ -486,19 +483,16 @@ function addQuestionsSheet(
     });
   }
 
-  // Add data validation for Test Name column
-  if (testNames && testNames.length > 0) {
-    const testListFormula = `"${testNames.join(',')}"`;
-    for (let i = 2; i <= 500; i++) {
-      sheet.getCell(`A${i}`).dataValidation = {
-        type: 'list',
-        allowBlank: true,
-        formulae: [testListFormula],
-        showErrorMessage: true,
-        errorTitle: 'Invalid Test Name',
-        error: 'Please select a test from the Tests sheet'
-      };
-    }
+  // Add data validation for Test Name column - dynamically reference Tests sheet
+  for (let i = 2; i <= 500; i++) {
+    sheet.getCell(`A${i}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['Tests!$A$2:$A$1000'],
+      showErrorMessage: true,
+      errorTitle: 'Invalid Test Name',
+      error: 'Please select a test from the Tests sheet'
+    };
   }
 
   // Add data validation for Question Type column
@@ -525,24 +519,16 @@ function addQuestionsSheet(
     };
   }
 
-  // Add data validation for Category Name - all categories combined
-  if (categoryInfo && categoryInfo.size > 0) {
-    const allCategories = new Set<string>();
-    categoryInfo.forEach(cats => cats.forEach(c => allCategories.add(c)));
-
-    if (allCategories.size > 0) {
-      const catListFormula = `"${Array.from(allCategories).join(',')}"`;
-      for (let i = 2; i <= 500; i++) {
-        sheet.getCell(`B${i}`).dataValidation = {
-          type: 'list',
-          allowBlank: true,
-          formulae: [catListFormula],
-          showErrorMessage: true,
-          errorTitle: 'Invalid Category',
-          error: 'Please select a category from the Categories sheet'
-        };
-      }
-    }
+  // Add data validation for Category Name - dynamically reference Categories sheet
+  for (let i = 2; i <= 500; i++) {
+    sheet.getCell(`B${i}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['Categories!$B$2:$B$1000'],
+      showErrorMessage: true,
+      errorTitle: 'Invalid Category',
+      error: 'Please select a category from the Categories sheet'
+    };
   }
 }
 
@@ -635,39 +621,28 @@ function addDropdownQuestionsSheet(
     row.alignment = { wrapText: true, vertical: 'top' };
   });
 
-  // Add data validation for Test Name column
-  if (testNames && testNames.length > 0) {
-    const testListFormula = `"${testNames.join(',')}"`;
-    for (let i = 3; i <= 500; i++) { // Start from row 3 (after header and instruction)
-      sheet.getCell(`A${i}`).dataValidation = {
-        type: 'list',
-        allowBlank: true,
-        formulae: [testListFormula],
-        showErrorMessage: true,
-        errorTitle: 'Invalid Test Name',
-        error: 'Please select a test from the Tests sheet'
-      };
-    }
+  // Add data validation for Test Name column - dynamically reference Tests sheet
+  for (let i = 3; i <= 500; i++) { // Start from row 3 (after header and instruction)
+    sheet.getCell(`A${i}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['Tests!$A$2:$A$1000'],
+      showErrorMessage: true,
+      errorTitle: 'Invalid Test Name',
+      error: 'Please select a test from the Tests sheet'
+    };
   }
 
-  // Add data validation for Category Name
-  if (categoryInfo && categoryInfo.size > 0) {
-    const allCategories = new Set<string>();
-    categoryInfo.forEach(cats => cats.forEach(c => allCategories.add(c)));
-
-    if (allCategories.size > 0) {
-      const catListFormula = `"${Array.from(allCategories).join(',')}"`;
-      for (let i = 3; i <= 500; i++) {
-        sheet.getCell(`B${i}`).dataValidation = {
-          type: 'list',
-          allowBlank: true,
-          formulae: [catListFormula],
-          showErrorMessage: true,
-          errorTitle: 'Invalid Category',
-          error: 'Please select a category from the Categories sheet'
-        };
-      }
-    }
+  // Add data validation for Category Name - dynamically reference Categories sheet
+  for (let i = 3; i <= 500; i++) {
+    sheet.getCell(`B${i}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['Categories!$B$2:$B$1000'],
+      showErrorMessage: true,
+      errorTitle: 'Invalid Category',
+      error: 'Please select a category from the Categories sheet'
+    };
   }
 
   // Add data validation for Preview column (column F)
